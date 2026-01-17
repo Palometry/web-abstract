@@ -1,0 +1,169 @@
+<section class="services-admin">
+  <header>
+    <div>
+      <h2>Servicios</h2>
+      <p>Define los servicios que se muestran en la pagina publica.</p>
+    </div>
+    <button type="button" (click)="toggleAdd()">
+      {{ showAdd ? 'Cerrar' : 'Nuevo servicio' }}
+    </button>
+  </header>
+
+  <div class="panel" *ngIf="showAdd">
+    <h3>Nuevo servicio</h3>
+    <div class="form-grid">
+      <label>
+        Nombre
+        <input [(ngModel)]="addDraft.name" />
+      </label>
+      <label class="wide">
+        Descripcion
+        <textarea rows="3" [(ngModel)]="addDraft.description"></textarea>
+      </label>
+      <label>
+        Icono (URL)
+        <input [(ngModel)]="addDraft.icon" />
+      </label>
+      <label>
+        Orden
+        <input type="number" min="0" step="1" [(ngModel)]="addDraft.displayOrder" />
+      </label>
+      <label>
+        Visible
+        <select [(ngModel)]="addDraft.public">
+          <option [ngValue]="true">Visible</option>
+          <option [ngValue]="false">Oculto</option>
+        </select>
+      </label>
+      <label>
+        Es extra
+        <select [(ngModel)]="addDraft.isAddon">
+          <option [ngValue]="false">No</option>
+          <option [ngValue]="true">Si</option>
+        </select>
+      </label>
+      <label>
+        Tipo de precio
+        <select [(ngModel)]="addDraft.pricingType">
+          <option *ngFor="let type of pricingTypes" [ngValue]="type.value">
+            {{ type.label }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Precio
+        <input type="number" min="0" step="0.01" [(ngModel)]="addDraft.price" />
+      </label>
+      <label>
+        Moneda
+        <input [(ngModel)]="addDraft.currency" />
+      </label>
+      <label>
+        Activo
+        <select [(ngModel)]="addDraft.isActive">
+          <option [ngValue]="true">Activo</option>
+          <option [ngValue]="false">Inactivo</option>
+        </select>
+      </label>
+      <button type="button" (click)="addService()" [disabled]="saving">
+        Agregar servicio
+      </button>
+    </div>
+  </div>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="services-grid">
+    <p class="hint" *ngIf="loading">Cargando servicios...</p>
+    <article class="service-card" *ngFor="let service of services">
+      <div class="service-summary" *ngIf="!isEditing(service)">
+        <div>
+          <h3>{{ service.name }}</h3>
+          <p>{{ service.description }}</p>
+        </div>
+        <span class="tag" [class.inactive]="!service.public">
+          {{ service.public ? 'Visible' : 'Oculto' }}
+        </span>
+      </div>
+
+      <div class="actions" *ngIf="!isEditing(service)">
+        <button type="button" (click)="startEdit(service)">Editar</button>
+      </div>
+
+      <div class="service-edit" *ngIf="isEditing(service)">
+        <div class="form-grid">
+          <label>
+            Nombre
+            <input [(ngModel)]="service.draft.name" />
+          </label>
+          <label class="wide">
+            Descripcion
+            <textarea rows="3" [(ngModel)]="service.draft.description"></textarea>
+          </label>
+          <label>
+            Icono (URL)
+            <input [(ngModel)]="service.draft.icon" />
+          </label>
+          <label>
+            Orden
+            <input type="number" min="0" step="1" [(ngModel)]="service.draft.displayOrder" />
+          </label>
+          <label>
+            Visible
+            <select [(ngModel)]="service.draft.public">
+              <option [ngValue]="true">Visible</option>
+              <option [ngValue]="false">Oculto</option>
+            </select>
+          </label>
+          <label>
+            Es extra
+            <select [(ngModel)]="service.draft.isAddon">
+              <option [ngValue]="false">No</option>
+              <option [ngValue]="true">Si</option>
+            </select>
+          </label>
+          <label>
+            Tipo de precio
+            <select [(ngModel)]="service.draft.pricingType">
+              <option *ngFor="let type of pricingTypes" [ngValue]="type.value">
+                {{ type.label }}
+              </option>
+            </select>
+          </label>
+          <label>
+            Precio
+            <input type="number" min="0" step="0.01" [(ngModel)]="service.draft.price" />
+          </label>
+          <label>
+            Moneda
+            <input [(ngModel)]="service.draft.currency" />
+          </label>
+          <label>
+            Activo
+            <select [(ngModel)]="service.draft.isActive">
+              <option [ngValue]="true">Activo</option>
+              <option [ngValue]="false">Inactivo</option>
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" (click)="saveService(service)" [disabled]="saving">
+            Guardar
+          </button>
+          <button type="button" (click)="cancelEdit(service)" [disabled]="saving">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="danger"
+            (click)="deactivateService(service)"
+            [disabled]="saving || !service.isActive"
+          >
+            Desactivar
+          </button>
+        </div>
+      </div>
+    </article>
+    <p class="hint" *ngIf="!loading && !services.length">Sin servicios.</p>
+  </div>
+</section>

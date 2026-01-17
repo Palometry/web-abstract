@@ -1,0 +1,47 @@
+<div class="admin-shell">
+  <aside class="admin-nav">
+    <div class="nav-brand">
+      <span>AN</span>
+      <div>
+        <strong>ArquiNelson</strong>
+        <small>Admin</small>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Dashboard
+      </a>
+      <a routerLink="/admin/content" routerLinkActive="active">Contenido</a>
+      <a routerLink="/admin/projects" routerLinkActive="active">Proyectos</a>
+      <a routerLink="/admin/portfolio" routerLinkActive="active">Portafolio</a>
+      <a routerLink="/admin/quotes" routerLinkActive="active">Cotizaciones</a>
+      <a routerLink="/admin/services" routerLinkActive="active">Servicios</a>
+      <a *ngIf="canManageUsers" routerLink="/admin/users" routerLinkActive="active">Usuarios</a>
+    </nav>
+
+    <div class="nav-footer">
+      <small>Version 0.1</small>
+    </div>
+  </aside>
+
+  <div class="admin-body">
+    <header class="admin-top">
+      <div class="admin-title">
+        <h1>Area administrativa</h1>
+        <p>Gestiona el sitio publico desde un solo lugar.</p>
+      </div>
+      <div class="admin-user">
+        <div>
+          <span>{{ user?.fullName || 'Usuario' }}</span>
+          <small>{{ user?.email }}</small>
+        </div>
+        <button type="button" (click)="logout()">Salir</button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

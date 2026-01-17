@@ -1,0 +1,218 @@
+@if (project) {
+  <div class="container project-page">
+    <section class="project-hero">
+      <div class="hero-slider" *ngIf="currentBannerImage">
+        <img class="hero-img" [src]="currentBannerImage" [alt]="project.title" />
+        <button
+          class="hero-nav prev"
+          type="button"
+          aria-label="Banner anterior"
+          (click)="prevBanner()"
+          *ngIf="bannerImages.length > 1"
+        >
+          &lt;
+        </button>
+        <button
+          class="hero-nav next"
+          type="button"
+          aria-label="Banner siguiente"
+          (click)="nextBanner()"
+          *ngIf="bannerImages.length > 1"
+        >
+          &gt;
+        </button>
+        <div class="hero-dots" *ngIf="bannerImages.length > 1">
+          @for (img of bannerImages; track img; let i = $index) {
+            <button
+              type="button"
+              [class.active]="i === currentBannerIndex"
+              (click)="goToBanner(i)"
+              aria-label="Ir al banner {{ i + 1 }}"
+            ></button>
+          }
+        </div>
+      </div>
+      <div class="hero-text">
+        <h2>{{ project.title }}</h2>
+        <p class="location">Ubicacion: {{ project.location }}</p>
+      </div>
+    </section>
+
+    <section class="project-ficha">
+      <h3>Ficha de datos</h3>
+      <table class="ficha-table">
+        <tr><th>Promotor</th><td>{{ project.promoter }}</td></tr>
+        <tr><th>Estado</th><td>{{ project.status }}</td></tr>
+        <tr><th>Tipo</th><td>{{ project.type }}</td></tr>
+        <tr><th>Ubicacion</th><td>{{ project.location }}</td></tr>
+        <tr><th>Area del terreno</th><td>{{ project.landArea }}</td></tr>
+        <tr><th>Unidades</th><td>{{ project.units }}</td></tr>
+        <tr><th>Areas comunes</th><td>{{ project.amenities.join(', ') }}</td></tr>
+        <tr><th>Inicio de obra</th><td>{{ project.startYear }}</td></tr>
+        <tr><th>Entrega estimada</th><td>{{ project.deliveryYear }}</td></tr>
+      </table>
+    </section>
+
+    <section class="project-description">
+      <h3>Descripcion</h3>
+      <p>{{ project.description }}</p>
+    </section>
+
+    @if (project.mapUrl || mapEmbedSafeUrl) {
+      <section class="project-map">
+        <h3>Ubicacion en el mapa</h3>
+        @if (mapEmbedSafeUrl) {
+          <div class="map-frame">
+            <iframe
+              [src]="mapEmbedSafeUrl"
+              title="Mapa de ubicacion"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+        } @else {
+          <p class="map-hint">Abre el punto exacto en Google Maps.</p>
+        }
+        @if (project.mapUrl) {
+          <a class="map-link" [href]="project.mapUrl" target="_blank" rel="noopener">
+            Ver ubicacion en Google Maps
+          </a>
+        }
+      </section>
+    }
+
+    @if (project.houseModels?.length) {
+      <section class="project-models">
+        <h3>Modelos de casas</h3>
+        <div class="models-grid">
+          @for (model of project.houseModels; track model.name) {
+            <article class="model-card">
+              <img [src]="model.image" [alt]="model.name" />
+              <h4>{{ model.name }}</h4>
+              <p>{{ model.description }}</p>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    @if (housePlans.length) {
+      <section class="project-plans">
+        <div class="plans-header">
+          <h3>Casas por ambientes</h3>
+          <div class="plan-filter">
+            <label for="plan-ambientes">Elegir N de ambientes</label>
+            <select id="plan-ambientes" [value]="selectedAmbientes" (change)="onAmbientesChange($event)">
+              <option [value]="0">Todos</option>
+              @for (opt of planOptions; track opt) {
+                <option [value]="opt">{{ opt }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        @if (currentPlan) {
+          <div class="plan-slider">
+            <div class="plan-frame">
+              <img [src]="currentPlan.image" [alt]="currentPlan.name" />
+            </div>
+            <button
+              class="plan-nav prev"
+              type="button"
+              aria-label="Plano anterior"
+              (click)="prevPlan()"
+              *ngIf="filteredPlans.length > 1"
+            >
+              &lt;
+            </button>
+            <button
+              class="plan-nav next"
+              type="button"
+              aria-label="Plano siguiente"
+              (click)="nextPlan()"
+              *ngIf="filteredPlans.length > 1"
+            >
+              &gt;
+            </button>
+          </div>
+
+          <div class="plan-meta">
+            <div class="plan-name">{{ currentPlan.name }}</div>
+            <div class="plan-info">
+              <span>Ambientes: {{ currentPlan.ambientes }}</span>
+              <span>Area total: {{ currentPlan.totalArea }}</span>
+              <span>Area techada: {{ currentPlan.coveredArea }}</span>
+            </div>
+          </div>
+
+          <div class="plan-dots" *ngIf="filteredPlans.length > 1">
+            @for (plan of filteredPlans; track plan.name; let i = $index) {
+              <button
+                type="button"
+                [class.active]="i === currentPlanIndex"
+                (click)="goToPlan(i)"
+                aria-label="Ir al plano {{ i + 1 }}"
+              ></button>
+            }
+          </div>
+        } @else {
+          <p class="plan-empty">No hay planos disponibles para este filtro.</p>
+        }
+      </section>
+    }
+
+    @if (project.enjoyAreas?.length) {
+      <section class="project-areas">
+        <h3>Areas para disfrutar</h3>
+        <div class="areas-grid">
+          @for (area of project.enjoyAreas; track area) {
+            <div class="area-item">{{ area }}</div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (project.masterplanImage) {
+      <section class="project-masterplan">
+        <h3>Masterplan y lotes</h3>
+        <div class="masterplan">
+          <img [src]="project.masterplanImage" [alt]="'Masterplan de ' + project.title" />
+        </div>
+        @if (project.lots?.length) {
+          <div class="lots-grid">
+            @for (lot of project.lots; track lot.id) {
+              <div class="lot-card" [class.reserved]="lot.status === 'Reservado'" [class.sold]="lot.status === 'Vendido'">
+                <div class="lot-id">{{ lot.id }}</div>
+                <div class="lot-area">{{ lot.area }}</div>
+                <div class="lot-status">{{ lot.status }}</div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (project.gallery && project.gallery.length > 0) {
+      <section class="project-gallery">
+        <h3>Galeria</h3>
+        <div class="gallery-grid">
+          @for (image of project.gallery; track image) {
+            <img [src]="image" [alt]="project.title" />
+          }
+        </div>
+      </section>
+    }
+
+    <aside class="project-contact">
+      <h4>Contacto</h4>
+      <p>Para mas informacion sobre este proyecto: info@funbellata.example</p>
+      <a [routerLink]="['/projects']" class="btn-back">Volver al listado</a>
+    </aside>
+  </div>
+} @else {
+  <div class="container">
+    <p>Proyecto no encontrado.</p>
+  </div>
+}
+
+

@@ -1,0 +1,150 @@
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  background: #f5f2ea;
+}
+
+.admin-nav {
+  background: #15261f;
+  color: #e7e1d3;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 20px;
+  gap: 28px;
+}
+
+.nav-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.nav-brand span {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #e0b36b;
+  color: #1a2b24;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-brand strong {
+  display: block;
+  font-size: 16px;
+}
+
+.nav-brand small {
+  display: block;
+  color: #b3c0b6;
+}
+
+.nav-links {
+  display: grid;
+  gap: 12px;
+}
+
+.nav-links a {
+  color: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+  background: rgba(224, 179, 107, 0.2);
+  color: #fff6e3;
+}
+
+.nav-footer {
+  margin-top: auto;
+  color: #8f9c93;
+}
+
+.admin-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.admin-top {
+  background: #ffffff;
+  padding: 28px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #e3dfd5;
+}
+
+.admin-title h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  color: #1a2b24;
+}
+
+.admin-title p {
+  margin: 0;
+  color: #6a726a;
+}
+
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-user span {
+  display: block;
+  font-weight: 600;
+}
+
+.admin-user small {
+  display: block;
+  color: #6a726a;
+}
+
+.admin-user button {
+  border: none;
+  background: #1f3b2c;
+  color: #f7f0e0;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.admin-user button:hover {
+  background: #274734;
+}
+
+.admin-content {
+  padding: 32px 40px 56px;
+}
+
+@media (max-width: 960px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .nav-links {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .admin-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

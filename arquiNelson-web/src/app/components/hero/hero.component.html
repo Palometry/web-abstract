@@ -1,0 +1,19 @@
+<section id="home" class="hero">
+  <div class="hero-background image-bg" role="img" aria-label="Logo background"></div>
+  
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1 class="hero-title">{{ title }}</h1>
+      <p class="hero-subtitle">{{ subtitle }}</p>
+      
+      <div class="hero-buttons">
+        <button class="btn btn-primary" (click)="scrollToSection('portfolio')">
+          Ver Proyectos
+        </button>
+        <button class="btn btn-secondary" (click)="scrollToSection('contact')">
+          Contactar
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

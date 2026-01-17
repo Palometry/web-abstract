@@ -1,0 +1,86 @@
+<section class="portfolio-admin">
+  <header>
+    <div>
+      <h2>Portafolio</h2>
+      <p>Define el orden de los proyectos visibles en el portafolio.</p>
+    </div>
+    <button type="button" (click)="toggleAdd()">
+      {{ showAdd ? 'Cerrar' : 'Agregar proyecto' }}
+    </button>
+  </header>
+
+  <div class="panel" *ngIf="showAdd">
+    <h3>Agregar al portafolio</h3>
+    <div class="form-grid">
+      <label>
+        Proyecto
+        <select [(ngModel)]="addDraft.projectId" (change)="onProjectSelect()">
+          <option [ngValue]="0">Selecciona un proyecto</option>
+          <option *ngFor="let project of availableProjects" [ngValue]="project.id">
+            {{ project.name }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Orden
+        <input type="number" min="0" step="1" [(ngModel)]="addDraft.sortOrder" />
+      </label>
+      <label>
+        Titulo en portafolio
+        <input [(ngModel)]="addDraft.titleOverride" placeholder="Opcional" />
+      </label>
+      <label>
+        Visible
+        <select [(ngModel)]="addDraft.isVisible">
+          <option [ngValue]="true">Visible</option>
+          <option [ngValue]="false">Oculto</option>
+        </select>
+      </label>
+      <button type="button" (click)="addEntry()" [disabled]="saving">
+        Agregar
+      </button>
+    </div>
+    <p class="hint" *ngIf="!availableProjects.length">No hay proyectos disponibles.</p>
+  </div>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="table">
+    <div class="table-row table-header">
+      <span>Orden</span>
+      <span>Proyecto</span>
+      <span>Titulo</span>
+      <span>Visible</span>
+      <span>Acciones</span>
+    </div>
+    <div class="table-row" *ngIf="loading">
+      <span>Cargando...</span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="table-row" *ngFor="let entry of entries">
+      <input type="number" min="0" step="1" [(ngModel)]="entry.draft.sortOrder" />
+      <span>{{ entry.project }}</span>
+      <input [(ngModel)]="entry.draft.titleOverride" placeholder="Opcional" />
+      <select [(ngModel)]="entry.draft.isVisible">
+        <option [ngValue]="true">Visible</option>
+        <option [ngValue]="false">Oculto</option>
+      </select>
+      <div class="actions">
+        <button type="button" (click)="saveEntry(entry)" [disabled]="saving">Guardar</button>
+        <button type="button" class="danger" (click)="removeEntry(entry)" [disabled]="saving">
+          Quitar
+        </button>
+      </div>
+    </div>
+    <div class="table-row" *ngIf="!loading && !entries.length">
+      <span>Sin proyectos en portafolio.</span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,137 @@
+<section class="project-detail">
+  <a routerLink="/admin/projects" class="back-link">← Volver a proyectos</a>
+
+  <div class="header">
+    <div>
+      <h2>Editar proyecto</h2>
+      <p>Actualiza informacion general del proyecto.</p>
+    </div>
+    <button type="button" (click)="saveProject()" [disabled]="saving || !project">
+      {{ saving ? 'Guardando...' : 'Guardar proyecto' }}
+    </button>
+  </div>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="panel" *ngIf="project">
+    <div class="form-grid">
+      <label>
+        Nombre
+        <input type="text" [(ngModel)]="draft.name" />
+      </label>
+      <label>
+        Cliente
+        <input type="text" [(ngModel)]="draft.clientName" />
+      </label>
+      <label class="wide">
+        Direccion
+        <input type="text" [(ngModel)]="draft.address" />
+      </label>
+      <label class="wide">
+        Descripcion
+        <textarea rows="4" [(ngModel)]="draft.description"></textarea>
+      </label>
+      <label>
+        Estado
+        <select [(ngModel)]="draft.status">
+          <option value="draft">Borrador</option>
+          <option value="active">Activo</option>
+          <option value="suspended">Suspendido</option>
+          <option value="archived">Archivado</option>
+        </select>
+      </label>
+      <label>
+        Inicio
+        <input type="date" [(ngModel)]="draft.startDate" />
+      </label>
+      <label>
+        Fin
+        <input type="date" [(ngModel)]="draft.endDate" />
+      </label>
+    </div>
+  </div>
+
+  <div class="panel" *ngIf="project">
+    <h3>Imagenes</h3>
+    <div class="form-grid">
+      <label class="wide">
+        URL de imagen
+        <input type="text" [(ngModel)]="imageDraft.fileUrl" />
+      </label>
+      <label>
+        Titulo
+        <input type="text" [(ngModel)]="imageDraft.title" />
+      </label>
+      <label>
+        Alt
+        <input type="text" [(ngModel)]="imageDraft.altText" />
+      </label>
+      <label>
+        Orden
+        <input type="number" [(ngModel)]="imageDraft.sortOrder" />
+      </label>
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="imageDraft.isCover" />
+        Portada
+      </label>
+      <button type="button" (click)="addImage()">Agregar imagen</button>
+    </div>
+
+    <div class="image-grid" *ngIf="images.length">
+      <div class="image-card" *ngFor="let image of images">
+        <img [src]="image.fileUrl" [alt]="image.altText || ''" />
+        <div class="form-grid compact">
+          <label class="wide">
+            URL
+            <input type="text" [(ngModel)]="image.draft.fileUrl" />
+          </label>
+          <label>
+            Titulo
+            <input type="text" [(ngModel)]="image.draft.title" />
+          </label>
+          <label>
+            Alt
+            <input type="text" [(ngModel)]="image.draft.altText" />
+          </label>
+          <label>
+            Orden
+            <input type="number" [(ngModel)]="image.draft.sortOrder" />
+          </label>
+          <label class="toggle">
+            <input type="checkbox" [(ngModel)]="image.draft.isCover" />
+            Portada
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" (click)="saveImage(image)">Guardar</button>
+          <button type="button" class="danger" (click)="deleteImage(image)">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" *ngIf="project">
+    <h3>Portafolio</h3>
+    <div class="form-grid">
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="portfolioDraft.enabled" />
+        Mostrar en portafolio
+      </label>
+      <label>
+        Orden
+        <input type="number" [(ngModel)]="portfolioDraft.sortOrder" />
+      </label>
+      <label class="wide">
+        Titulo alternativo
+        <input type="text" [(ngModel)]="portfolioDraft.titleOverride" />
+      </label>
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="portfolioDraft.isVisible" />
+        Visible
+      </label>
+      <button type="button" (click)="savePortfolio()">Guardar portafolio</button>
+    </div>
+  </div>
+
+  <p class="hint" *ngIf="loading">Cargando proyecto...</p>
+</section>

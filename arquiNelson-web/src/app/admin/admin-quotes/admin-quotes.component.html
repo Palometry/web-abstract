@@ -1,0 +1,42 @@
+<section class="quotes-admin">
+  <header>
+    <div>
+      <h2>Cotizaciones</h2>
+      <p>Revisa solicitudes y envia el contrato preliminar.</p>
+    </div>
+    <button type="button" routerLink="/admin/quotes/new">Nueva cotizacion</button>
+  </header>
+
+  <div class="table">
+    <div class="table-row table-header">
+      <span>Cliente</span>
+      <span>Proyecto</span>
+      <span>Area</span>
+      <span>Total</span>
+      <span>Estado</span>
+      <span>Acciones</span>
+    </div>
+    <div class="table-row" *ngIf="loading">
+      <span>Cargando...</span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="table-row" *ngFor="let quote of quotes">
+      <span>{{ quote.fullName }}</span>
+      <span>{{ quote.projectName }}</span>
+      <span>{{ quote.areaM2 }} m2</span>
+      <span>{{ formatCurrency(quote.totalCost, quote.currency) }}</span>
+      <span class="status">{{ formatStatus(quote.status) }}</span>
+      <button type="button" [routerLink]="['/admin/quotes', quote.id]">Ver</button>
+    </div>
+    <div class="table-row" *ngIf="!loading && !quotes.length">
+      <span>Sin cotizaciones hechas.</span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</section>

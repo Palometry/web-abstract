@@ -1,0 +1,169 @@
+.users-admin {
+  display: grid;
+  gap: 20px;
+}
+
+.users-admin h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.users-admin p {
+  margin: 0;
+  color: #6b726c;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+}
+
+.user-form,
+.user-list {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 22px rgba(31, 45, 38, 0.08);
+}
+
+.user-form h3,
+.user-list h3 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  color: #1f3b2c;
+}
+
+.user-form label {
+  display: block;
+  margin: 10px 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #607063;
+}
+
+.user-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dde3dc;
+}
+
+.roles {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.role-list {
+  display: grid;
+  gap: 6px;
+}
+
+.role-list label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.user-form button {
+  margin-top: 16px;
+  width: 100%;
+  border: none;
+  background: #1f3b2c;
+  color: #f7f0e0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.error {
+  margin: 10px 0 0;
+  color: #b35a3a;
+}
+
+.hint {
+  margin: 0 0 12px;
+  color: #7a857c;
+}
+
+.user-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #ede9df;
+}
+
+.user-card:last-child {
+  border-bottom: none;
+}
+
+.user-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.user-card small {
+  display: block;
+  color: #6b726c;
+  margin-bottom: 6px;
+}
+
+.roles-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.roles-badges span {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1ede3;
+  color: #4e564f;
+}
+
+.user-actions {
+  display: grid;
+  gap: 8px;
+  align-items: start;
+  justify-items: end;
+}
+
+.status {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1f3b2c;
+  color: #f7f0e0;
+}
+
+.status.inactive {
+  background: #d6cec2;
+  color: #4e564f;
+}
+
+.user-actions button {
+  border: 1px solid #d8d2c6;
+  background: transparent;
+  color: #1f3b2c;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.user-actions .hint {
+  color: #7a857c;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .users-grid {
+    grid-template-columns: 1fr;
+  }
+}

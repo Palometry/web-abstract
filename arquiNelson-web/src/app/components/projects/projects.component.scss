@@ -1,0 +1,294 @@
+.projects {
+  padding: 80px 20px;
+  background: white;
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 60px;
+
+    h2 {
+      font-size: 42px;
+      font-weight: 700;
+      color: #070809;
+      margin: 0 0 20px 0;
+    }
+
+    p {
+      font-size: 18px;
+      color: #666;
+      margin: 0;
+    }
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+
+    .project-card {
+      cursor: pointer;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 400px;
+      position: relative;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.02);
+
+        .project-overlay {
+          opacity: 1;
+        }
+      }
+
+      .project-image {
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+      }
+
+      .project-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(185, 186, 189, 0.95) 10%, rgba(200, 81, 79, 0.95) 90%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        display: flex;
+        align-items: flex-end;
+        padding: 30px;
+        color: white;
+
+        .project-info {
+          width: 100%;
+
+          .category {
+            display: inline-block;
+            background: #ffd700;
+            color: #090a0c;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+          }
+
+          h3 {
+            font-size: 24px;
+            margin: 10px 0;
+            font-weight: 600;
+          }
+
+          p {
+            font-size: 14px;
+            opacity: 0.95;
+            margin: 0;
+          }
+        }
+      }
+    }
+  }
+
+  .project-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+
+    .modal-content {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s ease;
+
+      .close-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        z-index: 10;
+
+        &:hover {
+          background: white;
+          transform: rotate(90deg);
+        }
+      }
+
+      .modal-image {
+        width: 100%;
+        height: 300px;
+        background-size: cover;
+        background-position: center;
+      }
+
+      .modal-body {
+        padding: 40px;
+
+        .modal-category {
+          display: inline-block;
+          background: #f0f0f0;
+          color: #0f1114;
+          padding: 5px 15px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+          margin-bottom: 15px;
+        }
+
+        h2 {
+          font-size: 28px;
+          color: #090b0f;
+          margin: 15px 0;
+        }
+
+        p {
+          color: #666;
+          line-height: 1.6;
+          margin: 20px 0;
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 15px;
+          margin-top: 30px;
+
+          .btn {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+
+            &.btn-primary {
+              background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+              color: #0d0705;
+
+              &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 15px rgba(255, 215, 0, 0.3);
+              }
+            }
+
+            &.btn-secondary {
+              background: #f0f0f0;
+              color: #0d0705;
+
+              &:hover {
+                background: #e0e0e0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Autodesk 360 Modal */
+.autodesk-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 20px;
+
+  .autodesk-modal-content {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 90%;
+    height: 90vh;
+    max-width: 1400px;
+    position: relative;
+    animation: slideUp 0.3s ease;
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      z-index: 10;
+
+      &:hover {
+        background: white;
+        transform: rotate(90deg);
+      }
+    }
+
+    .autodesk-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .autodesk-modal-content {
+      width: 95%;
+      height: 95vh;
+    }
+  }
+}
+

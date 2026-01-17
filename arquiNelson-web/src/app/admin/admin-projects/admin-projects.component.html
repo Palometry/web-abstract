@@ -1,0 +1,43 @@
+<section class="projects-admin">
+  <header>
+    <div>
+      <h2>Proyectos</h2>
+      <p>Gestiona proyectos activos, borradores o suspendidos.</p>
+    </div>
+    <a class="primary" routerLink="/admin/projects/new">Crear proyecto</a>
+  </header>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="table">
+    <div class="table-row table-header">
+      <span>Proyecto</span>
+      <span>Cliente</span>
+      <span>Direccion</span>
+      <span>Estado</span>
+      <span>Portafolio</span>
+      <span>Acciones</span>
+    </div>
+    <div class="table-row" *ngIf="loading">
+      <span>Cargando...</span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="table-row" *ngFor="let project of projects">
+      <span>{{ project.name }}</span>
+      <span>{{ project.clientName }}</span>
+      <span>{{ project.address }}</span>
+      <span class="status" [class.suspended]="project.status === 'suspended'">
+        {{ formatStatus(project.status) }}
+      </span>
+      <span>{{ project.portfolio ? 'Visible' : 'Oculto' }}</span>
+      <div class="actions">
+        <a [routerLink]="['/admin/projects', project.id]">Editar</a>
+        <button type="button" class="danger" (click)="deleteProject(project)">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,170 @@
+<section class="content-detail">
+  <a routerLink="/admin/content" class="back-link">← Volver a contenido</a>
+
+  <div class="header">
+    <div>
+      <h2>Editar pagina</h2>
+      <p>Actualiza la estructura y bloques visibles.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" (click)="savePage()" [disabled]="savingPage || !page">
+        {{ savingPage ? 'Guardando...' : 'Guardar pagina' }}
+      </button>
+      <a class="secondary" href="#section-panel">Agregar seccion</a>
+    </div>
+  </div>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="panel" id="page-panel" *ngIf="page">
+    <h3>Informacion general</h3>
+    <div class="form-grid">
+      <label>
+        Titulo
+        <input type="text" [(ngModel)]="pageDraft.title" />
+      </label>
+      <label>
+        Slug
+        <input type="text" [(ngModel)]="pageDraft.slug" />
+      </label>
+      <label>
+        Estado
+        <select [(ngModel)]="pageDraft.status">
+          <option value="draft">Borrador</option>
+          <option value="published">Publicado</option>
+        </select>
+      </label>
+      <label>
+        Meta titulo
+        <input type="text" [(ngModel)]="pageDraft.metaTitle" />
+      </label>
+      <label class="wide">
+        Meta descripcion
+        <input type="text" [(ngModel)]="pageDraft.metaDescription" />
+      </label>
+      <button type="button" (click)="savePage()" [disabled]="savingPage">
+        {{ savingPage ? 'Guardando...' : 'Guardar pagina' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="panel" id="section-panel">
+    <h3>Nueva seccion</h3>
+    <div class="form-grid">
+      <label>
+        sectionKey
+        <input type="text" [(ngModel)]="sectionDraft.sectionKey" />
+      </label>
+      <label>
+        Titulo
+        <input type="text" [(ngModel)]="sectionDraft.title" />
+      </label>
+      <label class="wide">
+        Descripcion
+        <textarea rows="3" [(ngModel)]="sectionDraft.description"></textarea>
+      </label>
+      <label class="wide">
+        Imagen (URL)
+        <input type="text" [(ngModel)]="sectionDraft.imageUrl" />
+      </label>
+      <label>
+        Orden
+        <input type="number" [(ngModel)]="sectionDraft.sortOrder" />
+      </label>
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="sectionDraft.isVisible" />
+        Visible
+      </label>
+      <button type="button" (click)="createSection()">Agregar seccion</button>
+    </div>
+  </div>
+
+  <div class="sections" *ngIf="!loading">
+    <div class="section-card" *ngFor="let section of sections">
+      <div class="section-header">
+        <div class="form-grid compact">
+          <label>
+            sectionKey
+            <input type="text" [(ngModel)]="section.sectionKey" />
+          </label>
+          <label>
+            Titulo
+            <input type="text" [(ngModel)]="section.title" />
+          </label>
+          <label class="wide">
+            Descripcion
+            <textarea rows="3" [(ngModel)]="section.description"></textarea>
+          </label>
+          <label class="wide">
+            Imagen (URL)
+            <input type="text" [(ngModel)]="section.imageUrl" />
+          </label>
+          <label>
+            Orden
+            <input type="number" [(ngModel)]="section.sortOrder" />
+          </label>
+          <label class="toggle">
+            <input type="checkbox" [(ngModel)]="section.isVisible" />
+            Visible
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" (click)="saveSection(section)">Guardar seccion</button>
+          <button type="button" class="danger" (click)="deleteSection(section)">Eliminar seccion</button>
+        </div>
+      </div>
+
+      <div class="blocks">
+        <div class="block-card" *ngFor="let block of section.blocks">
+          <div class="form-grid compact">
+            <label>
+              blockType
+              <input type="text" [(ngModel)]="block.blockType" />
+            </label>
+            <label>
+              Orden
+              <input type="number" [(ngModel)]="block.sortOrder" />
+            </label>
+            <label class="toggle">
+              <input type="checkbox" [(ngModel)]="block.isVisible" />
+              Visible
+            </label>
+          </div>
+          <label class="wide">
+            Contenido (JSON)
+            <textarea rows="4" [(ngModel)]="block.contentText"></textarea>
+          </label>
+          <div class="actions">
+            <button type="button" (click)="saveBlock(section, block)">Guardar bloque</button>
+            <button type="button" class="danger" (click)="deleteBlock(block)">Eliminar bloque</button>
+          </div>
+        </div>
+
+        <div class="block-card new-block">
+          <h4>Nuevo bloque</h4>
+          <div class="form-grid compact">
+            <label>
+              blockType
+              <input type="text" [(ngModel)]="blockDrafts[section.id].blockType" />
+            </label>
+            <label>
+              Orden
+              <input type="number" [(ngModel)]="blockDrafts[section.id].sortOrder" />
+            </label>
+            <label class="toggle">
+              <input type="checkbox" [(ngModel)]="blockDrafts[section.id].isVisible" />
+              Visible
+            </label>
+          </div>
+          <label class="wide">
+            Contenido (JSON)
+            <textarea rows="4" [(ngModel)]="blockDrafts[section.id].contentText"></textarea>
+          </label>
+          <button type="button" (click)="createBlock(section)">Agregar bloque</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint" *ngIf="loading">Cargando pagina...</p>
+</section>

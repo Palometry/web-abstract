@@ -1,0 +1,157 @@
+.services-admin {
+  display: grid;
+  gap: 20px;
+}
+
+.services-admin header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.services-admin h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.services-admin p {
+  margin: 0;
+  color: #6b726c;
+}
+
+.services-admin button {
+  border: none;
+  background: #1f3b2c;
+  color: #f7f0e0;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 22px rgba(31, 45, 38, 0.08);
+  display: grid;
+  gap: 16px;
+}
+
+.panel h3 {
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #607063;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dde3dc;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-grid textarea {
+  resize: vertical;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.services-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.service-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 12px 22px rgba(31, 45, 38, 0.08);
+}
+
+.service-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.service-summary h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: #1f3b2c;
+}
+
+.service-summary p {
+  margin: 0;
+  color: #6b726c;
+}
+
+.tag {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #1f3b2c;
+  color: #f7f0e0;
+}
+
+.tag.inactive {
+  background: #c9c1b3;
+  color: #4e564f;
+}
+
+.service-edit {
+  display: grid;
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.actions button {
+  border: 1px solid #d8d2c6;
+  background: transparent;
+  color: #1f3b2c;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.actions .danger {
+  border-color: #f1c4b1;
+  color: #b35a3a;
+}
+
+.hint {
+  margin: 0;
+  color: #7a857c;
+}
+
+.error {
+  margin: 0;
+  color: #b35a3a;
+}

@@ -1,0 +1,57 @@
+<header class="header">
+  <div class="header-container">
+    <div class="logo">
+      <a routerLink="/" fragment="home" class="logo-link" (click)="closeMenu()">
+        <img src="img/LOGO.jpg" alt="ArquiNelson logo" class="logo-img" />
+      </a>
+    </div>
+    
+    <nav class="nav-desktop">
+      <ul class="nav-list">
+        <li *ngFor="let item of menuItems" class="nav-item" [class.has-dropdown]="item.dropdown">
+          <a
+            [routerLink]="item.link"
+            [fragment]="item.fragment"
+            (click)="closeMenu()"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.fragment ? true : false }"
+          >
+            {{ item.name }}
+          </a>
+
+          <div class="dropdown" *ngIf="item.dropdown && projects.length">
+            <ul class="dropdown-list">
+              <li *ngFor="let proj of projects">
+                <a [routerLink]="['/project', proj.id]" (click)="closeMenu()">
+                  <span class="proj-name">{{ proj.title }}</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </nav>
+<button class="menu-toggle" (click)="toggleMenu()">
+      <span class="hamburger" [class.active]="isMenuOpen"></span>
+    </button>
+
+    <nav class="nav-mobile" [class.active]="isMenuOpen">
+      <ul class="nav-list">
+        <li *ngFor="let item of menuItems">
+          <a
+            [routerLink]="item.link"
+            [fragment]="item.fragment"
+            (click)="closeMenu()"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.fragment ? true : false }"
+          >
+            {{ item.name }}
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+
+

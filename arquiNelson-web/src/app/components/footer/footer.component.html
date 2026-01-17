@@ -1,0 +1,51 @@
+<footer id="contact" class="footer">
+  <div class="footer-content">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Columna 1: Información de la Empresa -->
+        <div class="footer-section logo-section">
+          <h3>
+            <img src="img/LOGO.jpg" alt="ArquiNelson logo" class="footer-logo" />
+            Nelson Daza, Arqui. y Urbanismo
+          </h3>
+          <p>Líderes en soluciones inmobiliarias integrales de calidad mundial con compromiso social y ambiental.</p>
+          <div class="social-links">
+            <a *ngFor="let social of socialLinks" [href]="social.url" class="social-icon" [title]="social.label">
+              {{ social.icon }}
+            </a>
+          </div>
+        </div>
+
+        <!-- Columna 2: Enlaces Rápidos -->
+        <div class="footer-section">
+          <h4>Enlaces Rápidos</h4>
+          <ul>
+            <li *ngFor="let link of quickLinks">
+              <a [href]="link.href">{{ link.name }}</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Columna 3: Información de Contacto -->
+        <div class="footer-section">
+          <h4>Contacto</h4>
+          <ul class="contact-info">
+            <li>📧 dazanelson8@gmail.com</li>
+            <li>📞 +51 956 639 199</li>
+            <li>📍 jr. Manuel del Aguila, Moyobamba, Perú</li>
+            <li>🕐 Lunes a Viernes: 9:00 - 18:00</li>
+          </ul>
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer inferior -->
+  <div class="footer-bottom">
+    <div class="container">
+      <p>&copy; {{ currentYear }} Nelson Daza. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>

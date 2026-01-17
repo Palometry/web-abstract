@@ -1,0 +1,29 @@
+<section class="dashboard">
+  <div class="stats-grid">
+    <div class="stat-card" *ngFor="let stat of stats">
+      <span class="stat-value">{{ stat.value }}</span>
+      <span class="stat-label">{{ stat.label }}</span>
+    </div>
+  </div>
+
+  <div class="panel-grid">
+    <div class="panel">
+      <h2>Actividad reciente</h2>
+      <p class="hint" *ngIf="loading">Cargando actividad...</p>
+      <ul *ngIf="!loading">
+        <li *ngFor="let item of activity">{{ item.message }}</li>
+      </ul>
+      <p class="hint" *ngIf="!loading && !activity.length">Sin actividad reciente.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Acciones rapidas</h2>
+      <div class="quick-actions">
+        <a class="quick-card" *ngFor="let action of quickActions" [routerLink]="action.link">
+          <strong>{{ action.title }}</strong>
+          <p>{{ action.description }}</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

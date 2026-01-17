@@ -1,0 +1,62 @@
+<section class="content-admin">
+  <header>
+    <div>
+      <h2>Contenido del sitio</h2>
+      <p>Actualiza textos, imagenes y secciones visibles.</p>
+    </div>
+  </header>
+
+  <div class="create-panel">
+    <h3>Nueva pagina</h3>
+    <div class="form-grid">
+      <label>
+        Titulo
+        <input type="text" [(ngModel)]="newPage.title" />
+      </label>
+      <label>
+        Slug
+        <input type="text" [(ngModel)]="newPage.slug" />
+      </label>
+      <label>
+        Estado
+        <select [(ngModel)]="newPage.status">
+          <option value="draft">Borrador</option>
+          <option value="published">Publicado</option>
+        </select>
+      </label>
+      <button type="button" (click)="createPage()" [disabled]="creating">
+        {{ creating ? 'Creando...' : 'Crear pagina' }}
+      </button>
+    </div>
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </div>
+
+  <div class="table">
+    <div class="table-row table-header">
+      <span>Pagina</span>
+      <span>Slug</span>
+      <span>Secciones</span>
+      <span>Estado</span>
+      <span>Acciones</span>
+    </div>
+    <div class="table-row" *ngIf="loading">
+      <span>Cargando...</span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="table-row" *ngFor="let page of pages">
+      <span>{{ page.title }}</span>
+      <span>{{ page.slug }}</span>
+      <span>{{ page.sections }}</span>
+      <span class="status" [class.draft]="page.status === 'draft'">
+        {{ formatStatus(page.status) }}
+      </span>
+      <div class="actions">
+        <a [routerLink]="['/admin/content', page.id]">Editar</a>
+        <button type="button" class="danger" (click)="deletePage(page)">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</section>

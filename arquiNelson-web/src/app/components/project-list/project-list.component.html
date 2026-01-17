@@ -1,0 +1,16 @@
+<div class="container projects-page">
+  <section class="projects-hero">
+    <h2>Proyectos</h2>
+    <p>Listado de proyectos inmobiliarios destacables.</p>
+  </section>
+
+  <section class="projects-grid">
+    <article class="project-card" *ngFor="let project of projects">
+      <a [routerLink]="['/project', project.id]">
+        <img [src]="project.thumbImage || project.image" [alt]="project.title" />
+        <h3>{{ project.title }}</h3>
+        <p>{{ project.shortDesc }}</p>
+      </a>
+    </article>
+  </section>
+</div>

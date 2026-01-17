@@ -1,0 +1,125 @@
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 70px;
+
+  .hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.image-bg {
+      background-image: url('/img/isometricos.jpg');
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: cover; /* fill the hero area for better visibility */
+      opacity: 0.5; /* keep full opacity; we'll darken via blend-mode for contrast */
+      filter: saturate(1.15) contrast(1.2) brightness(0.95);
+      background-color: rgba(0,0,0,0.08);
+      background-blend-mode: multiply; /* darken image so it reads under content */
+    }
+
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0); /* keep transparent so logo shows through */
+    }
+  }
+
+  .hero-content {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: center;
+  color: var(--color-white);
+
+    .hero-text {
+      animation: fadeInUp 1s ease-out;
+
+      .hero-title {
+        font-size: clamp(28px, 8vw, 64px);
+        font-weight: 700;
+        margin: 0 0 20px 0;
+        line-height: 1.2;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      }
+
+      .hero-subtitle {
+        font-size: clamp(16px, 4vw, 28px);
+        font-weight: 300;
+        margin: 0 0 40px 0;
+        opacity: 0.95;
+        color: rgba(255,255,255,0.95);
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      }
+
+      .hero-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+
+        .btn {
+          padding: 15px 40px;
+          font-size: 16px;
+          font-weight: 600;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          display: inline-block;
+
+          &.btn-primary {
+            background: var(--color-red);
+            color: var(--color-white);
+
+            &:hover {
+              transform: translateY(-3px);
+              box-shadow: 0 10px 30px rgba(200, 16, 40, 0.18);
+            }
+          }
+
+          &.btn-secondary {
+            background: var(--color-white);
+            color: var(--color-black);
+            border: 2px solid var(--color-black);
+
+            &:hover {
+              background: var(--color-black);
+              color: var(--color-white);
+              transform: translateY(-3px);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

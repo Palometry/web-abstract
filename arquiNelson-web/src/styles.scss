@@ -1,0 +1,36 @@
+:root {
+	--color-white: #ffffff;
+	--color-red: #9f3232; /* primary brand red (updated) */
+	--color-red-dark: #8b2a2a;
+	--color-black: #0b0b0b;
+	--color-muted: #6b6b6b;
+}
+
+/* Global base styles */
+html, body {
+	height: 100%;
+}
+body {
+	margin: 0;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	background: var(--color-white);
+	color: var(--color-black);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility classes */
+.text-red {
+	color: var(--color-red) !important;
+}
+.btn--primary {
+	background: var(--color-red);
+	color: var(--color-white);
+}
+.btn--secondary {
+	background: var(--color-white);
+	color: var(--color-black);
+	border: 2px solid var(--color-black);
+}
+
+/* You can add global styles to this file, and also import other style files */

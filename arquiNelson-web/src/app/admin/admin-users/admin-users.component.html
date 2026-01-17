@@ -1,0 +1,69 @@
+<section class="users-admin">
+  <header>
+    <div>
+      <h2>Usuarios</h2>
+      <p>Administra accesos y roles para el panel.</p>
+    </div>
+  </header>
+
+  <div class="users-grid">
+    <div class="user-form" *ngIf="canCreate">
+      <h3>Nuevo usuario</h3>
+      <label>Nombre completo</label>
+      <input type="text" [(ngModel)]="newUser.fullName" />
+
+      <label>Correo</label>
+      <input type="email" [(ngModel)]="newUser.email" />
+
+      <label>Contrasena</label>
+      <input type="password" [(ngModel)]="newUser.password" />
+
+      <div class="roles">
+        <span>Roles</span>
+        <div class="role-list">
+          <label *ngFor="let role of roles">
+            <input
+              type="checkbox"
+              [checked]="isRoleSelected(role.key)"
+              (change)="toggleRole(role.key)"
+            />
+            {{ role.label }}
+          </label>
+        </div>
+      </div>
+
+      <button type="button" (click)="createUser()">Crear usuario</button>
+      <p class="error" *ngIf="error">{{ error }}</p>
+    </div>
+
+    <div class="user-list">
+      <h3>Usuarios existentes</h3>
+      <p class="hint" *ngIf="loading">Cargando usuarios...</p>
+      <div class="user-card" *ngFor="let user of users">
+        <div>
+          <strong>{{ user.fullName }}</strong>
+          <small>{{ user.email }}</small>
+          <div class="roles-badges">
+            <span *ngFor="let role of user.roles">{{ role }}</span>
+          </div>
+        </div>
+        <div class="user-actions">
+          <span class="status" [class.inactive]="!user.active">
+            {{ user.active ? 'Activo' : 'Inactivo' }}
+          </span>
+          <button
+            type="button"
+            *ngIf="canCreate"
+            (click)="setActive(user, !user.active)"
+            [disabled]="user.active && isLastAdmin(user)"
+          >
+            {{ user.active ? 'Desactivar' : 'Activar' }}
+          </button>
+          <small class="hint" *ngIf="user.active && isLastAdmin(user)">
+            Asigna otro admin antes de desactivar.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
