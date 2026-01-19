@@ -272,7 +272,7 @@ pagesRouter.post('/:id/sections', requireRole(['admin', 'editor']), async (req, 
     return res.status(400).json({ error: 'Invalid page id.' });
   }
 
-  const { sectionKey, title, description, imageUrl, sortOrder, isVisible } = req.body as {
+  const { sectionKey: rawSectionKey, title, description, imageUrl, sortOrder, isVisible } = req.body as {
     sectionKey?: string;
     title?: string | null;
     description?: string | null;
@@ -281,6 +281,7 @@ pagesRouter.post('/:id/sections', requireRole(['admin', 'editor']), async (req, 
     isVisible?: boolean;
   };
 
+  const sectionKey = rawSectionKey ? String(rawSectionKey).trim() : '';
   if (!sectionKey) {
     return res.status(400).json({ error: 'sectionKey is required.' });
   }
@@ -320,7 +321,7 @@ pagesRouter.patch('/sections/:id', requireRole(['admin', 'editor']), async (req,
     return res.status(400).json({ error: 'Invalid section id.' });
   }
 
-  const { sectionKey, title, description, imageUrl, sortOrder, isVisible } = req.body as {
+  const { sectionKey: rawSectionKey, title, description, imageUrl, sortOrder, isVisible } = req.body as {
     sectionKey?: string;
     title?: string | null;
     description?: string | null;
@@ -332,7 +333,11 @@ pagesRouter.patch('/sections/:id', requireRole(['admin', 'editor']), async (req,
   const updates: string[] = [];
   const params: any[] = [];
 
-  if (sectionKey !== undefined) {
+  if (rawSectionKey !== undefined) {
+    const sectionKey = String(rawSectionKey).trim();
+    if (!sectionKey) {
+      return res.status(400).json({ error: 'sectionKey is required.' });
+    }
     updates.push('section_key = ?');
     params.push(sectionKey);
   }
