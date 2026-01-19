@@ -1,0 +1,96 @@
+<section class="portfolio-detail" *ngIf="item; else notFound">
+  <div class="container">
+    <a class="back-link" routerLink="/" fragment="portfolio">Volver al portafolio</a>
+
+    <header class="detail-header">
+      <div>
+        <span class="category" *ngIf="item.category">{{ item.category }}</span>
+        <h1>{{ item.title }}</h1>
+        <p class="intro" *ngIf="item.description">{{ item.description }}</p>
+      </div>
+    </header>
+
+    <section class="detail-hero" *ngIf="heroImages.length">
+      <div class="hero-grid">
+        <img class="hero-main" [src]="activeHero" [alt]="item.title" loading="lazy" />
+        <div class="hero-thumbs" *ngIf="heroImages.length > 1">
+          <button
+            class="hero-thumb"
+            type="button"
+            *ngFor="let image of heroImages; let i = index; trackBy: trackByIndex"
+            [class.active]="i === activeHeroIndex"
+            (click)="setHero(i)"
+          >
+            <img [src]="image" [alt]="item.title + ' ' + (i + 1)" loading="lazy" />
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-section specs" *ngIf="item.specs.length">
+      <h2>Especificaciones</h2>
+      <dl class="specs-grid">
+        <div class="spec-item" *ngFor="let spec of item.specs">
+          <dt>{{ spec.label }}</dt>
+          <dd>{{ spec.value }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="detail-section tags" *ngIf="item.tags.length">
+      <h2>Tags</h2>
+      <div class="tags-list">
+        <span class="tag" *ngFor="let tag of item.tags">{{ tag }}</span>
+      </div>
+    </section>
+
+    <section class="detail-section article" *ngIf="item.blocks.length">
+      <h2>Contenido</h2>
+      <div class="article-block" *ngFor="let block of item.blocks">
+        <p *ngIf="block.type === 'text'">{{ block.text }}</p>
+        <figure
+          *ngIf="block.type === 'image' && block.src"
+          class="article-figure"
+          [class.block-wide]="block.layout === 'wide'"
+        >
+          <img [src]="block.src" [alt]="block.caption || item.title" loading="lazy" />
+          <figcaption *ngIf="block.caption">{{ block.caption }}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="detail-section gallery" *ngIf="item.gallery.length">
+      <h2>Galeria</h2>
+      <div class="gallery-grid">
+        <img *ngFor="let image of item.gallery; trackBy: trackByIndex" [src]="image" [alt]="item.title" loading="lazy" />
+      </div>
+    </section>
+
+    <section class="detail-section viewer" *ngIf="autocadEmbedUrl">
+      <div class="viewer-header">
+        <h2>Visor 3D</h2>
+        <a [href]="item.autocadUrl" target="_blank" rel="noopener">Abrir en nueva pestana</a>
+      </div>
+      <div class="viewer-frame">
+        <iframe
+          [src]="autocadEmbedUrl"
+          loading="lazy"
+          title="Visor 3D"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </section>
+  </div>
+</section>
+
+<ng-template #notFound>
+  <section class="portfolio-detail empty-state">
+    <div class="container">
+      <p *ngIf="loading">Cargando proyecto...</p>
+      <ng-container *ngIf="!loading">
+        <p>No encontramos el proyecto solicitado.</p>
+        <a class="back-link" routerLink="/" fragment="portfolio">Volver al portafolio</a>
+      </ng-container>
+    </div>
+  </section>
+</ng-template>

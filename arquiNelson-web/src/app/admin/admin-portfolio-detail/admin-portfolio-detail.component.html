@@ -1,0 +1,169 @@
+<section class="portfolio-detail-admin">
+  <header class="page-header">
+    <div>
+      <a class="back-link" routerLink="/admin/portfolio">Volver a portafolio</a>
+      <h2>Detalle de portafolio</h2>
+      <p>Administra el articulo y los elementos visibles en la web.</p>
+      <p class="project-name" *ngIf="entry?.projectName">Proyecto base: {{ entry?.projectName }}</p>
+    </div>
+    <button type="button" (click)="save()" [disabled]="saving || loading">
+      {{ saving ? 'Guardando...' : 'Guardar cambios' }}
+    </button>
+  </header>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="panel" *ngIf="loading">
+    <p>Cargando...</p>
+  </div>
+
+  <ng-container *ngIf="!loading && entry">
+    <div class="panel">
+      <h3>Informacion principal</h3>
+      <div class="form-grid">
+        <label>
+          Titulo
+          <input [(ngModel)]="form.titleOverride" placeholder="Titulo en portafolio" />
+        </label>
+        <label>
+          Categoria
+          <input [(ngModel)]="form.category" placeholder="Residencial, Comercial..." />
+        </label>
+        <label>
+          Orden
+          <input type="number" min="0" step="1" [(ngModel)]="form.sortOrder" />
+        </label>
+        <label>
+          Visible
+          <select [(ngModel)]="form.isVisible">
+            <option [ngValue]="true">Visible</option>
+            <option [ngValue]="false">Oculto</option>
+          </select>
+        </label>
+        <label class="full">
+          Resumen
+          <textarea rows="3" [(ngModel)]="form.summary" placeholder="Descripcion corta"></textarea>
+        </label>
+        <label class="full">
+          Link Autocad 360
+          <input [(ngModel)]="form.autocadUrl" placeholder="https://a360.co/..." />
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Imagen de portada</h3>
+      <div class="image-uploader">
+        <div class="image-preview" *ngIf="form.coverImage">
+          <img [src]="form.coverImage.fileUrl" alt="Portada" />
+          <button type="button" class="ghost" (click)="removeCover()">Quitar</button>
+        </div>
+        <label class="upload">
+          Subir imagen
+          <input type="file" accept="image/*" (change)="uploadCover($event)" />
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Imagenes principales</h3>
+      <div class="image-list">
+        <div class="image-card" *ngFor="let img of form.heroImages; let i = index">
+          <img [src]="img.fileUrl" alt="Hero" />
+          <div class="image-actions">
+            <button type="button" (click)="moveHero(i, -1)">Arriba</button>
+            <button type="button" (click)="moveHero(i, 1)">Abajo</button>
+            <button type="button" class="danger" (click)="removeHero(i)">Eliminar</button>
+          </div>
+        </div>
+      </div>
+      <label class="upload">
+        Agregar imagen
+        <input type="file" accept="image/*" (change)="uploadHero($event)" />
+      </label>
+    </div>
+
+    <div class="panel">
+      <h3>Especificaciones</h3>
+      <div class="spec-grid">
+        <div class="spec-row" *ngFor="let spec of form.specs; let i = index">
+          <input [(ngModel)]="spec.label" placeholder="Etiqueta" />
+          <input [(ngModel)]="spec.value" placeholder="Valor" />
+          <button type="button" class="danger" (click)="removeSpec(i)">Quitar</button>
+        </div>
+      </div>
+      <button type="button" class="ghost" (click)="addSpec()">Agregar especificacion</button>
+    </div>
+
+    <div class="panel">
+      <h3>Tags</h3>
+      <div class="tag-editor">
+        <input [(ngModel)]="newTag" placeholder="Nuevo tag" />
+        <button type="button" (click)="addTag()">Agregar</button>
+      </div>
+      <div class="tag-list">
+        <span class="tag" *ngFor="let tag of form.tags; let i = index">
+          {{ tag }}
+          <button type="button" (click)="removeTag(i)">x</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Contenido del articulo</h3>
+      <div class="blocks">
+        <div class="block-card" *ngFor="let block of form.blocks; let i = index">
+          <div class="block-header">
+            <strong>{{ block.blockType === 'text' ? 'Texto' : 'Imagen' }}</strong>
+            <div class="block-actions">
+              <button type="button" (click)="moveBlock(i, -1)">Arriba</button>
+              <button type="button" (click)="moveBlock(i, 1)">Abajo</button>
+              <button type="button" class="danger" (click)="removeBlock(i)">Eliminar</button>
+            </div>
+          </div>
+          <div *ngIf="block.blockType === 'text'">
+            <textarea rows="4" [(ngModel)]="block.textContent" placeholder="Texto del articulo"></textarea>
+          </div>
+          <div *ngIf="block.blockType === 'image'" class="block-image">
+            <img *ngIf="block.fileUrl" [src]="block.fileUrl" alt="Bloque" />
+            <label class="upload">
+              Subir imagen
+              <input type="file" accept="image/*" (change)="uploadBlockImage(block, $event)" />
+            </label>
+            <input [(ngModel)]="block.caption" placeholder="Caption" />
+            <select [(ngModel)]="block.layout">
+              <option [ngValue]="'inline'">Inline</option>
+              <option [ngValue]="'wide'">Wide</option>
+            </select>
+            <label class="toggle">
+              Visible
+              <input type="checkbox" [(ngModel)]="block.isVisible" />
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="block-actions">
+        <button type="button" class="ghost" (click)="addTextBlock()">Agregar texto</button>
+        <button type="button" class="ghost" (click)="addImageBlock()">Agregar imagen</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Galeria</h3>
+      <div class="image-list">
+        <div class="image-card" *ngFor="let img of form.galleryImages; let i = index">
+          <img [src]="img.fileUrl" alt="Galeria" />
+          <div class="image-actions">
+            <button type="button" (click)="moveGallery(i, -1)">Arriba</button>
+            <button type="button" (click)="moveGallery(i, 1)">Abajo</button>
+            <button type="button" class="danger" (click)="removeGallery(i)">Eliminar</button>
+          </div>
+        </div>
+      </div>
+      <label class="upload">
+        Agregar imagen
+        <input type="file" accept="image/*" (change)="uploadGallery($event)" />
+      </label>
+    </div>
+  </ng-container>
+</section>

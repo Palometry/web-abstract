@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'node:path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { authRouter } from './routes/auth';
@@ -9,6 +10,7 @@ import { portfolioRouter } from './routes/portfolio';
 import { quotesRouter } from './routes/quotes';
 import { servicesRouter } from './routes/services';
 import { dashboardRouter } from './routes/dashboard';
+import { mediaRouter } from './routes/media';
 
 dotenv.config();
 
@@ -18,7 +20,7 @@ const corsOrigin = process.env['CORS_ORIGIN'] || 'http://localhost:4200';
 
 app.disable('etag');
 app.use(cors({ origin: corsOrigin, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
@@ -36,9 +38,12 @@ app.use('/api/users', usersRouter);
 app.use('/api/pages', pagesRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/portfolio', portfolioRouter);
+app.use('/api/media', mediaRouter);
 app.use('/api/quotes', quotesRouter);
 app.use('/api/services', servicesRouter);
 app.use('/api/dashboard', dashboardRouter);
+
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

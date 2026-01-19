@@ -16,7 +16,7 @@ const angularApp = new AngularNodeAppEngine();
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; connect-src 'self' http://localhost:4200 ws://localhost:4200 http://localhost:4001; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.unsplash.com; frame-src 'self' https://a360.co https://*.autodesk.com https://*.a360.autodesk.com https://*.autodesk360.com https://myhub.autodesk360.com https://www.google.com https://maps.google.com;"
+    "default-src 'self'; connect-src 'self' http://localhost:4200 ws://localhost:4200 http://localhost:4001; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:4001 https://images.unsplash.com; frame-src 'self' https://a360.co https://*.autodesk.com https://*.a360.autodesk.com https://*.autodesk360.com https://myhub.autodesk360.com https://www.google.com https://maps.google.com;"
   );
   next();
 });

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { ProjectDetailComponent } from './components/project-detail/project-detail';
+import { PortfolioDetailComponent } from './components/portfolio-detail/portfolio-detail.component';
 import { HomeComponent } from './components/home/home.component';
 import { ProjectListComponent } from './components/project-list/project-list.component';
 import { AdminLoginComponent } from './admin/admin-login/admin-login.component';
@@ -11,6 +12,7 @@ import { AdminProjectsComponent } from './admin/admin-projects/admin-projects.co
 import { AdminProjectDetailComponent } from './admin/admin-project-detail/admin-project-detail.component';
 import { AdminProjectCreateComponent } from './admin/admin-project-create/admin-project-create.component';
 import { AdminPortfolioComponent } from './admin/admin-portfolio/admin-portfolio.component';
+import { AdminPortfolioDetailComponent } from './admin/admin-portfolio-detail/admin-portfolio-detail.component';
 import { AdminQuotesComponent } from './admin/admin-quotes/admin-quotes.component';
 import { AdminQuoteCreateComponent } from './admin/admin-quote-create/admin-quote-create.component';
 import { AdminQuoteDetailComponent } from './admin/admin-quote-detail/admin-quote-detail.component';
@@ -33,6 +35,7 @@ export const routes: Routes = [
       { path: 'projects/new', component: AdminProjectCreateComponent },
       { path: 'projects/:id', component: AdminProjectDetailComponent },
       { path: 'portfolio', component: AdminPortfolioComponent },
+      { path: 'portfolio/:id', component: AdminPortfolioDetailComponent },
       { path: 'quotes', component: AdminQuotesComponent },
       { path: 'quotes/new', component: AdminQuoteCreateComponent },
       { path: 'quotes/:id', component: AdminQuoteDetailComponent },
@@ -43,5 +46,6 @@ export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
   { path: 'projects', component: ProjectListComponent },
   { path: 'project/:id', component: ProjectDetailComponent },
+  { path: 'portfolio/:id', component: PortfolioDetailComponent },
   { path: '**', redirectTo: '' }
 ];

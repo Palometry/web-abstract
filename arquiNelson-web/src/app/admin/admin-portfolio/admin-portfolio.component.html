@@ -69,6 +69,7 @@
         <option [ngValue]="false">Oculto</option>
       </select>
       <div class="actions">
+        <a class="secondary" [routerLink]="['/admin/portfolio', entry.id]">Editar</a>
         <button type="button" (click)="saveEntry(entry)" [disabled]="saving">Guardar</button>
         <button type="button" class="danger" (click)="removeEntry(entry)" [disabled]="saving">
           Quitar

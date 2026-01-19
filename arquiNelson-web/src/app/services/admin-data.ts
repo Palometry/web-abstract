@@ -83,6 +83,55 @@ export type AdminPortfolioEntry = {
   titleOverride: string | null;
 };
 
+export type AdminPortfolioImage = {
+  id: number;
+  mediaId: number;
+  fileUrl: string;
+  imageType: 'cover' | 'hero' | 'gallery';
+  sortOrder: number;
+  title?: string | null;
+  altText?: string | null;
+};
+
+export type AdminPortfolioSpec = {
+  id: number;
+  label: string;
+  value: string;
+  sortOrder: number;
+};
+
+export type AdminPortfolioBlock = {
+  id: number;
+  blockType: 'text' | 'image';
+  textContent?: string | null;
+  mediaId?: number | null;
+  fileUrl?: string | null;
+  caption?: string | null;
+  layout?: 'wide' | 'inline';
+  sortOrder: number;
+  isVisible: boolean;
+};
+
+export type AdminPortfolioDetail = {
+  id: number;
+  projectId: number;
+  projectName: string | null;
+  titleOverride: string | null;
+  category: string | null;
+  summary: string | null;
+  autocadUrl: string | null;
+  sortOrder: number;
+  isVisible: boolean;
+  images: {
+    cover: AdminPortfolioImage | null;
+    hero: AdminPortfolioImage[];
+    gallery: AdminPortfolioImage[];
+  };
+  specs: AdminPortfolioSpec[];
+  tags: { id: number; tag: string; sortOrder: number }[];
+  blocks: AdminPortfolioBlock[];
+};
+
 export type AdminQuote = {
   id: number;
   fullName: string;
@@ -605,6 +654,89 @@ export class AdminDataService {
       return [];
     }
     return this.safeGet<AdminPortfolioEntry[]>(`${this.apiBaseUrl}/portfolio`, []);
+  }
+
+  async getPortfolioEntryDetail(entryId: number): Promise<AdminPortfolioDetail | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    return this.safeGet<AdminPortfolioDetail | null>(
+      `${this.apiBaseUrl}/portfolio/${entryId}`,
+      null
+    );
+  }
+
+  async updatePortfolioEntry(
+    entryId: number,
+    payload: {
+      titleOverride?: string | null;
+      category?: string | null;
+      summary?: string | null;
+      autocadUrl?: string | null;
+      sortOrder?: number;
+      isVisible?: boolean;
+      coverMediaId?: number | null;
+      heroMediaIds?: number[];
+      galleryMediaIds?: number[];
+      specs?: { label: string; value: string }[];
+      tags?: string[];
+      blocks?: {
+        blockType: 'text' | 'image';
+        textContent?: string | null;
+        mediaId?: number | null;
+        caption?: string | null;
+        layout?: 'wide' | 'inline';
+        isVisible?: boolean;
+      }[];
+    }
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.apiBaseUrl}/portfolio/${entryId}`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'No se pudo actualizar el portafolio.' };
+    }
+  }
+
+  async uploadMedia(
+    file: File,
+    options?: { title?: string; altText?: string }
+  ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('No se pudo leer el archivo.'));
+        reader.readAsDataURL(file);
+      });
+
+      const response = await firstValueFrom(
+        this.http.post<{ id: number; fileUrl: string }>(
+          `${this.apiBaseUrl}/media`,
+          {
+            filename: file.name,
+            data: dataUrl,
+            mimeType: file.type,
+            title: options?.title ?? null,
+            altText: options?.altText ?? null
+          },
+          { headers: this.authHeaders() }
+        )
+      );
+      return { ok: true, id: response.id, fileUrl: response.fileUrl };
+    } catch {
+      return { ok: false, error: 'No se pudo subir la imagen.' };
+    }
   }
 
   async getQuotes(): Promise<AdminQuote[]> {

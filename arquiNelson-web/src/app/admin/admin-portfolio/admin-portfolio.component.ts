@@ -1,6 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AdminDataService, AdminPortfolioEntry, AdminProject } from '../../services/admin-data';
 
 type PortfolioEntryView = AdminPortfolioEntry & {
@@ -14,7 +15,7 @@ type PortfolioEntryView = AdminPortfolioEntry & {
 @Component({
   selector: 'app-admin-portfolio',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-portfolio.component.html',
   styleUrls: ['./admin-portfolio.component.scss']
 })

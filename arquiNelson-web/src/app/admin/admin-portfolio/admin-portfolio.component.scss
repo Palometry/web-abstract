@@ -129,6 +129,17 @@
   gap: 8px;
 }
 
+.actions .secondary {
+  border: 1px solid #d8d2c6;
+  color: #1f3b2c;
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .actions .danger {
   border-color: #f1c4b1;
   color: #b35a3a;

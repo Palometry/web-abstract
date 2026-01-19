@@ -1,0 +1,286 @@
+.portfolio-detail-admin {
+  display: grid;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  h2 {
+    margin: 6px 0;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 0;
+    color: #6b726c;
+  }
+}
+
+.project-name {
+  margin: 0;
+  font-size: 13px;
+  color: #607063;
+}
+
+.back-link {
+  color: #1f3b2c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.page-header button {
+  border: none;
+  background: #1f3b2c;
+  color: #f7f0e0;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.panel {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 22px rgba(31, 45, 38, 0.08);
+  display: grid;
+  gap: 16px;
+}
+
+.panel h3 {
+  margin: 0;
+}
+
+.error {
+  margin: 0;
+  color: #b35a3a;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #607063;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dde3dc;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.image-uploader {
+  display: grid;
+  gap: 12px;
+}
+
+.image-preview img {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 12px;
+  display: block;
+}
+
+.image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.image-card {
+  border: 1px solid #e5e1d8;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #faf9f6;
+
+  img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+}
+
+.image-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.image-actions button,
+.block-actions button,
+.panel button {
+  border: 1px solid #d8d2c6;
+  background: transparent;
+  color: #1f3b2c;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed #c8c2b7;
+  cursor: pointer;
+  color: #506257;
+
+  input {
+    display: none;
+  }
+}
+
+.ghost {
+  background: transparent;
+}
+
+.danger {
+  border-color: #f1c4b1;
+  color: #b35a3a;
+}
+
+.spec-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+}
+
+.spec-row input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #dde3dc;
+}
+
+.tag-editor {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  input {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #dde3dc;
+  }
+}
+
+.tag-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: #1f3b2c;
+  color: #f7f0e0;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+
+  button {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+}
+
+.blocks {
+  display: grid;
+  gap: 12px;
+}
+
+.block-card {
+  border: 1px solid #e5e1d8;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfaf7;
+  display: grid;
+  gap: 12px;
+}
+
+.block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.block-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.block-card textarea,
+.block-card input,
+.block-card select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #dde3dc;
+  font-family: inherit;
+}
+
+.block-image {
+  display: grid;
+  gap: 10px;
+}
+
+.block-image img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #506257;
+}
+
+@media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .spec-row {
+    grid-template-columns: 1fr;
+  }
+}
