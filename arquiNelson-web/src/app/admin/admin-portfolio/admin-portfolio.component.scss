@@ -49,6 +49,10 @@
   align-items: end;
 }
 
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
 .form-grid label {
   display: grid;
   gap: 6px;
@@ -70,6 +74,133 @@
 .hint {
   margin: 0;
   color: #7a857c;
+}
+
+.subpanel {
+  border-top: 1px solid #efe9dc;
+  padding-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.subpanel h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.image-uploader {
+  display: grid;
+  gap: 12px;
+}
+
+.image-preview img {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 12px;
+  display: block;
+}
+
+.image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.image-card {
+  border: 1px solid #e5e1d8;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #faf9f6;
+
+  img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+}
+
+.image-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed #c8c2b7;
+  cursor: pointer;
+  color: #506257;
+
+  input {
+    display: none;
+  }
+}
+
+.ghost {
+  background: transparent;
+}
+
+.spec-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+}
+
+.spec-row input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #dde3dc;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.tag-editor {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  input {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #dde3dc;
+  }
+}
+
+.tag-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: #1f3b2c;
+  color: #f7f0e0;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+
+  button {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
 }
 
 .error {
@@ -149,5 +280,9 @@
   .table-row {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .spec-row {
+    grid-template-columns: 1fr;
   }
 }
