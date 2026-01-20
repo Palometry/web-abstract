@@ -35,6 +35,7 @@ export const routes: Routes = [
       { path: 'projects/new', component: AdminProjectCreateComponent },
       { path: 'projects/:id', component: AdminProjectDetailComponent },
       { path: 'portfolio', component: AdminPortfolioComponent },
+      { path: 'portfolio/new', component: AdminPortfolioDetailComponent },
       { path: 'portfolio/:id', component: AdminPortfolioDetailComponent },
       { path: 'quotes', component: AdminQuotesComponent },
       { path: 'quotes/new', component: AdminQuoteCreateComponent },

@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AdminDataService, AdminPortfolioDetail } from '../../services/admin-data';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AdminDataService, AdminPortfolioDetail, AdminProject } from '../../services/admin-data';
 
 type ImageDraft = {
   mediaId: number;
@@ -36,6 +36,9 @@ export class AdminPortfolioDetailComponent implements OnInit {
   saving = false;
   error = '';
   entryId = 0;
+  isCreate = false;
+  selectedProjectId = 0;
+  availableProjects: AdminProject[] = [];
   entry?: AdminPortfolioDetail | null;
   private readonly isBrowser: boolean;
 
@@ -60,6 +63,7 @@ export class AdminPortfolioDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private data: AdminDataService,
     private cdr: ChangeDetectorRef,
+    private router: Router,
     @Inject(PLATFORM_ID) platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -70,11 +74,19 @@ export class AdminPortfolioDetailComponent implements OnInit {
       return;
     }
     this.route.paramMap.subscribe((params) => {
-      const id = Number(params.get('id'));
+      const rawId = params.get('id');
+      if (rawId === 'new') {
+        this.isCreate = true;
+        this.entryId = 0;
+        this.loadCreateData();
+        return;
+      }
+      const id = Number(rawId);
       if (!Number.isFinite(id)) {
         this.error = 'ID de portafolio invalido.';
         return;
       }
+      this.isCreate = false;
       this.entryId = id;
       this.loadEntry();
     });
@@ -123,6 +135,37 @@ export class AdminPortfolioDetailComponent implements OnInit {
         isVisible: block.isVisible
       }))
     };
+    this.cdr.detectChanges();
+  }
+
+  private async loadCreateData() {
+    this.loading = true;
+    this.error = '';
+    const [projects, entries] = await Promise.all([
+      this.data.getProjects(),
+      this.data.getPortfolioEntries()
+    ]);
+    this.availableProjects = projects.filter((project) => !project.portfolio);
+    const maxOrder = entries.reduce((max, entry) => Math.max(max, entry.order), 0);
+    this.form = {
+      titleOverride: '',
+      category: '',
+      summary: '',
+      autocadUrl: '',
+      sortOrder: maxOrder + 1,
+      isVisible: true,
+      coverImage: null,
+      heroImages: [],
+      galleryImages: [],
+      specs: [],
+      tags: [],
+      blocks: []
+    };
+    this.selectedProjectId = this.availableProjects[0]?.id ?? 0;
+    this.loading = false;
+    if (!this.availableProjects.length) {
+      this.error = 'No hay proyectos disponibles para agregar.';
+    }
     this.cdr.detectChanges();
   }
 
@@ -272,9 +315,6 @@ export class AdminPortfolioDetailComponent implements OnInit {
   }
 
   async save() {
-    if (!this.entryId) {
-      return;
-    }
     this.saving = true;
     this.error = '';
     const payload = {
@@ -303,6 +343,41 @@ export class AdminPortfolioDetailComponent implements OnInit {
         isVisible: block.isVisible
       }))
     };
+
+    if (this.isCreate) {
+      if (!this.selectedProjectId) {
+        this.saving = false;
+        this.error = 'Selecciona un proyecto.';
+        return;
+      }
+      const createResult = await this.data.updateProjectPortfolio(this.selectedProjectId, {
+        titleOverride: payload.titleOverride,
+        category: payload.category,
+        summary: payload.summary,
+        autocadUrl: payload.autocadUrl,
+        sortOrder: payload.sortOrder,
+        isVisible: payload.isVisible
+      });
+      if (!createResult.ok || !createResult.id) {
+        this.saving = false;
+        this.error = createResult.error ?? 'No se pudo crear el portafolio.';
+        return;
+      }
+      const detailResult = await this.data.updatePortfolioEntry(createResult.id, payload);
+      this.saving = false;
+      if (!detailResult.ok) {
+        this.error = detailResult.error ?? 'Se creo el portafolio, pero no se guardaron los detalles.';
+        return;
+      }
+      await this.router.navigate(['/admin/portfolio', createResult.id]);
+      return;
+    }
+
+    if (!this.entryId) {
+      this.saving = false;
+      this.error = 'Portafolio invalido.';
+      return;
+    }
 
     const result = await this.data.updatePortfolioEntry(this.entryId, payload);
     this.saving = false;
