@@ -68,11 +68,12 @@
         transition: opacity 0.4s ease;
         display: flex;
         align-items: flex-end;
-        padding: 30px;
+        padding: 10px 20px;
         color: white;
 
         .project-info {
           width: 100%;
+          transform: translateY(-16px);
 
           .category {
             display: inline-block;
