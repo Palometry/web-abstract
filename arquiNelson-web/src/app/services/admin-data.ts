@@ -611,6 +611,9 @@ export class AdminDataService {
     projectId: number,
     payload: {
       titleOverride?: string | null;
+      category?: string | null;
+      summary?: string | null;
+      autocadUrl?: string | null;
       sortOrder?: number;
       isVisible?: boolean;
     }

@@ -228,56 +228,85 @@ projectsRouter.put('/:id/portfolio', requireRole(['admin', 'editor']), async (re
     return res.status(400).json({ error: 'Invalid project id.' });
   }
 
-  const { titleOverride, sortOrder, isVisible } = req.body as {
+  const { titleOverride, category, summary, autocadUrl, sortOrder, isVisible } = req.body as {
     titleOverride?: string | null;
+    category?: string | null;
+    summary?: string | null;
+    autocadUrl?: string | null;
     sortOrder?: number;
     isVisible?: boolean;
   };
 
-  const [projectRows] = await db.query('SELECT id FROM projects WHERE id = ? LIMIT 1', [projectId]);
-  const project = Array.isArray(projectRows) ? projectRows[0] : undefined;
-  if (!project) {
-    return res.status(404).json({ error: 'Project not found.' });
-  }
+  try {
+    const [projectRows] = await db.query('SELECT id FROM projects WHERE id = ? LIMIT 1', [projectId]);
+    const project = Array.isArray(projectRows) ? projectRows[0] : undefined;
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found.' });
+    }
 
-  const [existingRows] = await db.query(
-    'SELECT id FROM portfolio_entries WHERE project_id = ? LIMIT 1',
-    [projectId]
-  );
-  const existing = Array.isArray(existingRows) ? existingRows[0] : undefined;
-
-  if (!existing) {
-    const [result] = await db.query(
-      `INSERT INTO portfolio_entries (project_id, title_override, sort_order, is_visible)
-       VALUES (?, ?, ?, ?)`,
-      [projectId, titleOverride ?? null, sortOrder ?? 0, isVisible === false ? 0 : 1]
+    const [existingRows] = await db.query(
+      'SELECT id FROM portfolio_entries WHERE project_id = ? LIMIT 1',
+      [projectId]
     );
-    return res.status(201).json({ id: (result as any).insertId });
-  }
+    const existing = Array.isArray(existingRows) ? existingRows[0] : undefined;
 
-  const updates: string[] = [];
-  const params: any[] = [];
-  if (titleOverride !== undefined) {
-    updates.push('title_override = ?');
-    params.push(titleOverride);
-  }
-  if (sortOrder !== undefined) {
-    updates.push('sort_order = ?');
-    params.push(sortOrder);
-  }
-  if (isVisible !== undefined) {
-    updates.push('is_visible = ?');
-    params.push(isVisible ? 1 : 0);
-  }
-  if (!updates.length) {
+    if (!existing) {
+      const [result] = await db.query(
+        `INSERT INTO portfolio_entries
+         (project_id, title_override, category, summary, autocad_url, sort_order, is_visible)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          projectId,
+          titleOverride ?? null,
+          category ?? null,
+          summary ?? null,
+          autocadUrl ?? null,
+          sortOrder ?? 0,
+          isVisible === false ? 0 : 1
+        ]
+      );
+      return res.status(201).json({ id: (result as any).insertId });
+    }
+
+    const updates: string[] = [];
+    const params: any[] = [];
+    if (titleOverride !== undefined) {
+      updates.push('title_override = ?');
+      params.push(titleOverride);
+    }
+    if (category !== undefined) {
+      updates.push('category = ?');
+      params.push(category);
+    }
+    if (summary !== undefined) {
+      updates.push('summary = ?');
+      params.push(summary);
+    }
+    if (autocadUrl !== undefined) {
+      updates.push('autocad_url = ?');
+      params.push(autocadUrl);
+    }
+    if (sortOrder !== undefined) {
+      updates.push('sort_order = ?');
+      params.push(sortOrder);
+    }
+    if (isVisible !== undefined) {
+      updates.push('is_visible = ?');
+      params.push(isVisible ? 1 : 0);
+    }
+    if (!updates.length) {
+      return res.json({ ok: true });
+    }
+
+    await db.query(`UPDATE portfolio_entries SET ${updates.join(', ')} WHERE project_id = ?`, [
+      ...params,
+      projectId
+    ]);
     return res.json({ ok: true });
+  } catch (error) {
+    console.error('[portfolio] update failed', error);
+    return res.status(500).json({ error: 'Failed to update portfolio.' });
   }
-
-  await db.query(`UPDATE portfolio_entries SET ${updates.join(', ')} WHERE project_id = ?`, [
-    ...params,
-    projectId
-  ]);
-  return res.json({ ok: true });
 });
 
 projectsRouter.delete('/:id/portfolio', requireRole(['admin', 'editor']), async (req, res) => {

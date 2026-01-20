@@ -129,6 +129,9 @@ export class AdminPortfolioComponent implements OnInit, AfterViewInit {
     this.error = '';
     const result = await this.data.updateProjectPortfolio(this.addDraft.projectId, {
       titleOverride: this.addDraft.titleOverride.trim() || null,
+      category: this.addDraft.category.trim() || null,
+      summary: this.addDraft.summary.trim() || null,
+      autocadUrl: this.addDraft.autocadUrl.trim() || null,
       sortOrder: this.addDraft.sortOrder,
       isVisible: this.addDraft.isVisible
     });
