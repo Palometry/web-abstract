@@ -16,16 +16,34 @@ export class AdminQuoteCreateComponent implements OnInit {
   loading = false;
   error = '';
   rates: AdminPricingRateOption[] = [];
+  readonly todayLabel = new Date().toLocaleDateString('es-PE');
+  readonly docTypes = [
+    { value: 'DNI', label: 'DNI' },
+    { value: 'RUC', label: 'RUC' },
+    { value: 'CE', label: 'Carnet de extranjeria' },
+    { value: 'PASAPORTE', label: 'Pasaporte' }
+  ];
 
   draft = {
     fullName: '',
     phone: '',
     email: '',
+    documentType: 'DNI',
+    documentNumber: '',
     projectName: '',
+    projectAddress: '',
     areaM2: 0,
+    areaCoveredM2: 0,
+    areaUncoveredPercent: 0,
+    floorCount: 1,
     baseRatePerM2: 0,
     pricingRateId: null as number | null,
+    currency: 'PEN',
+    planName: '',
+    planMinDays: null as number | null,
+    planMaxDays: null as number | null,
     status: 'new',
+    expiresAt: '',
     notes: ''
   };
 
@@ -46,15 +64,54 @@ export class AdminQuoteCreateComponent implements OnInit {
     const selected = this.rates.find((rate) => rate.id === this.draft.pricingRateId);
     if (selected) {
       this.draft.baseRatePerM2 = selected.basePricePerM2;
+      this.draft.currency = selected.currency;
+      this.draft.planName = selected.name;
+      this.draft.planMinDays = selected.minDays ?? null;
+      this.draft.planMaxDays = selected.maxDays ?? null;
     }
+  }
+
+  updateAreaCovered() {
+    const areaTotal = Number(this.draft.areaM2);
+    const freePercent = Number(this.draft.areaUncoveredPercent);
+    if (!Number.isFinite(areaTotal) || areaTotal <= 0) {
+      this.draft.areaCoveredM2 = 0;
+      return;
+    }
+    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 0;
+    this.draft.areaUncoveredPercent = safePercent;
+    this.draft.areaCoveredM2 = Number((areaTotal * (1 - safePercent / 100)).toFixed(2));
+  }
+
+  get baseCost() {
+    const area = Number(this.draft.areaM2);
+    const rate = Number(this.draft.baseRatePerM2);
+    if (!Number.isFinite(area) || !Number.isFinite(rate)) {
+      return 0;
+    }
+    return Number((area * rate).toFixed(2));
+  }
+
+  formatCurrency(value: number, currency: string) {
+    const safeCurrency = currency || 'PEN';
+    return new Intl.NumberFormat('es-PE', {
+      style: 'currency',
+      currency: safeCurrency
+    }).format(value);
   }
 
   async createQuote() {
     const fullName = this.draft.fullName.trim();
     const phone = this.draft.phone.trim();
     const email = this.draft.email.trim();
+    const documentType = this.draft.documentType.trim();
+    const documentNumber = this.draft.documentNumber.trim();
     const projectName = this.draft.projectName.trim();
+    const projectAddress = this.draft.projectAddress.trim();
     const areaM2 = Number(this.draft.areaM2);
+    const areaCoveredM2 = Number(this.draft.areaCoveredM2);
+    const areaUncoveredPercent = Number(this.draft.areaUncoveredPercent);
+    const floorCount = Number(this.draft.floorCount);
     const baseRatePerM2 = Number(this.draft.baseRatePerM2);
 
     if (!fullName || !phone || !email || !projectName) {
@@ -70,17 +127,33 @@ export class AdminQuoteCreateComponent implements OnInit {
       return;
     }
 
+    if (Number.isFinite(areaUncoveredPercent) && (areaUncoveredPercent < 0 || areaUncoveredPercent > 100)) {
+      this.error = 'El porcentaje de area libre debe estar entre 0 y 100.';
+      return;
+    }
+
     this.saving = true;
     this.error = '';
     const result = await this.data.createQuote({
       fullName,
       phone,
       email,
+      documentType: documentType || null,
+      documentNumber: documentNumber || null,
       projectName,
+      projectAddress: projectAddress || null,
       areaM2,
+      areaCoveredM2: Number.isFinite(areaCoveredM2) ? areaCoveredM2 : null,
+      areaUncoveredPercent: Number.isFinite(areaUncoveredPercent) ? areaUncoveredPercent : null,
+      floorCount: Number.isFinite(floorCount) ? floorCount : null,
       baseRatePerM2,
       pricingRateId: this.draft.pricingRateId,
+      currency: this.draft.currency,
+      planName: this.draft.planName.trim() || null,
+      planMinDays: this.draft.planMinDays,
+      planMaxDays: this.draft.planMaxDays,
       status: this.draft.status,
+      expiresAt: this.draft.expiresAt || null,
       notes: this.draft.notes.trim() || null
     });
     this.saving = false;

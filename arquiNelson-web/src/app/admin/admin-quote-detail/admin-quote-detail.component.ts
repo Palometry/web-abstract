@@ -6,7 +6,8 @@ import {
   AdminDataService,
   AdminQuoteDetail,
   AdminQuoteService,
-  AdminQuoteServiceOption
+  AdminQuoteServiceOption,
+  AdminPricingRateOption
 } from '../../services/admin-data';
 
 type QuoteServiceView = AdminQuoteService & {
@@ -27,6 +28,13 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
   quote: AdminQuoteDetail | null = null;
   services: QuoteServiceView[] = [];
   serviceOptions: AdminQuoteServiceOption[] = [];
+  rates: AdminPricingRateOption[] = [];
+  readonly docTypes = [
+    { value: 'DNI', label: 'DNI' },
+    { value: 'RUC', label: 'RUC' },
+    { value: 'CE', label: 'Carnet de extranjeria' },
+    { value: 'PASAPORTE', label: 'Pasaporte' }
+  ];
   loading = false;
   saving = false;
   error = '';
@@ -37,10 +45,22 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     fullName: '',
     phone: '',
     email: '',
+    documentType: 'DNI',
+    documentNumber: '',
     projectName: '',
+    projectAddress: '',
     areaM2: 0,
+    areaCoveredM2: 0,
+    areaUncoveredPercent: 0,
+    floorCount: 1,
     baseRatePerM2: 0,
+    pricingRateId: null as number | null,
+    currency: 'PEN',
+    planName: '',
+    planMinDays: null as number | null,
+    planMaxDays: null as number | null,
     status: 'new',
+    expiresAt: '',
     notes: ''
   };
 
@@ -100,10 +120,22 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
         fullName: quote.fullName,
         phone: quote.phone,
         email: quote.email,
+        documentType: quote.documentType ?? 'DNI',
+        documentNumber: quote.documentNumber ?? '',
         projectName: quote.projectName,
+        projectAddress: quote.projectAddress ?? '',
         areaM2: quote.areaM2,
+        areaCoveredM2: quote.areaCoveredM2 ?? 0,
+        areaUncoveredPercent: quote.areaUncoveredPercent ?? 0,
+        floorCount: quote.floorCount ?? 0,
         baseRatePerM2: quote.baseRatePerM2,
+        pricingRateId: quote.pricingRateId ?? null,
+        currency: quote.currency,
+        planName: quote.planName ?? '',
+        planMinDays: quote.planMinDays ?? null,
+        planMaxDays: quote.planMaxDays ?? null,
         status: quote.status,
+        expiresAt: quote.expiresAt ?? '',
         notes: quote.notes ?? ''
       };
       this.services = quote.services.map((service) => ({
@@ -113,7 +145,9 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
           unitPrice: service.unitPrice
         }
       }));
+      this.rates = options.pricingRates.filter((rate) => rate.isActive);
       this.serviceOptions = options.services.filter((service) => service.isActive);
+      this.updateAreaCovered();
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -152,6 +186,29 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
+  onRateChange() {
+    const selected = this.rates.find((rate) => rate.id === this.draft.pricingRateId);
+    if (selected) {
+      this.draft.baseRatePerM2 = selected.basePricePerM2;
+      this.draft.currency = selected.currency;
+      this.draft.planName = selected.name;
+      this.draft.planMinDays = selected.minDays ?? null;
+      this.draft.planMaxDays = selected.maxDays ?? null;
+    }
+  }
+
+  updateAreaCovered() {
+    const areaTotal = Number(this.draft.areaM2);
+    const freePercent = Number(this.draft.areaUncoveredPercent);
+    if (!Number.isFinite(areaTotal) || areaTotal <= 0) {
+      this.draft.areaCoveredM2 = 0;
+      return;
+    }
+    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 0;
+    this.draft.areaUncoveredPercent = safePercent;
+    this.draft.areaCoveredM2 = Number((areaTotal * (1 - safePercent / 100)).toFixed(2));
+  }
+
   async saveQuote() {
     if (!this.quote) {
       return;
@@ -159,8 +216,14 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     const fullName = this.draft.fullName.trim();
     const phone = this.draft.phone.trim();
     const email = this.draft.email.trim();
+    const documentType = this.draft.documentType.trim();
+    const documentNumber = this.draft.documentNumber.trim();
     const projectName = this.draft.projectName.trim();
+    const projectAddress = this.draft.projectAddress.trim();
     const areaM2 = Number(this.draft.areaM2);
+    const areaCoveredM2 = Number(this.draft.areaCoveredM2);
+    const areaUncoveredPercent = Number(this.draft.areaUncoveredPercent);
+    const floorCount = Number(this.draft.floorCount);
     const baseRatePerM2 = Number(this.draft.baseRatePerM2);
 
     if (!fullName || !phone || !email || !projectName) {
@@ -176,16 +239,33 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    if (Number.isFinite(areaUncoveredPercent) && (areaUncoveredPercent < 0 || areaUncoveredPercent > 100)) {
+      this.error = 'El porcentaje de area libre debe estar entre 0 y 100.';
+      return;
+    }
+
     this.saving = true;
     this.error = '';
     const result = await this.data.updateQuote(this.quote.id, {
       fullName,
       phone,
       email,
+      documentType: documentType || null,
+      documentNumber: documentNumber || null,
       projectName,
+      projectAddress: projectAddress || null,
       areaM2,
+      areaCoveredM2: Number.isFinite(areaCoveredM2) ? areaCoveredM2 : null,
+      areaUncoveredPercent: Number.isFinite(areaUncoveredPercent) ? areaUncoveredPercent : null,
+      floorCount: Number.isFinite(floorCount) ? floorCount : null,
       baseRatePerM2,
+      pricingRateId: this.draft.pricingRateId,
+      currency: this.draft.currency,
+      planName: this.draft.planName.trim() || null,
+      planMinDays: this.draft.planMinDays,
+      planMaxDays: this.draft.planMaxDays,
       status: this.draft.status,
+      expiresAt: this.draft.expiresAt || null,
       notes: this.draft.notes.trim() || null
     });
     this.saving = false;

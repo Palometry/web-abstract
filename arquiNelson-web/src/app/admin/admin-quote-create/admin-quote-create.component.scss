@@ -47,6 +47,17 @@
   box-shadow: 0 12px 22px rgba(31, 45, 38, 0.08);
 }
 
+.panel h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -78,6 +89,28 @@
 
 .wide {
   grid-column: 1 / -1;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.summary div {
+  background: #fbf9f2;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.summary span {
+  color: #6b726c;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .hint {

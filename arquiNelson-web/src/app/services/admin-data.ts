@@ -158,8 +158,14 @@ export type AdminQuoteDetail = {
   fullName: string;
   phone: string;
   email: string;
+  documentType?: string | null;
+  documentNumber?: string | null;
   projectName: string;
+  projectAddress?: string | null;
   areaM2: number;
+  areaCoveredM2?: number | null;
+  areaUncoveredPercent?: number | null;
+  floorCount?: number | null;
   baseRatePerM2: number;
   baseCost: number;
   extrasCost: number;
@@ -168,6 +174,10 @@ export type AdminQuoteDetail = {
   status: string;
   notes: string | null;
   createdAt?: string;
+  expiresAt?: string | null;
+  planName?: string | null;
+  planMinDays?: number | null;
+  planMaxDays?: number | null;
   pricingRateId?: number | null;
   pricingRateName?: string | null;
   services: AdminQuoteService[];
@@ -188,6 +198,8 @@ export type AdminPricingRateOption = {
   name: string;
   basePricePerM2: number;
   currency: string;
+  minDays?: number | null;
+  maxDays?: number | null;
   isActive: boolean;
 };
 
@@ -773,11 +785,22 @@ export class AdminDataService {
     fullName: string;
     phone: string;
     email: string;
+    documentType?: string | null;
+    documentNumber?: string | null;
     projectName: string;
+    projectAddress?: string | null;
     areaM2: number;
+    areaCoveredM2?: number | null;
+    areaUncoveredPercent?: number | null;
+    floorCount?: number | null;
     baseRatePerM2: number;
     pricingRateId?: number | null;
+    currency?: string;
+    planName?: string | null;
+    planMinDays?: number | null;
+    planMaxDays?: number | null;
     status?: string;
+    expiresAt?: string | null;
     notes?: string | null;
   }): Promise<{ ok: boolean; id?: number; error?: string }> {
     if (!this.isBrowser) {
@@ -801,10 +824,22 @@ export class AdminDataService {
       fullName: string;
       phone: string;
       email: string;
+      documentType: string | null;
+      documentNumber: string | null;
       projectName: string;
+      projectAddress: string | null;
       areaM2: number;
+      areaCoveredM2: number | null;
+      areaUncoveredPercent: number | null;
+      floorCount: number | null;
       baseRatePerM2: number;
+      pricingRateId: number | null;
+      currency: string;
+      planName: string | null;
+      planMinDays: number | null;
+      planMaxDays: number | null;
       status: string;
+      expiresAt: string | null;
       notes: string | null;
     }>
   ): Promise<{ ok: boolean; error?: string }> {

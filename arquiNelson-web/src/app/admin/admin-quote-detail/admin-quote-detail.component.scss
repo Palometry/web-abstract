@@ -49,6 +49,17 @@
   gap: 16px;
 }
 
+.panel h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

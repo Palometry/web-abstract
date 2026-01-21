@@ -4,70 +4,197 @@
   <header class="header">
     <div>
       <h2>Nueva cotizacion</h2>
-      <p>Registra los datos base antes de agregar servicios extra.</p>
+      <p>Completa los datos del cliente, proyecto y plan antes de agregar servicios extra.</p>
     </div>
     <button type="button" (click)="createQuote()" [disabled]="saving || loading">
       Crear cotizacion
     </button>
   </header>
 
-  <div class="panel">
-    <div class="form-grid">
-      <label>
-        Nombre completo
-        <input name="fullName" [(ngModel)]="draft.fullName" placeholder="Nombre y apellido" />
-      </label>
-      <label>
-        Telefono
-        <input name="phone" [(ngModel)]="draft.phone" placeholder="999 999 999" />
-      </label>
-      <label>
-        Correo
-        <input name="email" type="email" [(ngModel)]="draft.email" placeholder="correo@empresa.com" />
-      </label>
-      <label>
-        Proyecto
-        <input name="projectName" [(ngModel)]="draft.projectName" placeholder="Nombre provisional" />
-      </label>
-      <label>
-        Area (m2)
-        <input name="areaM2" type="number" min="0" step="0.01" [(ngModel)]="draft.areaM2" />
-      </label>
-      <label>
-        Tarifa por m2 (PEN)
-        <input
-          name="baseRatePerM2"
-          type="number"
-          min="0"
-          step="0.01"
-          [(ngModel)]="draft.baseRatePerM2"
-        />
-      </label>
-      <label>
-        Tarifa guardada
-        <select name="pricingRateId" [(ngModel)]="draft.pricingRateId" (change)="onRateChange()">
-          <option [ngValue]="null">Manual</option>
-          <option *ngFor="let rate of rates" [ngValue]="rate.id">
-            {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
-          </option>
-        </select>
-      </label>
-      <label>
-        Estado
-        <select name="status" [(ngModel)]="draft.status">
-          <option value="new">Nueva</option>
-          <option value="reviewed">Revisada</option>
-          <option value="sent">Enviada</option>
-          <option value="accepted">Aceptada</option>
-          <option value="rejected">Rechazada</option>
-        </select>
-      </label>
-      <label class="wide">
-        Notas
-        <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea>
-      </label>
+  <p class="hint" *ngIf="loading">Cargando opciones...</p>
+
+  <div class="panel-grid">
+    <div class="panel">
+      <h3>Datos de la cotizacion</h3>
+      <div class="form-grid">
+        <label>
+          N° Cotizacion
+          <input name="quoteNumber" value="Se asigna al guardar" readonly />
+        </label>
+        <label>
+          Estado
+          <select name="status" [(ngModel)]="draft.status">
+            <option value="new">Nueva</option>
+            <option value="reviewed">Revisada</option>
+            <option value="sent">Enviada</option>
+            <option value="accepted">Aceptada</option>
+            <option value="rejected">Rechazada</option>
+          </select>
+        </label>
+        <label>
+          Fecha creacion
+          <input name="createdAt" [value]="todayLabel" readonly />
+        </label>
+        <label>
+          Vigente hasta
+          <input name="expiresAt" type="date" [(ngModel)]="draft.expiresAt" />
+        </label>
+      </div>
     </div>
 
+    <div class="panel">
+      <h3>Datos del cliente</h3>
+      <div class="form-grid">
+        <label>
+          Tipo documento
+          <select name="documentType" [(ngModel)]="draft.documentType">
+            <option *ngFor="let doc of docTypes" [value]="doc.value">{{ doc.label }}</option>
+          </select>
+        </label>
+        <label>
+          N° documento
+          <input name="documentNumber" [(ngModel)]="draft.documentNumber" placeholder="Numero de documento" />
+        </label>
+        <label>
+          Nombre completo
+          <input name="fullName" [(ngModel)]="draft.fullName" placeholder="Nombre y apellido" />
+        </label>
+        <label>
+          Telefono
+          <input name="phone" [(ngModel)]="draft.phone" placeholder="999 999 999" />
+        </label>
+        <label class="wide">
+          Correo
+          <input name="email" type="email" [(ngModel)]="draft.email" placeholder="correo@empresa.com" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-grid">
+    <div class="panel">
+      <h3>Datos del proyecto</h3>
+      <div class="form-grid">
+        <label>
+          Nombre del proyecto
+          <input name="projectName" [(ngModel)]="draft.projectName" placeholder="Nombre provisional" />
+        </label>
+        <label class="wide">
+          Direccion
+          <input name="projectAddress" [(ngModel)]="draft.projectAddress" placeholder="Direccion del proyecto" />
+        </label>
+        <label>
+          Area total (m2)
+          <input
+            name="areaM2"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="draft.areaM2"
+            (input)="updateAreaCovered()"
+          />
+        </label>
+        <label>
+          Area libre (%)
+          <input
+            name="areaUncoveredPercent"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            [(ngModel)]="draft.areaUncoveredPercent"
+            (input)="updateAreaCovered()"
+          />
+        </label>
+        <label>
+          Area techada (m2)
+          <input name="areaCoveredM2" type="number" [value]="draft.areaCoveredM2" readonly />
+        </label>
+        <label>
+          N° pisos
+          <input name="floorCount" type="number" min="0" step="1" [(ngModel)]="draft.floorCount" />
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Datos del plan</h3>
+      <div class="form-grid">
+        <label>
+          Plan
+          <select name="pricingRateId" [(ngModel)]="draft.pricingRateId" (change)="onRateChange()">
+            <option [ngValue]="null">Manual</option>
+            <option *ngFor="let rate of rates" [ngValue]="rate.id">
+              {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
+            </option>
+          </select>
+        </label>
+        <label>
+          Nombre del plan
+          <input
+            name="planName"
+            [(ngModel)]="draft.planName"
+            [readonly]="!!draft.pricingRateId"
+            placeholder="Nombre del plan"
+          />
+        </label>
+        <label>
+          Costo x m2 ({{ draft.currency }})
+          <input
+            name="baseRatePerM2"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="draft.baseRatePerM2"
+            [readonly]="!!draft.pricingRateId"
+          />
+        </label>
+        <label>
+          Plazo minimo (dias)
+          <input
+            name="planMinDays"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="draft.planMinDays"
+            [readonly]="!!draft.pricingRateId"
+          />
+        </label>
+        <label>
+          Plazo maximo (dias)
+          <input
+            name="planMaxDays"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="draft.planMaxDays"
+            [readonly]="!!draft.pricingRateId"
+          />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Resumen</h3>
+    <div class="summary">
+      <div>
+        <span>Base</span>
+        <strong>{{ formatCurrency(baseCost, draft.currency) }}</strong>
+      </div>
+      <div>
+        <span>Extras</span>
+        <strong>{{ formatCurrency(0, draft.currency) }}</strong>
+      </div>
+      <div>
+        <span>Total</span>
+        <strong>{{ formatCurrency(baseCost, draft.currency) }}</strong>
+      </div>
+    </div>
+    <label class="wide">
+      Notas
+      <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea>
+    </label>
     <p class="hint">Los servicios extra se agregan luego en el detalle.</p>
     <p class="error" *ngIf="error">{{ error }}</p>
   </div>

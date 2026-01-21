@@ -14,12 +14,22 @@ type QuoteCreateBody = {
   fullName?: string;
   phone?: string;
   email?: string;
+  documentType?: string;
+  documentNumber?: string;
   projectName?: string;
+  projectAddress?: string;
   areaM2?: number;
+  areaCoveredM2?: number;
+  areaUncoveredPercent?: number;
+  floorCount?: number;
   baseRatePerM2?: number;
   pricingRateId?: number | null;
   currency?: string;
+  planName?: string;
+  planMinDays?: number;
+  planMaxDays?: number;
   status?: string;
+  expiresAt?: string | null;
   notes?: string | null;
   services?: QuoteServiceInput[];
 };
@@ -28,10 +38,22 @@ type QuoteUpdateBody = {
   fullName?: string;
   phone?: string;
   email?: string;
+  documentType?: string;
+  documentNumber?: string;
   projectName?: string;
+  projectAddress?: string;
   areaM2?: number;
+  areaCoveredM2?: number;
+  areaUncoveredPercent?: number;
+  floorCount?: number;
   baseRatePerM2?: number;
+  pricingRateId?: number | null;
+  currency?: string;
+  planName?: string;
+  planMinDays?: number;
+  planMaxDays?: number;
   status?: string;
+  expiresAt?: string | null;
   notes?: string | null;
 };
 
@@ -40,6 +62,33 @@ const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100)
 const toNumber = (value: unknown, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseDate = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return null;
+  }
+  return trimmed;
+};
+
+const formatDate = (value: unknown) => {
+  if (!value) {
+    return null;
+  }
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === 'string') {
+    return value.slice(0, 10);
+  }
+  return null;
 };
 
 const sanitizeStatus = (status?: string) => {
@@ -80,7 +129,7 @@ quotesRouter.use(authenticate);
 
 quotesRouter.get('/options', requireRole(['admin', 'editor']), async (_req, res) => {
   const [rateRows] = await db.query(
-    `SELECT id, name, base_price_per_m2, currency, is_active
+    `SELECT id, name, base_price_per_m2, currency, is_active, min_days, max_days
      FROM pricing_rates
      ORDER BY is_active DESC, effective_from DESC, id DESC`
   );
@@ -96,6 +145,8 @@ quotesRouter.get('/options', requireRole(['admin', 'editor']), async (_req, res)
         name: row.name,
         basePricePerM2: Number(row.base_price_per_m2),
         currency: row.currency,
+        minDays: row.min_days !== null ? Number(row.min_days) : null,
+        maxDays: row.max_days !== null ? Number(row.max_days) : null,
         isActive: !!row.is_active
       }))
     : [];
@@ -145,10 +196,14 @@ quotesRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) => {
   }
 
   const [rows] = await db.query(
-    `SELECT q.id, q.full_name, q.phone, q.email, q.project_name, q.area_m2,
+    `SELECT q.id, q.full_name, q.phone, q.email, q.document_type, q.document_number,
+            q.project_name, q.project_address, q.area_m2, q.area_covered_m2,
+            q.area_uncovered_percent, q.floor_count, q.expires_at,
             q.base_rate_per_m2, q.base_cost, q.extras_cost, q.total_cost,
             q.currency, q.status, q.notes, q.created_at,
-            pr.id AS pricing_rate_id, pr.name AS pricing_rate_name
+            q.plan_name, q.plan_min_days, q.plan_max_days,
+            pr.id AS pricing_rate_id, pr.name AS pricing_rate_name,
+            pr.min_days AS pricing_rate_min_days, pr.max_days AS pricing_rate_max_days
      FROM quotes q
      LEFT JOIN pricing_rates pr ON pr.id = q.pricing_rate_id
      WHERE q.id = ?
@@ -187,8 +242,15 @@ quotesRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) => {
     fullName: quote.full_name,
     phone: quote.phone,
     email: quote.email,
+    documentType: quote.document_type,
+    documentNumber: quote.document_number,
     projectName: quote.project_name,
+    projectAddress: quote.project_address,
     areaM2: Number(quote.area_m2),
+    areaCoveredM2: quote.area_covered_m2 !== null ? Number(quote.area_covered_m2) : null,
+    areaUncoveredPercent:
+      quote.area_uncovered_percent !== null ? Number(quote.area_uncovered_percent) : null,
+    floorCount: quote.floor_count !== null ? Number(quote.floor_count) : null,
     baseRatePerM2: Number(quote.base_rate_per_m2),
     baseCost: Number(quote.base_cost),
     extrasCost: Number(quote.extras_cost),
@@ -197,8 +259,14 @@ quotesRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) => {
     status: quote.status,
     notes: quote.notes,
     createdAt: quote.created_at,
+    expiresAt: formatDate(quote.expires_at),
     pricingRateId: quote.pricing_rate_id,
     pricingRateName: quote.pricing_rate_name,
+    planName: quote.plan_name ?? quote.pricing_rate_name,
+    planMinDays:
+      quote.plan_min_days !== null ? Number(quote.plan_min_days) : Number(quote.pricing_rate_min_days ?? 0) || null,
+    planMaxDays:
+      quote.plan_max_days !== null ? Number(quote.plan_max_days) : Number(quote.pricing_rate_max_days ?? 0) || null,
     services
   });
 });
@@ -208,12 +276,22 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
     fullName,
     phone,
     email,
+    documentType,
+    documentNumber,
     projectName,
+    projectAddress,
     areaM2,
+    areaCoveredM2,
+    areaUncoveredPercent,
+    floorCount,
     baseRatePerM2,
     pricingRateId,
     currency,
+    planName,
+    planMinDays,
+    planMaxDays,
     status,
+    expiresAt,
     notes,
     services
   } = req.body as QuoteCreateBody;
@@ -231,6 +309,20 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
     return res.status(400).json({ error: 'areaM2 must be greater than 0.' });
   }
 
+  const parsedUncovered = toNumber(areaUncoveredPercent, 0);
+  const safeUncoveredPercent =
+    Number.isFinite(parsedUncovered) && parsedUncovered >= 0 && parsedUncovered <= 100
+      ? parsedUncovered
+      : 0;
+  const parsedCovered = toNumber(areaCoveredM2, -1);
+  const safeCoveredM2 =
+    Number.isFinite(parsedCovered) && parsedCovered >= 0
+      ? parsedCovered
+      : roundMoney(parsedArea * (1 - safeUncoveredPercent / 100));
+
+  const parsedFloors = toNumber(floorCount, -1);
+  const safeFloors = Number.isFinite(parsedFloors) && parsedFloors >= 0 ? Math.round(parsedFloors) : null;
+
   let selectedRateId: number | null = null;
   if (Number.isFinite(pricingRateId)) {
     selectedRateId = Number(pricingRateId);
@@ -238,9 +330,12 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
 
   let ratePerM2 = toNumber(baseRatePerM2, -1);
   let quoteCurrency = (currency ?? 'PEN').toString().toUpperCase();
+  let resolvedPlanName = typeof planName === 'string' ? planName.trim() : '';
+  let resolvedPlanMin = Number.isFinite(Number(planMinDays)) ? Number(planMinDays) : null;
+  let resolvedPlanMax = Number.isFinite(Number(planMaxDays)) ? Number(planMaxDays) : null;
   if (selectedRateId) {
     const [rateRows] = await db.query(
-      `SELECT id, base_price_per_m2, currency
+      `SELECT id, name, base_price_per_m2, currency, min_days, max_days
        FROM pricing_rates
        WHERE id = ? AND is_active = 1
        LIMIT 1`,
@@ -252,6 +347,9 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
     }
     ratePerM2 = Number(rate.base_price_per_m2);
     quoteCurrency = rate.currency;
+    resolvedPlanName = rate.name;
+    resolvedPlanMin = rate.min_days !== null ? Number(rate.min_days) : null;
+    resolvedPlanMax = rate.max_days !== null ? Number(rate.max_days) : null;
   }
 
   if (ratePerM2 <= 0) {
@@ -261,6 +359,12 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
   const baseCost = roundMoney(parsedArea * ratePerM2);
   const safeStatus = sanitizeStatus(status) ?? 'new';
   const safeNotes = typeof notes === 'string' ? notes.trim() || null : null;
+  const safeDocumentType = typeof documentType === 'string' ? documentType.trim() || null : null;
+  const safeDocumentNumber =
+    typeof documentNumber === 'string' ? documentNumber.trim() || null : null;
+  const safeProjectAddress =
+    typeof projectAddress === 'string' ? projectAddress.trim() || null : null;
+  const safeExpiresAt = parseDate(expiresAt ?? undefined);
   const serviceInputs = Array.isArray(services) ? services : [];
   const serviceIds = Array.from(
     new Set(
@@ -331,24 +435,35 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
 
     const [result] = await connection.query(
       `INSERT INTO quotes (
-        pricing_rate_id, full_name, phone, email, project_name,
-        area_m2, base_rate_per_m2, base_cost, extras_cost, total_cost,
-        currency, status, notes
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pricing_rate_id, full_name, phone, email, document_type, document_number,
+        project_name, project_address, area_m2, area_covered_m2, area_uncovered_percent,
+        floor_count, base_rate_per_m2, base_cost, extras_cost, total_cost,
+        currency, status, notes, expires_at, plan_name, plan_min_days, plan_max_days
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         selectedRateId,
         safeFullName,
         safePhone,
         safeEmail,
+        safeDocumentType,
+        safeDocumentNumber,
         safeProjectName,
+        safeProjectAddress,
         parsedArea,
+        safeCoveredM2,
+        safeUncoveredPercent,
+        safeFloors,
         ratePerM2,
         baseCost,
         extrasCost,
         totalCost,
         quoteCurrency,
         safeStatus,
-        safeNotes
+        safeNotes,
+        safeExpiresAt,
+        resolvedPlanName || null,
+        resolvedPlanMin,
+        resolvedPlanMax
       ]
     );
 
@@ -379,6 +494,20 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
 
   const { fullName, phone, email, projectName, areaM2, baseRatePerM2, status, notes } =
     req.body as QuoteUpdateBody;
+  const {
+    documentType,
+    documentNumber,
+    projectAddress,
+    areaCoveredM2,
+    areaUncoveredPercent,
+    floorCount,
+    pricingRateId,
+    currency,
+    planName,
+    planMinDays,
+    planMaxDays,
+    expiresAt
+  } = req.body as QuoteUpdateBody;
 
   const updates: string[] = [];
   const params: Array<string | number | null> = [];
@@ -415,6 +544,21 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
     updates.push('project_name = ?');
     params.push(safeProjectName);
   }
+  if (projectAddress !== undefined) {
+    const safeProjectAddress = String(projectAddress).trim();
+    updates.push('project_address = ?');
+    params.push(safeProjectAddress || null);
+  }
+  if (documentType !== undefined) {
+    const safeDocumentType = String(documentType).trim();
+    updates.push('document_type = ?');
+    params.push(safeDocumentType || null);
+  }
+  if (documentNumber !== undefined) {
+    const safeDocumentNumber = String(documentNumber).trim();
+    updates.push('document_number = ?');
+    params.push(safeDocumentNumber || null);
+  }
   if (status !== undefined) {
     const safeStatus = sanitizeStatus(status);
     if (!safeStatus) {
@@ -426,6 +570,37 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
   if (notes !== undefined) {
     updates.push('notes = ?');
     params.push(typeof notes === 'string' ? notes.trim() || null : null);
+  }
+  if (expiresAt !== undefined) {
+    updates.push('expires_at = ?');
+    params.push(parseDate(expiresAt ?? undefined));
+  }
+
+  const parsedUncovered = areaUncoveredPercent !== undefined ? toNumber(areaUncoveredPercent, -1) : undefined;
+  if (parsedUncovered !== undefined) {
+    if (parsedUncovered < 0 || parsedUncovered > 100) {
+      return res.status(400).json({ error: 'areaUncoveredPercent must be between 0 and 100.' });
+    }
+    updates.push('area_uncovered_percent = ?');
+    params.push(parsedUncovered);
+  }
+
+  const parsedCovered = areaCoveredM2 !== undefined ? toNumber(areaCoveredM2, -1) : undefined;
+  if (parsedCovered !== undefined) {
+    if (parsedCovered < 0) {
+      return res.status(400).json({ error: 'areaCoveredM2 must be 0 or greater.' });
+    }
+    updates.push('area_covered_m2 = ?');
+    params.push(parsedCovered);
+  }
+
+  const parsedFloors = floorCount !== undefined ? toNumber(floorCount, -1) : undefined;
+  if (parsedFloors !== undefined) {
+    if (parsedFloors < 0) {
+      return res.status(400).json({ error: 'floorCount must be 0 or greater.' });
+    }
+    updates.push('floor_count = ?');
+    params.push(Math.round(parsedFloors));
   }
 
   let recalcTotals = false;
@@ -453,7 +628,7 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
     await connection.beginTransaction();
 
     const [quoteRows] = await connection.query(
-      `SELECT id, area_m2, base_rate_per_m2, base_cost
+      `SELECT id, area_m2, base_rate_per_m2, base_cost, pricing_rate_id
        FROM quotes
        WHERE id = ?
        LIMIT 1`,
@@ -465,9 +640,63 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
       return res.status(404).json({ error: 'Quote not found.' });
     }
 
-    const finalArea = parsedArea ?? Number(quote.area_m2);
-    const finalRate = parsedRate ?? Number(quote.base_rate_per_m2);
+    let finalArea = parsedArea ?? Number(quote.area_m2);
+    let finalRate = parsedRate ?? Number(quote.base_rate_per_m2);
     let baseCost = Number(quote.base_cost);
+    let finalCurrency = currency ? String(currency).toUpperCase() : undefined;
+    const canApplyPlanFields = pricingRateId === undefined || pricingRateId === null;
+
+    if (pricingRateId !== undefined) {
+      if (pricingRateId === null) {
+        updates.push('pricing_rate_id = ?');
+        params.push(null);
+      } else if (Number.isFinite(Number(pricingRateId))) {
+        const [rateRows] = await connection.query(
+          `SELECT id, name, base_price_per_m2, currency, min_days, max_days
+           FROM pricing_rates
+           WHERE id = ? AND is_active = 1
+           LIMIT 1`,
+          [Number(pricingRateId)]
+        );
+        const rate = Array.isArray(rateRows) ? rateRows[0] : undefined;
+        if (!rate) {
+          await connection.rollback();
+          return res.status(400).json({ error: 'Invalid pricing rate.' });
+        }
+        updates.push('pricing_rate_id = ?');
+        params.push(rate.id);
+        finalRate = Number(rate.base_price_per_m2);
+        finalCurrency = rate.currency;
+        updates.push('plan_name = ?');
+        params.push(rate.name);
+        updates.push('plan_min_days = ?');
+        params.push(rate.min_days !== null ? Number(rate.min_days) : null);
+        updates.push('plan_max_days = ?');
+        params.push(rate.max_days !== null ? Number(rate.max_days) : null);
+        recalcTotals = true;
+      } else {
+        await connection.rollback();
+        return res.status(400).json({ error: 'Invalid pricing rate.' });
+      }
+    }
+
+    if (canApplyPlanFields) {
+      if (planName !== undefined) {
+        const safePlanName = String(planName).trim();
+        updates.push('plan_name = ?');
+        params.push(safePlanName || null);
+      }
+      if (planMinDays !== undefined) {
+        const safePlanMin = Number.isFinite(Number(planMinDays)) ? Number(planMinDays) : null;
+        updates.push('plan_min_days = ?');
+        params.push(safePlanMin);
+      }
+      if (planMaxDays !== undefined) {
+        const safePlanMax = Number.isFinite(Number(planMaxDays)) ? Number(planMaxDays) : null;
+        updates.push('plan_max_days = ?');
+        params.push(safePlanMax);
+      }
+    }
 
     if (recalcTotals) {
       baseCost = roundMoney(finalArea * finalRate);
@@ -477,6 +706,17 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
       params.push(finalRate);
       updates.push('base_cost = ?');
       params.push(baseCost);
+    }
+
+    if (finalCurrency) {
+      updates.push('currency = ?');
+      params.push(finalCurrency);
+    }
+
+    if (parsedUncovered !== undefined && parsedCovered === undefined) {
+      const recomputedCovered = roundMoney(finalArea * (1 - parsedUncovered / 100));
+      updates.push('area_covered_m2 = ?');
+      params.push(recomputedCovered);
     }
 
     if (updates.length) {
