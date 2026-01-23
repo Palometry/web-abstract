@@ -55,9 +55,15 @@ export class AdminQuoteCreateComponent implements OnInit {
 
   private async loadOptions() {
     this.loading = true;
-    const options = await this.data.getQuoteOptions();
-    this.rates = options.pricingRates.filter((rate) => rate.isActive);
-    this.loading = false;
+    this.error = '';
+    try {
+      const options = await this.data.getQuoteOptions();
+      this.rates = options.pricingRates.filter((rate) => rate.isActive);
+    } catch {
+      this.error = 'No se pudieron cargar las opciones. Verifica el backend.';
+    } finally {
+      this.loading = false;
+    }
   }
 
   onRateChange() {
