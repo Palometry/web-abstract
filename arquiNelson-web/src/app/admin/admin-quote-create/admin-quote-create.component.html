@@ -107,6 +107,15 @@
           />
         </label>
         <label>
+          Area libre (m2)
+          <input
+            name="areaUncoveredM2"
+            type="number"
+            [value]="getAreaUncoveredM2()"
+            readonly
+          />
+        </label>
+        <label>
           Area techada (m2)
           <input name="areaCoveredM2" type="number" [value]="draft.areaCoveredM2" readonly />
         </label>
@@ -123,7 +132,6 @@
         <label>
           Plan
           <select name="pricingRateId" [(ngModel)]="draft.pricingRateId" (change)="onRateChange()">
-            <option [ngValue]="null">Manual</option>
             <option *ngFor="let rate of rates" [ngValue]="rate.id">
               {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
             </option>
@@ -131,12 +139,7 @@
         </label>
         <label>
           Nombre del plan
-          <input
-            name="planName"
-            [(ngModel)]="draft.planName"
-            [readonly]="!!draft.pricingRateId"
-            placeholder="Nombre del plan"
-          />
+          <input name="planName" [(ngModel)]="draft.planName" readonly placeholder="Nombre del plan" />
         </label>
         <label>
           Costo x m2 ({{ draft.currency }})
@@ -146,7 +149,7 @@
             min="0"
             step="0.01"
             [(ngModel)]="draft.baseRatePerM2"
-            [readonly]="!!draft.pricingRateId"
+            readonly
           />
         </label>
         <label>
@@ -157,7 +160,7 @@
             min="0"
             step="1"
             [(ngModel)]="draft.planMinDays"
-            [readonly]="!!draft.pricingRateId"
+            readonly
           />
         </label>
         <label>
@@ -168,7 +171,7 @@
             min="0"
             step="1"
             [(ngModel)]="draft.planMaxDays"
-            [readonly]="!!draft.pricingRateId"
+            readonly
           />
         </label>
       </div>

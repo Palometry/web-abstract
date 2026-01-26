@@ -51,7 +51,7 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     projectAddress: '',
     areaM2: 0,
     areaCoveredM2: 0,
-    areaUncoveredPercent: 0,
+    areaUncoveredPercent: 30,
     floorCount: 1,
     baseRatePerM2: 0,
     pricingRateId: null as number | null,
@@ -126,8 +126,8 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
         projectAddress: quote.projectAddress ?? '',
         areaM2: quote.areaM2,
         areaCoveredM2: quote.areaCoveredM2 ?? 0,
-        areaUncoveredPercent: quote.areaUncoveredPercent ?? 0,
-        floorCount: quote.floorCount ?? 0,
+        areaUncoveredPercent: quote.areaUncoveredPercent ?? 30,
+        floorCount: quote.floorCount ?? 1,
         baseRatePerM2: quote.baseRatePerM2,
         pricingRateId: quote.pricingRateId ?? null,
         currency: quote.currency,
@@ -199,14 +199,24 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
 
   updateAreaCovered() {
     const areaTotal = Number(this.draft.areaM2);
-    const freePercent = Number(this.draft.areaUncoveredPercent);
     if (!Number.isFinite(areaTotal) || areaTotal <= 0) {
       this.draft.areaCoveredM2 = 0;
       return;
     }
-    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 0;
+    const freePercent = Number(this.draft.areaUncoveredPercent);
+    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 30;
     this.draft.areaUncoveredPercent = safePercent;
     this.draft.areaCoveredM2 = Number((areaTotal * (1 - safePercent / 100)).toFixed(2));
+  }
+
+  getAreaUncoveredM2() {
+    const areaTotal = Number(this.draft.areaM2);
+    if (!Number.isFinite(areaTotal) || areaTotal <= 0) {
+      return 0;
+    }
+    const freePercent = Number(this.draft.areaUncoveredPercent);
+    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 30;
+    return Number((areaTotal * (safePercent / 100)).toFixed(2));
   }
 
   async saveQuote() {

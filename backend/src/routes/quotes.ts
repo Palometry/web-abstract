@@ -309,19 +309,15 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
     return res.status(400).json({ error: 'areaM2 must be greater than 0.' });
   }
 
-  const parsedUncovered = toNumber(areaUncoveredPercent, 0);
+  const parsedUncovered = toNumber(areaUncoveredPercent, 30);
   const safeUncoveredPercent =
     Number.isFinite(parsedUncovered) && parsedUncovered >= 0 && parsedUncovered <= 100
       ? parsedUncovered
-      : 0;
-  const parsedCovered = toNumber(areaCoveredM2, -1);
-  const safeCoveredM2 =
-    Number.isFinite(parsedCovered) && parsedCovered >= 0
-      ? parsedCovered
-      : roundMoney(parsedArea * (1 - safeUncoveredPercent / 100));
+      : 30;
+  const safeCoveredM2 = roundMoney(parsedArea * (1 - safeUncoveredPercent / 100));
 
   const parsedFloors = toNumber(floorCount, -1);
-  const safeFloors = Number.isFinite(parsedFloors) && parsedFloors >= 0 ? Math.round(parsedFloors) : null;
+  const safeFloors = Number.isFinite(parsedFloors) && parsedFloors > 0 ? Math.round(parsedFloors) : 1;
 
   let selectedRateId: number | null = null;
   if (Number.isFinite(pricingRateId)) {
@@ -356,7 +352,7 @@ quotesRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
     return res.status(400).json({ error: 'baseRatePerM2 must be greater than 0.' });
   }
 
-  const baseCost = roundMoney(parsedArea * ratePerM2);
+  const baseCost = roundMoney(safeCoveredM2 * safeFloors * ratePerM2);
   const safeStatus = sanitizeStatus(status) ?? 'new';
   const safeNotes = typeof notes === 'string' ? notes.trim() || null : null;
   const safeDocumentType = typeof documentType === 'string' ? documentType.trim() || null : null;
@@ -576,7 +572,8 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
     params.push(parseDate(expiresAt ?? undefined));
   }
 
-  const parsedUncovered = areaUncoveredPercent !== undefined ? toNumber(areaUncoveredPercent, -1) : undefined;
+  const parsedUncovered =
+    areaUncoveredPercent !== undefined ? toNumber(areaUncoveredPercent, -1) : undefined;
   if (parsedUncovered !== undefined) {
     if (parsedUncovered < 0 || parsedUncovered > 100) {
       return res.status(400).json({ error: 'areaUncoveredPercent must be between 0 and 100.' });
@@ -596,8 +593,8 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
 
   const parsedFloors = floorCount !== undefined ? toNumber(floorCount, -1) : undefined;
   if (parsedFloors !== undefined) {
-    if (parsedFloors < 0) {
-      return res.status(400).json({ error: 'floorCount must be 0 or greater.' });
+    if (parsedFloors < 1) {
+      return res.status(400).json({ error: 'floorCount must be 1 or greater.' });
     }
     updates.push('floor_count = ?');
     params.push(Math.round(parsedFloors));
@@ -618,6 +615,9 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
     }
     recalcTotals = true;
   }
+  if (parsedUncovered !== undefined || parsedCovered !== undefined || parsedFloors !== undefined) {
+    recalcTotals = true;
+  }
 
   if (!updates.length && !recalcTotals) {
     return res.status(400).json({ error: 'No fields to update.' });
@@ -628,7 +628,8 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
     await connection.beginTransaction();
 
     const [quoteRows] = await connection.query(
-      `SELECT id, area_m2, base_rate_per_m2, base_cost, pricing_rate_id
+      `SELECT id, area_m2, area_covered_m2, area_uncovered_percent, floor_count,
+              base_rate_per_m2, base_cost, pricing_rate_id
        FROM quotes
        WHERE id = ?
        LIMIT 1`,
@@ -640,8 +641,22 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
       return res.status(404).json({ error: 'Quote not found.' });
     }
 
-    let finalArea = parsedArea ?? Number(quote.area_m2);
+    const existingArea = Number(quote.area_m2);
+    const existingUncovered =
+      quote.area_uncovered_percent !== null ? Number(quote.area_uncovered_percent) : 30;
+    const existingCovered =
+      quote.area_covered_m2 !== null
+        ? Number(quote.area_covered_m2)
+        : roundMoney(existingArea * (1 - existingUncovered / 100));
+    const existingFloors = quote.floor_count !== null ? Number(quote.floor_count) : 1;
+
+    let finalArea = parsedArea ?? existingArea;
     let finalRate = parsedRate ?? Number(quote.base_rate_per_m2);
+    let finalUncovered = parsedUncovered ?? existingUncovered ?? 30;
+    let finalCovered =
+      parsedCovered ?? roundMoney(finalArea * (1 - finalUncovered / 100));
+    let finalFloors =
+      parsedFloors !== undefined ? Math.max(1, Math.round(parsedFloors)) : existingFloors;
     let baseCost = Number(quote.base_cost);
     let finalCurrency = currency ? String(currency).toUpperCase() : undefined;
     const canApplyPlanFields = pricingRateId === undefined || pricingRateId === null;
@@ -699,7 +714,7 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
     }
 
     if (recalcTotals) {
-      baseCost = roundMoney(finalArea * finalRate);
+      baseCost = roundMoney(finalCovered * finalFloors * finalRate);
       updates.push('area_m2 = ?');
       params.push(finalArea);
       updates.push('base_rate_per_m2 = ?');
@@ -713,10 +728,13 @@ quotesRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) =>
       params.push(finalCurrency);
     }
 
-    if (parsedUncovered !== undefined && parsedCovered === undefined) {
-      const recomputedCovered = roundMoney(finalArea * (1 - parsedUncovered / 100));
+    if (parsedArea !== undefined || parsedUncovered !== undefined || parsedCovered !== undefined) {
       updates.push('area_covered_m2 = ?');
-      params.push(recomputedCovered);
+      params.push(finalCovered);
+      if (parsedUncovered === undefined && quote.area_uncovered_percent === null) {
+        updates.push('area_uncovered_percent = ?');
+        params.push(finalUncovered);
+      }
     }
 
     if (updates.length) {

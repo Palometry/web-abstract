@@ -3,15 +3,34 @@
 
   <div class="header">
     <div>
-      <h2>Crear proyecto</h2>
-      <p>Completa la informacion principal del proyecto.</p>
+      <h2>{{ projectId ? 'Editar proyecto' : 'Crear proyecto' }}</h2>
+      <p>
+        {{
+          projectId
+            ? 'Actualiza informacion general del proyecto.'
+            : 'Completa la informacion principal del proyecto.'
+        }}
+      </p>
     </div>
-    <button type="button" (click)="createProject()" [disabled]="saving">
-      {{ saving ? 'Creando...' : 'Crear proyecto' }}
+    <button
+      type="button"
+      (click)="projectId ? saveProject() : createProject()"
+      [disabled]="saving"
+    >
+      {{
+        saving
+          ? projectId
+            ? 'Guardando...'
+            : 'Creando...'
+          : projectId
+            ? 'Guardar proyecto'
+            : 'Crear proyecto'
+      }}
     </button>
   </div>
 
   <p class="error" *ngIf="error">{{ error }}</p>
+  <p class="hint" *ngIf="loading">Cargando proyecto...</p>
 
   <div class="panel">
     <div class="form-grid">
@@ -49,5 +68,139 @@
         <input type="date" [(ngModel)]="draft.endDate" />
       </label>
     </div>
+  </div>
+
+  <div class="panel">
+    <h3>Imagenes</h3>
+    <ng-container *ngIf="projectId; else imagesDisabled">
+      <div class="form-grid">
+        <label class="wide">
+          URL de imagen
+          <input type="text" [(ngModel)]="imageDraft.fileUrl" />
+        </label>
+        <label>
+          Titulo
+          <input type="text" [(ngModel)]="imageDraft.title" />
+        </label>
+        <label>
+          Alt
+          <input type="text" [(ngModel)]="imageDraft.altText" />
+        </label>
+        <label>
+          Orden
+          <input type="number" [(ngModel)]="imageDraft.sortOrder" />
+        </label>
+        <label class="toggle">
+          <input type="checkbox" [(ngModel)]="imageDraft.isCover" />
+          Portada
+        </label>
+        <button type="button" (click)="addImage()">Agregar imagen</button>
+      </div>
+
+      <div class="image-grid" *ngIf="images.length">
+        <div class="image-card" *ngFor="let image of images">
+          <img [src]="image.fileUrl" [alt]="image.altText || ''" />
+          <div class="form-grid compact">
+            <label class="wide">
+              URL
+              <input type="text" [(ngModel)]="image.draft.fileUrl" />
+            </label>
+            <label>
+              Titulo
+              <input type="text" [(ngModel)]="image.draft.title" />
+            </label>
+            <label>
+              Alt
+              <input type="text" [(ngModel)]="image.draft.altText" />
+            </label>
+            <label>
+              Orden
+              <input type="number" [(ngModel)]="image.draft.sortOrder" />
+            </label>
+            <label class="toggle">
+              <input type="checkbox" [(ngModel)]="image.draft.isCover" />
+              Portada
+            </label>
+          </div>
+          <div class="actions">
+            <button type="button" (click)="saveImage(image)">Guardar</button>
+            <button type="button" class="danger" (click)="deleteImage(image)">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #imagesDisabled>
+      <p class="hint">Guarda el proyecto para habilitar la carga de imagenes.</p>
+      <div class="form-grid">
+        <label class="wide">
+          URL de imagen
+          <input type="text" disabled />
+        </label>
+        <label>
+          Titulo
+          <input type="text" disabled />
+        </label>
+        <label>
+          Alt
+          <input type="text" disabled />
+        </label>
+        <label>
+          Orden
+          <input type="number" disabled />
+        </label>
+        <label class="toggle">
+          <input type="checkbox" disabled />
+          Portada
+        </label>
+        <button type="button" disabled>Agregar imagen</button>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="panel">
+    <h3>Portafolio</h3>
+    <ng-container *ngIf="projectId; else portfolioDisabled">
+      <div class="form-grid">
+        <label class="toggle">
+          <input type="checkbox" [(ngModel)]="portfolioDraft.enabled" />
+          Mostrar en portafolio
+        </label>
+        <label>
+          Orden
+          <input type="number" [(ngModel)]="portfolioDraft.sortOrder" />
+        </label>
+        <label class="wide">
+          Titulo alternativo
+          <input type="text" [(ngModel)]="portfolioDraft.titleOverride" />
+        </label>
+        <label class="toggle">
+          <input type="checkbox" [(ngModel)]="portfolioDraft.isVisible" />
+          Visible
+        </label>
+        <button type="button" (click)="savePortfolio()">Guardar portafolio</button>
+      </div>
+    </ng-container>
+    <ng-template #portfolioDisabled>
+      <p class="hint">Guarda el proyecto para habilitar el portafolio.</p>
+      <div class="form-grid">
+        <label class="toggle">
+          <input type="checkbox" disabled />
+          Mostrar en portafolio
+        </label>
+        <label>
+          Orden
+          <input type="number" disabled />
+        </label>
+        <label class="wide">
+          Titulo alternativo
+          <input type="text" disabled />
+        </label>
+        <label class="toggle">
+          <input type="checkbox" disabled />
+          Visible
+        </label>
+        <button type="button" disabled>Guardar portafolio</button>
+      </div>
+    </ng-template>
   </div>
 </section>

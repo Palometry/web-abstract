@@ -6,7 +6,6 @@
       <h2>Cotizacion #{{ quote?.id }}</h2>
       <p *ngIf="quote">Estado actual: {{ formatStatus(quote.status) }}</p>
     </div>
-    <button type="button" (click)="saveQuote()" [disabled]="saving || loading">Guardar cambios</button>
   </header>
 
   <p class="hint" *ngIf="loading">Cargando cotizacion...</p>
@@ -104,6 +103,15 @@
               step="0.01"
               [(ngModel)]="draft.areaUncoveredPercent"
               (input)="updateAreaCovered()"
+            />
+          </label>
+          <label>
+            Area libre (m2)
+            <input
+              name="areaUncoveredM2"
+              type="number"
+              [value]="getAreaUncoveredM2()"
+              readonly
             />
           </label>
           <label>
@@ -246,6 +254,12 @@
           <button type="button" (click)="addService()">Agregar</button>
         </div>
       </div>
+    </div>
+
+    <div class="footer-actions">
+      <button type="button" (click)="saveQuote()" [disabled]="saving || loading">
+        Guardar cambios
+      </button>
     </div>
   </ng-container>
 </section>

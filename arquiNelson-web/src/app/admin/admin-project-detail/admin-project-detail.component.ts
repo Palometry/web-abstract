@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AdminDataService, AdminProjectDetail, AdminProjectImage } from '../../services/admin-data';
@@ -21,12 +21,14 @@ type ProjectImageView = AdminProjectImage & {
   templateUrl: './admin-project-detail.component.html',
   styleUrls: ['./admin-project-detail.component.scss']
 })
-export class AdminProjectDetailComponent implements OnInit {
+export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
   project: AdminProjectDetail | null = null;
   images: ProjectImageView[] = [];
   loading = false;
   saving = false;
   error = '';
+  private loaded = false;
+  private readonly isBrowser: boolean;
 
   draft = {
     name: '',
@@ -53,10 +55,30 @@ export class AdminProjectDetailComponent implements OnInit {
     isVisible: true
   };
 
-  constructor(private route: ActivatedRoute, private data: AdminDataService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private data: AdminDataService,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) platformId: object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit() {
-    this.loadProject();
+    this.tryLoad();
+  }
+
+  ngAfterViewInit() {
+    this.tryLoad();
+  }
+
+  private async tryLoad() {
+    if (!this.isBrowser || this.loaded) {
+      return;
+    }
+    this.loaded = true;
+    await this.loadProject();
+    this.cdr.detectChanges();
   }
 
   async loadProject() {
@@ -67,39 +89,44 @@ export class AdminProjectDetailComponent implements OnInit {
     }
     this.loading = true;
     this.error = '';
-    const project = await this.data.getProjectDetail(projectId);
-    if (!project) {
-      this.error = 'No se encontro el proyecto.';
-      this.loading = false;
-      return;
-    }
-    this.project = project;
-    this.draft = {
-      name: project.name,
-      clientName: project.clientName,
-      address: project.address,
-      description: project.description ?? '',
-      status: project.status,
-      startDate: project.startDate ?? '',
-      endDate: project.endDate ?? ''
-    };
-    this.images = project.images.map((image) => ({
-      ...image,
-      draft: {
-        fileUrl: image.fileUrl,
-        title: image.title ?? '',
-        altText: image.altText ?? '',
-        isCover: image.isCover,
-        sortOrder: image.sortOrder
+    try {
+      const project = await this.data.getProjectDetail(projectId);
+      if (!project) {
+        this.error = 'No se encontro el proyecto.';
+        return;
       }
-    }));
-    this.portfolioDraft = {
-      enabled: !!project.portfolioEntry,
-      titleOverride: project.portfolioEntry?.titleOverride ?? '',
-      sortOrder: project.portfolioEntry?.sortOrder ?? 0,
-      isVisible: project.portfolioEntry?.isVisible ?? true
-    };
-    this.loading = false;
+      this.project = project;
+      this.draft = {
+        name: project.name,
+        clientName: project.clientName,
+        address: project.address,
+        description: project.description ?? '',
+        status: project.status,
+        startDate: project.startDate ?? '',
+        endDate: project.endDate ?? ''
+      };
+      const images = Array.isArray(project.images) ? project.images : [];
+      this.images = images.map((image) => ({
+        ...image,
+        draft: {
+          fileUrl: image.fileUrl,
+          title: image.title ?? '',
+          altText: image.altText ?? '',
+          isCover: image.isCover,
+          sortOrder: image.sortOrder
+        }
+      }));
+      this.portfolioDraft = {
+        enabled: !!project.portfolioEntry,
+        titleOverride: project.portfolioEntry?.titleOverride ?? '',
+        sortOrder: project.portfolioEntry?.sortOrder ?? 0,
+        isVisible: project.portfolioEntry?.isVisible ?? true
+      };
+    } catch {
+      this.error = 'No se pudo cargar el proyecto.';
+    } finally {
+      this.loading = false;
+    }
   }
 
   async saveProject() {

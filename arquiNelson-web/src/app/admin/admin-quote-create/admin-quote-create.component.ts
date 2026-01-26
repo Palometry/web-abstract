@@ -34,7 +34,7 @@ export class AdminQuoteCreateComponent implements OnInit {
     projectAddress: '',
     areaM2: 0,
     areaCoveredM2: 0,
-    areaUncoveredPercent: 0,
+    areaUncoveredPercent: 30,
     floorCount: 1,
     baseRatePerM2: 0,
     pricingRateId: null as number | null,
@@ -59,6 +59,10 @@ export class AdminQuoteCreateComponent implements OnInit {
     try {
       const options = await this.data.getQuoteOptions();
       this.rates = options.pricingRates.filter((rate) => rate.isActive);
+      if (this.rates.length && !this.draft.pricingRateId) {
+        this.draft.pricingRateId = this.rates[0].id;
+        this.onRateChange();
+      }
     } catch {
       this.error = 'No se pudieron cargar las opciones. Verifica el backend.';
     } finally {
@@ -79,23 +83,34 @@ export class AdminQuoteCreateComponent implements OnInit {
 
   updateAreaCovered() {
     const areaTotal = Number(this.draft.areaM2);
-    const freePercent = Number(this.draft.areaUncoveredPercent);
     if (!Number.isFinite(areaTotal) || areaTotal <= 0) {
       this.draft.areaCoveredM2 = 0;
       return;
     }
-    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 0;
+    const freePercent = Number(this.draft.areaUncoveredPercent);
+    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 30;
     this.draft.areaUncoveredPercent = safePercent;
     this.draft.areaCoveredM2 = Number((areaTotal * (1 - safePercent / 100)).toFixed(2));
   }
 
-  get baseCost() {
-    const area = Number(this.draft.areaM2);
-    const rate = Number(this.draft.baseRatePerM2);
-    if (!Number.isFinite(area) || !Number.isFinite(rate)) {
+  getAreaUncoveredM2() {
+    const areaTotal = Number(this.draft.areaM2);
+    if (!Number.isFinite(areaTotal) || areaTotal <= 0) {
       return 0;
     }
-    return Number((area * rate).toFixed(2));
+    const freePercent = Number(this.draft.areaUncoveredPercent);
+    const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 30;
+    return Number((areaTotal * (safePercent / 100)).toFixed(2));
+  }
+
+  get baseCost() {
+    const area = Number(this.draft.areaCoveredM2);
+    const floors = Number(this.draft.floorCount || 1);
+    const rate = Number(this.draft.baseRatePerM2);
+    if (!Number.isFinite(area) || !Number.isFinite(rate) || !Number.isFinite(floors)) {
+      return 0;
+    }
+    return Number((area * floors * rate).toFixed(2));
   }
 
   formatCurrency(value: number, currency: string) {
