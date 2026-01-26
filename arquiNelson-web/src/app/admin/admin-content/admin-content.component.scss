@@ -22,8 +22,8 @@
 
 .content-admin button {
   border: none;
-  background: #1f3b2c;
-  color: #f7f0e0;
+  background: var(--color-red);
+  color: var(--color-white);
   padding: 10px 18px;
   border-radius: 10px;
   cursor: pointer;
@@ -46,7 +46,7 @@
 .create-panel h3 {
   margin: 0;
   font-size: 16px;
-  color: #1f3b2c;
+  color: var(--color-red);
 }
 
 .form-grid {
@@ -111,7 +111,7 @@
 .table-row button {
   border: 1px solid #d8d2c6;
   background: transparent;
-  color: #1f3b2c;
+  color: var(--color-red);
   padding: 6px 12px;
   border-radius: 8px;
 }
@@ -147,3 +147,4 @@
     gap: 8px;
   }
 }
+

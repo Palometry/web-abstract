@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 1.05fr 1fr;
-  background: #f2efe7;
+  background: #ffffff;
 }
 
 .login-panel {
@@ -25,8 +25,8 @@
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: #1f3b2c;
-  color: #f9f4e6;
+  background: var(--color-red);
+  color: var(--color-white);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -37,12 +37,12 @@
 .brand-copy h1 {
   margin: 0 0 8px;
   font-size: 28px;
-  color: #1b2c24;
+  color: var(--color-black);
 }
 
 .brand-copy p {
   margin: 0;
-  color: #5d6b60;
+  color: var(--color-muted);
 }
 
 .login-form {
@@ -54,7 +54,7 @@
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #607063;
+  color: var(--color-muted);
 }
 
 .login-form input {
@@ -69,8 +69,8 @@
   padding: 14px 18px;
   border-radius: 12px;
   border: none;
-  background: #1f3b2c;
-  color: #fff4dd;
+  background: var(--color-red);
+  color: var(--color-white);
   font-weight: 600;
   cursor: pointer;
 }
@@ -81,7 +81,7 @@
 }
 
 .login-form button:hover {
-  background: #264735;
+  background: var(--color-red-dark);
 }
 
 .error {
@@ -93,7 +93,7 @@
 .hint {
   margin: 0;
   font-size: 13px;
-  color: #7c897f;
+  color: var(--color-muted);
 }
 
 .login-art {
@@ -102,8 +102,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at top, #2d5f49, #1d2e28);
-  color: #f6f0df;
+  background: radial-gradient(circle at top, var(--color-red) 0%, var(--color-red-dark) 100%);
+  color: var(--color-white);
   overflow: hidden;
 }
 
@@ -124,7 +124,7 @@
   width: 320px;
   height: 320px;
   border-radius: 32% 68% 49% 51%;
-  background: rgba(226, 187, 138, 0.16);
+  background: rgba(255, 255, 255, 0.12);
   bottom: -120px;
   left: -60px;
 }
@@ -132,7 +132,7 @@
 .art-card {
   position: relative;
   z-index: 1;
-  background: rgba(20, 30, 26, 0.65);
+  background: rgba(0, 0, 0, 0.35);
   padding: 32px;
   border-radius: 20px;
   max-width: 360px;
@@ -146,7 +146,7 @@
 
 .art-card p {
   margin: 0 0 24px;
-  color: #e2dcc8;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .art-metrics {
@@ -164,7 +164,7 @@
 .art-metrics small {
   display: block;
   font-size: 12px;
-  color: #cbd6c5;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 @media (max-width: 960px) {
@@ -181,3 +181,4 @@
     box-shadow: none;
   }
 }
+

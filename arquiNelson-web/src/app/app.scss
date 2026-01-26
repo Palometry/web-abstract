@@ -30,7 +30,7 @@ button {
 
 .app-content.admin-content {
   min-height: 100vh;
-  background: #f5f2ea;
+  background: #ffffff;
 }
 
 /* Scrollbar styles */
@@ -43,11 +43,11 @@ button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e3c72;
+  background: var(--color-red);
   border-radius: 5px;
   
   &:hover {
-    background: #0f2439;
+    background: var(--color-red-dark);
   }
 }
 

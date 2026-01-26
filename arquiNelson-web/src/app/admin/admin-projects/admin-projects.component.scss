@@ -27,8 +27,8 @@
 
 .projects-admin .primary {
   border: none;
-  background: #1f3b2c;
-  color: #f7f0e0;
+  background: var(--color-red);
+  color: var(--color-white);
   padding: 10px 18px;
   border-radius: 10px;
   cursor: pointer;
@@ -67,7 +67,7 @@
 .table-row button {
   border: 1px solid #d8d2c6;
   background: transparent;
-  color: #1f3b2c;
+  color: var(--color-red);
   padding: 6px 12px;
   border-radius: 8px;
 }
@@ -103,3 +103,4 @@
     gap: 8px;
   }
 }
+

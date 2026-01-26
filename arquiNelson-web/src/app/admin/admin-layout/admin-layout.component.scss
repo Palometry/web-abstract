@@ -2,12 +2,12 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 240px 1fr;
-  background: #f5f2ea;
+  background: #ffffff;
 }
 
 .admin-nav {
-  background: #15261f;
-  color: #e7e1d3;
+  background: var(--color-red-dark);
+  color: var(--color-white);
   display: flex;
   flex-direction: column;
   padding: 28px 20px;
@@ -24,8 +24,8 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: #e0b36b;
-  color: #1a2b24;
+  background: var(--color-white);
+  color: var(--color-red);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -39,7 +39,7 @@
 
 .nav-brand small {
   display: block;
-  color: #b3c0b6;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .nav-links {
@@ -56,13 +56,13 @@
 
 .nav-links a.active,
 .nav-links a:hover {
-  background: rgba(224, 179, 107, 0.2);
-  color: #fff6e3;
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--color-white);
 }
 
 .nav-footer {
   margin-top: auto;
-  color: #8f9c93;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .admin-body {
@@ -84,12 +84,12 @@
 .admin-title h1 {
   margin: 0 0 6px;
   font-size: 22px;
-  color: #1a2b24;
+  color: var(--color-black);
 }
 
 .admin-title p {
   margin: 0;
-  color: #6a726a;
+  color: var(--color-muted);
 }
 
 .admin-user {
@@ -105,20 +105,20 @@
 
 .admin-user small {
   display: block;
-  color: #6a726a;
+  color: var(--color-muted);
 }
 
 .admin-user button {
   border: none;
-  background: #1f3b2c;
-  color: #f7f0e0;
+  background: var(--color-red);
+  color: var(--color-white);
   padding: 10px 16px;
   border-radius: 10px;
   cursor: pointer;
 }
 
 .admin-user button:hover {
-  background: #274734;
+  background: var(--color-red-dark);
 }
 
 .admin-content {
@@ -148,3 +148,4 @@
     align-items: flex-start;
   }
 }
+

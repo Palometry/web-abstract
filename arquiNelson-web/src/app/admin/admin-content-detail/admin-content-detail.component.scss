@@ -4,7 +4,7 @@
 }
 
 .back-link {
-  color: #1f3b2c;
+  color: var(--color-red);
   font-weight: 600;
 }
 
@@ -28,8 +28,8 @@
 .header-actions button,
 .header-actions a {
   border: none;
-  background: #1f3b2c;
-  color: #f7f0e0;
+  background: var(--color-red);
+  color: var(--color-white);
   padding: 8px 16px;
   border-radius: 10px;
   cursor: pointer;
@@ -43,7 +43,7 @@
 .header-actions a.secondary {
   background: transparent;
   border: 1px solid #d8d2c6;
-  color: #1f3b2c;
+  color: var(--color-red);
 }
 
 .panel {
@@ -58,7 +58,7 @@
 .panel h3 {
   margin: 0;
   font-size: 16px;
-  color: #1f3b2c;
+  color: var(--color-red);
 }
 
 .form-grid {
@@ -110,8 +110,8 @@
 .panel button,
 .actions button {
   border: none;
-  background: #1f3b2c;
-  color: #f7f0e0;
+  background: var(--color-red);
+  color: var(--color-white);
   padding: 8px 16px;
   border-radius: 10px;
   cursor: pointer;
@@ -160,13 +160,13 @@
   padding: 16px;
   display: grid;
   gap: 12px;
-  background: #fbf9f2;
+  background: #f8f8f8;
 }
 
 .block-card h4 {
   margin: 0;
   font-size: 14px;
-  color: #1f3b2c;
+  color: var(--color-red);
 }
 
 .new-block {
@@ -182,3 +182,4 @@
   margin: 0;
   color: #7a857c;
 }
+
