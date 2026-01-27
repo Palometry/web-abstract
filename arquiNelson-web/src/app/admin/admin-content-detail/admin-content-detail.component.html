@@ -67,6 +67,18 @@
         Imagen (URL)
         <input type="text" [(ngModel)]="sectionDraft.imageUrl" />
       </label>
+      <label class="wide image-upload">
+        Subir imagen (archivo)
+        <div class="upload-row">
+          <input
+            type="file"
+            accept="image/*"
+            (change)="uploadSectionDraftImage($event)"
+            [disabled]="sectionDraftUploading"
+          />
+          <span class="upload-hint" *ngIf="sectionDraftUploading">Subiendo...</span>
+        </div>
+      </label>
       <label>
         Orden
         <input type="number" [(ngModel)]="sectionDraft.sortOrder" />
@@ -99,6 +111,18 @@
             Imagen (URL)
             <input type="text" [(ngModel)]="section.imageUrl" />
           </label>
+          <label class="wide image-upload">
+            Subir imagen (archivo)
+            <div class="upload-row">
+              <input
+                type="file"
+                accept="image/*"
+                (change)="uploadSectionImage(section, $event)"
+                [disabled]="sectionUploadStates[section.id]"
+              />
+              <span class="upload-hint" *ngIf="sectionUploadStates[section.id]">Subiendo...</span>
+            </div>
+          </label>
           <label>
             Orden
             <input type="number" [(ngModel)]="section.sortOrder" />
@@ -119,7 +143,17 @@
           <div class="form-grid compact">
             <label>
               blockType
-              <input type="text" [(ngModel)]="block.blockType" />
+              <select [(ngModel)]="block.blockType" (change)="onBlockTypeChange(block)">
+                <option
+                  *ngIf="!hasPreset(block.blockType)"
+                  [ngValue]="block.blockType"
+                >
+                  Personalizado ({{ block.blockType }})
+                </option>
+                <option *ngFor="let preset of blockPresets" [ngValue]="preset.value">
+                  {{ preset.label }}
+                </option>
+              </select>
             </label>
             <label>
               Orden
@@ -130,10 +164,49 @@
               Visible
             </label>
           </div>
-          <label class="wide">
-            Contenido (JSON)
-            <textarea rows="4" [(ngModel)]="block.contentText"></textarea>
-          </label>
+          <ng-container *ngIf="getPreset(block.blockType) as preset; else manualBlockContent">
+            <div class="form-grid compact block-fields">
+              <ng-container *ngFor="let field of preset.fields">
+                <ng-container [ngSwitch]="field.type">
+                  <label *ngSwitchCase="'textarea'" class="wide">
+                    {{ field.label }}
+                    <textarea
+                      rows="4"
+                      [(ngModel)]="block.fieldDraft[field.key]"
+                      [placeholder]="field.placeholder || ''"
+                    ></textarea>
+                  </label>
+                  <label *ngSwitchCase="'number'">
+                    {{ field.label }}
+                    <input
+                      type="number"
+                      [(ngModel)]="block.fieldDraft[field.key]"
+                      [placeholder]="field.placeholder || ''"
+                    />
+                  </label>
+                  <label *ngSwitchCase="'boolean'" class="toggle">
+                    <input type="checkbox" [(ngModel)]="block.fieldDraft[field.key]" />
+                    {{ field.label }}
+                  </label>
+                  <label *ngSwitchDefault>
+                    {{ field.label }}
+                    <input
+                      type="text"
+                      [(ngModel)]="block.fieldDraft[field.key]"
+                      [placeholder]="field.placeholder || ''"
+                    />
+                  </label>
+                </ng-container>
+              </ng-container>
+            </div>
+          </ng-container>
+          <ng-template #manualBlockContent>
+            <label class="wide">
+              Contenido (manual)
+              <small class="field-hint">Puedes escribir texto normal. El JSON es opcional.</small>
+              <textarea rows="4" [(ngModel)]="block.contentText"></textarea>
+            </label>
+          </ng-template>
           <div class="actions">
             <button type="button" (click)="saveBlock(section, block)">Guardar bloque</button>
             <button type="button" class="danger" (click)="deleteBlock(block)">Eliminar bloque</button>
@@ -145,7 +218,14 @@
           <div class="form-grid compact">
             <label>
               blockType
-              <input type="text" [(ngModel)]="blockDrafts[section.id].blockType" />
+              <select
+                [(ngModel)]="blockDrafts[section.id].blockType"
+                (change)="onDraftBlockTypeChange(section.id)"
+              >
+                <option *ngFor="let preset of blockPresets" [ngValue]="preset.value">
+                  {{ preset.label }}
+                </option>
+              </select>
             </label>
             <label>
               Orden
@@ -156,10 +236,49 @@
               Visible
             </label>
           </div>
-          <label class="wide">
-            Contenido (JSON)
-            <textarea rows="4" [(ngModel)]="blockDrafts[section.id].contentText"></textarea>
-          </label>
+          <ng-container *ngIf="getPreset(blockDrafts[section.id].blockType) as preset; else manualNewBlock">
+            <div class="form-grid compact block-fields">
+              <ng-container *ngFor="let field of preset.fields">
+                <ng-container [ngSwitch]="field.type">
+                  <label *ngSwitchCase="'textarea'" class="wide">
+                    {{ field.label }}
+                    <textarea
+                      rows="4"
+                      [(ngModel)]="blockDrafts[section.id].fieldDraft[field.key]"
+                      [placeholder]="field.placeholder || ''"
+                    ></textarea>
+                  </label>
+                  <label *ngSwitchCase="'number'">
+                    {{ field.label }}
+                    <input
+                      type="number"
+                      [(ngModel)]="blockDrafts[section.id].fieldDraft[field.key]"
+                      [placeholder]="field.placeholder || ''"
+                    />
+                  </label>
+                  <label *ngSwitchCase="'boolean'" class="toggle">
+                    <input type="checkbox" [(ngModel)]="blockDrafts[section.id].fieldDraft[field.key]" />
+                    {{ field.label }}
+                  </label>
+                  <label *ngSwitchDefault>
+                    {{ field.label }}
+                    <input
+                      type="text"
+                      [(ngModel)]="blockDrafts[section.id].fieldDraft[field.key]"
+                      [placeholder]="field.placeholder || ''"
+                    />
+                  </label>
+                </ng-container>
+              </ng-container>
+            </div>
+          </ng-container>
+          <ng-template #manualNewBlock>
+            <label class="wide">
+              Contenido (manual)
+              <small class="field-hint">Puedes escribir texto normal. El JSON es opcional.</small>
+              <textarea rows="4" [(ngModel)]="blockDrafts[section.id].contentText"></textarea>
+            </label>
+          </ng-template>
           <button type="button" (click)="createBlock(section)">Agregar bloque</button>
         </div>
       </div>

@@ -30,6 +30,12 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 40px;
 
+    .service-link {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+
     .service-card {
       background: white;
       padding: 40px 30px;

@@ -28,10 +28,10 @@ export class HeaderComponent {
 
   menuItems = [
     { name: 'Inicio', link: '/', fragment: 'home' },
+    { name: 'Sobre Nosotros', link: '/', fragment: 'about' },
     { name: 'Servicios', link: '/', fragment: 'services' },
     { name: 'Portafolio', link: '/', fragment: 'portfolio' },
     { name: 'Proyecto', link: '/projects', dropdown: true },
-    { name: 'Sobre Nosotros', link: '/', fragment: 'about' },
     { name: 'Contacto', link: '/', fragment: 'contact' }
   ];
 }

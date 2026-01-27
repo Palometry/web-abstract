@@ -6,11 +6,35 @@
     </div>
 
     <div class="services-grid">
-      <div class="service-card" *ngFor="let service of services">
-        <div class="service-icon">{{ service.icon }}</div>
-        <h3>{{ service.title }}</h3>
-        <p>{{ service.description }}</p>
-      </div>
+      <ng-container *ngFor="let service of services">
+        <a
+          *ngIf="service.url && isInternal(service.url)"
+          class="service-card service-link"
+          [routerLink]="service.url"
+        >
+          <div class="service-icon">{{ service.icon }}</div>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+        </a>
+
+        <a
+          *ngIf="service.url && !isInternal(service.url)"
+          class="service-card service-link"
+          [href]="service.url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <div class="service-icon">{{ service.icon }}</div>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+        </a>
+
+        <div *ngIf="!service.url" class="service-card">
+          <div class="service-icon">{{ service.icon }}</div>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+        </div>
+      </ng-container>
     </div>
   </div>
 </section>
