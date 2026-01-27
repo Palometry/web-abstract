@@ -12,10 +12,10 @@ export class FooterComponent {
   currentYear = new Date().getFullYear();
 
   socialLinks = [
-    { icon: '📘', url: 'https://www.facebook.com/Abstract.Daza/', label: 'Facebook' },
-    { icon: '🐦', url: '#', label: 'Twitter' },
-    { icon: '📷', url: '#', label: 'Instagram' },
-    { icon: '💼', url: 'https://linkedin.com/in/nelson-daza-b37844298', label: 'LinkedIn' }
+    { image: 'img/facebook.png', url: 'https://www.facebook.com/Abstract.Daza/', label: 'Facebook' },
+    { image: 'img/instagram.png', url: '#', label: 'Instagram' },
+    { image: 'img/linkedin.png', url: 'https://linkedin.com/in/nelson-daza-b37844298', label: 'LinkedIn' },
+    { image: 'img/twitter.png', url: '#', label: 'Twitter' }
   ];
 
   quickLinks = [

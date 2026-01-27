@@ -10,8 +10,16 @@
           </h3>
           <p>Líderes en soluciones inmobiliarias integrales de calidad mundial con compromiso social y ambiental.</p>
           <div class="social-links">
-            <a *ngFor="let social of socialLinks" [href]="social.url" class="social-icon" [title]="social.label">
-              {{ social.icon }}
+            <a
+              *ngFor="let social of socialLinks"
+              [href]="social.url"
+              class="social-icon"
+              [title]="social.label"
+              [attr.aria-label]="social.label"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img [src]="social.image" [alt]="social.label" />
             </a>
           </div>
         </div>
