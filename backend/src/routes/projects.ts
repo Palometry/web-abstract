@@ -31,7 +31,7 @@ projectsRouter.get('/', requireRole(['admin', 'editor']), async (_req, res) => {
 });
 
 projectsRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
-  const { name, clientName, address, description, status, startDate, endDate } = req.body as {
+  const { name, clientName, address, description, status, startDate, endDate, slug, details } = req.body as {
     name?: string;
     clientName?: string;
     address?: string;
@@ -39,6 +39,8 @@ projectsRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
     status?: string;
     startDate?: string | null;
     endDate?: string | null;
+    slug?: string | null;
+    details?: unknown;
   };
 
   if (!name || !clientName || !address) {
@@ -46,8 +48,8 @@ projectsRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
   }
 
   const [result] = await db.query(
-    `INSERT INTO projects (name, client_name, address, description, status, start_date, end_date)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO projects (name, client_name, address, description, status, start_date, end_date, slug, details_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       name,
       clientName,
@@ -55,7 +57,9 @@ projectsRouter.post('/', requireRole(['admin', 'editor']), async (req, res) => {
       description ?? null,
       status ?? 'draft',
       startDate ?? null,
-      endDate ?? null
+      endDate ?? null,
+      slug ?? null,
+      details ? JSON.stringify(details) : null
     ]
   );
 
@@ -70,7 +74,7 @@ projectsRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) =>
 
   const [rows] = await db.query(
     `SELECT p.id, p.name, p.client_name, p.address, p.description, p.status,
-            p.start_date, p.end_date,
+            p.start_date, p.end_date, p.slug, p.details_json,
             MAX(CASE WHEN pe.is_visible = 1 THEN 1 ELSE 0 END) AS in_portfolio
      FROM projects p
      LEFT JOIN portfolio_entries pe ON pe.project_id = p.id
@@ -116,6 +120,15 @@ projectsRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) =>
       }))
     : [];
 
+  let details = null;
+  if (project.details_json) {
+    try {
+      details = JSON.parse(project.details_json);
+    } catch {
+      details = null;
+    }
+  }
+
   return res.json({
     id: project.id,
     name: project.name,
@@ -125,6 +138,8 @@ projectsRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) =>
     status: project.status,
     startDate: project.start_date,
     endDate: project.end_date,
+    slug: project.slug ?? null,
+    details,
     portfolio: !!project.in_portfolio,
     portfolioEntry: portfolio
       ? {
@@ -144,7 +159,7 @@ projectsRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) 
     return res.status(400).json({ error: 'Invalid project id.' });
   }
 
-  const { name, clientName, address, description, status, startDate, endDate } = req.body as {
+  const { name, clientName, address, description, status, startDate, endDate, slug, details } = req.body as {
     name?: string;
     clientName?: string;
     address?: string;
@@ -152,6 +167,8 @@ projectsRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) 
     status?: string;
     startDate?: string | null;
     endDate?: string | null;
+    slug?: string | null;
+    details?: unknown;
   };
 
   const updates: string[] = [];
@@ -184,6 +201,14 @@ projectsRouter.patch('/:id', requireRole(['admin', 'editor']), async (req, res) 
   if (endDate !== undefined) {
     updates.push('end_date = ?');
     params.push(endDate);
+  }
+  if (slug !== undefined) {
+    updates.push('slug = ?');
+    params.push(slug);
+  }
+  if (details !== undefined) {
+    updates.push('details_json = ?');
+    params.push(details ? JSON.stringify(details) : null);
   }
 
   if (!updates.length) {

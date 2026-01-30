@@ -50,10 +50,40 @@ export type AdminProject = {
   portfolio: boolean;
 };
 
+export type AdminProjectDetails = {
+  shortDesc?: string | null;
+  bannerImages?: string[];
+  promoter?: string | null;
+  publicStatus?: string | null;
+  publicType?: string | null;
+  location?: string | null;
+  landArea?: string | null;
+  units?: number | null;
+  amenities?: string[];
+  startYear?: number | null;
+  deliveryYear?: number | null;
+  mapUrl?: string | null;
+  mapEmbedUrl?: string | null;
+  masterplanImage?: string | null;
+  gallery?: string[];
+  enjoyAreas?: string[];
+  houseModels?: { name: string; description: string; image: string }[];
+  housePlans?: {
+    name: string;
+    ambientes: number;
+    totalArea: string;
+    coveredArea: string;
+    image: string;
+  }[];
+  lots?: { id: string; area: string; status: 'Disponible' | 'Reservado' | 'Vendido' }[];
+};
+
 export type AdminProjectDetail = AdminProject & {
   description: string | null;
   startDate: string | null;
   endDate: string | null;
+  slug?: string | null;
+  details?: AdminProjectDetails | null;
   images: AdminProjectImage[];
   portfolioEntry: AdminPortfolioEntryDetail | null;
 };
@@ -228,6 +258,11 @@ export type AdminDashboardStats = {
   newQuotes: number;
   sentQuotes: number;
   publishedPages: number;
+};
+
+export type AdminPublicDashboardStats = {
+  activeProjects: number;
+  newQuotes: number;
 };
 
 export type AdminDashboardData = {
@@ -491,6 +526,8 @@ export class AdminDataService {
     status?: string;
     startDate?: string | null;
     endDate?: string | null;
+    slug?: string | null;
+    details?: AdminProjectDetails | null;
   }): Promise<{ ok: boolean; id?: number; error?: string }> {
     if (!this.isBrowser) {
       return { ok: false, error: 'Storage no disponible.' };
@@ -517,6 +554,8 @@ export class AdminDataService {
       status: string;
       startDate: string | null;
       endDate: string | null;
+      slug: string | null;
+      details: AdminProjectDetails | null;
     }>
   ): Promise<{ ok: boolean; error?: string }> {
     if (!this.isBrowser) {
@@ -948,6 +987,20 @@ export class AdminDataService {
       },
       activity: []
     });
+  }
+
+  async getPublicDashboardStats(): Promise<AdminPublicDashboardStats> {
+    if (!this.isBrowser) {
+      return { activeProjects: 0, newQuotes: 0 };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http.get<AdminPublicDashboardStats>(`${this.apiBaseUrl}/dashboard/public`)
+      );
+      return response;
+    } catch {
+      return { activeProjects: 0, newQuotes: 0 };
+    }
   }
 
   async createService(payload: {

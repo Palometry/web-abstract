@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,8 +9,11 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./hero.component.scss']
 })
 export class HeroComponent {
-  title = 'Soluciones Inmobiliarias Profesionales';
-  subtitle = 'Desarrollos inmobiliarios de clase mundial con atención al detalle';
+  @Input() title?: string;
+  @Input() subtitle?: string;
+
+  defaultTitle = 'Soluciones Inmobiliarias Profesionales';
+  defaultSubtitle = 'Desarrollos inmobiliarios de clase mundial con atención al detalle';
   
   scrollToSection(sectionId: string) {
     const element = document.getElementById(sectionId);

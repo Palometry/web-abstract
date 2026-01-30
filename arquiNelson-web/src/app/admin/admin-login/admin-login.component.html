@@ -44,11 +44,11 @@
       <p>Administra la pagina publica, proyectos y solicitudes de clientes.</p>
       <div class="art-metrics">
         <div>
-          <span>24</span>
+          <span>{{ statsLoading ? '...' : stats.activeProjects }}</span>
           <small>Proyectos activos</small>
         </div>
         <div>
-          <span>8</span>
+          <span>{{ statsLoading ? '...' : stats.newQuotes }}</span>
           <small>Solicitudes nuevas</small>
         </div>
       </div>

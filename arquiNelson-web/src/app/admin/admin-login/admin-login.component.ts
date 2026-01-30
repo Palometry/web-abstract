@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminAuthService } from '../../services/admin-auth';
+import { AdminDataService, AdminPublicDashboardStats } from '../../services/admin-data';
 
 @Component({
   selector: 'app-admin-login',
@@ -16,13 +17,21 @@ export class AdminLoginComponent implements OnInit {
   password = '';
   error = '';
   loading = false;
+  statsLoading = false;
+  stats: AdminPublicDashboardStats = { activeProjects: 0, newQuotes: 0 };
 
-  constructor(private auth: AdminAuthService, private router: Router) {}
+  constructor(
+    private auth: AdminAuthService,
+    private data: AdminDataService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/admin']);
+      return;
     }
+    this.loadStats();
   }
 
   async submit() {
@@ -35,5 +44,11 @@ export class AdminLoginComponent implements OnInit {
       return;
     }
     this.router.navigate(['/admin']);
+  }
+
+  private async loadStats() {
+    this.statsLoading = true;
+    this.stats = await this.data.getPublicDashboardStats();
+    this.statsLoading = false;
   }
 }

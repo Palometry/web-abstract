@@ -1,3 +1,59 @@
  :host {
   display: block;
 }
+ .dynamic-content {
+  padding: 60px 20px;
+  background: #fff;
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    margin-bottom: 24px;
+
+    h2 {
+      font-size: 28px;
+      margin: 0 0 10px 0;
+      color: #8f2e27;
+    }
+
+    p {
+      margin: 0;
+      color: #666;
+    }
+  }
+
+  .block-list {
+    display: grid;
+    gap: 16px;
+  }
+
+  .block-card {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 16px 20px;
+    background: #fafafa;
+  }
+
+  .service-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .service-icon {
+    font-size: 24px;
+  }
+
+  .tag-link {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #8f2e27;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+  }
+}

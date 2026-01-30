@@ -4,6 +4,25 @@ import { authenticate, requireRole } from '../middleware/auth';
 
 export const dashboardRouter = Router();
 
+dashboardRouter.get('/public', async (_req, res) => {
+  const [activeProjectsRows] = await db.query(
+    `SELECT COUNT(*) AS total FROM projects WHERE status = 'active'`
+  );
+  const [newQuotesRows] = await db.query(
+    `SELECT COUNT(*) AS total FROM quotes WHERE status = 'new'`
+  );
+
+  const activeProjects = Array.isArray(activeProjectsRows)
+    ? Number(activeProjectsRows[0]?.total ?? 0)
+    : 0;
+  const newQuotes = Array.isArray(newQuotesRows) ? Number(newQuotesRows[0]?.total ?? 0) : 0;
+
+  return res.json({
+    activeProjects,
+    newQuotes
+  });
+});
+
 dashboardRouter.use(authenticate);
 
 dashboardRouter.get('/', requireRole(['admin', 'editor']), async (_req, res) => {

@@ -3,8 +3,8 @@
   
   <div class="hero-content">
     <div class="hero-text">
-      <h1 class="hero-title">{{ title }}</h1>
-      <p class="hero-subtitle">{{ subtitle }}</p>
+      <h1 class="hero-title">{{ title || defaultTitle }}</h1>
+      <p class="hero-subtitle">{{ subtitle || defaultSubtitle }}</p>
       
       <div class="hero-buttons">
         <button class="btn btn-primary" (click)="scrollToSection('portfolio')">

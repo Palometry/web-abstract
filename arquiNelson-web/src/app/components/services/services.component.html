@@ -1,12 +1,12 @@
 <section id="services" class="services">
   <div class="container">
     <div class="section-header">
-      <h2>Nuestros Servicios</h2>
-      <p>Ofrecemos soluciones inmobiliarias integrales y profesionales</p>
+      <h2>{{ title || defaultTitle }}</h2>
+      <p>{{ summary || defaultSummary }}</p>
     </div>
 
     <div class="services-grid">
-      <ng-container *ngFor="let service of services">
+      <ng-container *ngFor="let service of displayServices">
         <a
           *ngIf="service.url && isInternal(service.url)"
           class="service-card service-link"
@@ -21,8 +21,8 @@
           *ngIf="service.url && !isInternal(service.url)"
           class="service-card service-link"
           [href]="service.url"
-          target="_blank"
-          rel="noopener noreferrer"
+          [attr.target]="getTarget(service)"
+          [attr.rel]="getTarget(service) ? 'noopener noreferrer' : null"
         >
           <div class="service-icon">{{ service.icon }}</div>
           <h3>{{ service.title }}</h3>

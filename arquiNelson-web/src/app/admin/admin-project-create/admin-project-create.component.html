@@ -71,12 +71,118 @@
   </div>
 
   <div class="panel">
+    <h3>Detalle público del proyecto</h3>
+    <div class="form-grid">
+      <label class="wide">
+        Resumen corto
+        <input type="text" [(ngModel)]="detailsDraft.shortDesc" />
+      </label>
+      <label>
+        Ubicación (texto)
+        <input type="text" [(ngModel)]="detailsDraft.location" />
+      </label>
+      <label>
+        Promotor
+        <input type="text" [(ngModel)]="detailsDraft.promoter" />
+      </label>
+      <label>
+        Estado público
+        <input type="text" [(ngModel)]="detailsDraft.publicStatus" />
+      </label>
+      <label>
+        Tipo público
+        <input type="text" [(ngModel)]="detailsDraft.publicType" />
+      </label>
+      <label>
+        Area del terreno
+        <input type="text" [(ngModel)]="detailsDraft.landArea" />
+      </label>
+      <label>
+        Unidades
+        <input type="number" [(ngModel)]="detailsDraft.units" />
+      </label>
+      <label>
+        Año inicio
+        <input type="number" [(ngModel)]="detailsDraft.startYear" />
+      </label>
+      <label>
+        Año entrega
+        <input type="number" [(ngModel)]="detailsDraft.deliveryYear" />
+      </label>
+      <label class="wide">
+        URL Mapa (Google Maps)
+        <input type="text" [(ngModel)]="detailsDraft.mapUrl" />
+      </label>
+      <label class="wide">
+        URL Mapa embed
+        <input type="text" [(ngModel)]="detailsDraft.mapEmbedUrl" />
+      </label>
+      <label class="wide">
+        Imagen masterplan / lotización
+        <input type="text" [(ngModel)]="detailsDraft.masterplanImage" />
+      </label>
+      <label class="wide">
+        Subir imagen masterplan
+        <input type="file" accept="image/*" (change)="uploadDetailImage($event, 'masterplanImage')" />
+      </label>
+      <label class="wide">
+        Amenities / Áreas comunes (una por lí­nea)
+        <textarea rows="4" [(ngModel)]="detailsDraft.amenitiesText"></textarea>
+      </label>
+      <label class="wide">
+        Banner de imagenes (una URL por lí­nea)
+        <textarea rows="4" [(ngModel)]="detailsDraft.bannerImagesText"></textarea>
+      </label>
+      <label class="wide">
+        Subir imagen al banner
+        <input type="file" accept="image/*" (change)="appendDetailImage($event, 'bannerImagesText')" />
+      </label>
+      <label class="wide">
+        Galerí­a final (una URL por linea)
+        <textarea rows="4" [(ngModel)]="detailsDraft.galleryText"></textarea>
+      </label>
+      <label class="wide">
+        Subir imagen a galería final
+        <input type="file" accept="image/*" (change)="appendDetailImage($event, 'galleryText')" />
+      </label>
+      <label class="wide">
+        Areas para disfrutar (una por li­nea)
+        <textarea rows="4" [(ngModel)]="detailsDraft.enjoyAreasText"></textarea>
+      </label>
+      <label class="wide">
+        Modelos de casas (Nombre | Descripción | URL)
+        <textarea rows="4" [(ngModel)]="detailsDraft.houseModelsText"></textarea>
+      </label>
+      <label class="wide">
+        Subir imagen para modelo de casa
+        <input type="file" accept="image/*" (change)="appendHouseModelImage($event)" />
+      </label>
+      <label class="wide">
+        Planos de casas (Nombre | Ambientes | Area total | Area techada | URL)
+        <textarea rows="4" [(ngModel)]="detailsDraft.housePlansText"></textarea>
+      </label>
+      <label class="wide">
+        Subir imagen para plano de casa
+        <input type="file" accept="image/*" (change)="appendHousePlanImage($event)" />
+      </label>
+      <label class="wide">
+        Lotes (ID | Area | Estado: Disponible/Reservado/Vendido)
+        <textarea rows="4" [(ngModel)]="detailsDraft.lotsText"></textarea>
+      </label>
+    </div>
+  </div>
+
+  <div class="panel">
     <h3>Imagenes</h3>
     <ng-container *ngIf="projectId; else imagesDisabled">
       <div class="form-grid">
         <label class="wide">
           URL de imagen
           <input type="text" [(ngModel)]="imageDraft.fileUrl" />
+        </label>
+        <label class="wide">
+          Subir imagen (archivo)
+          <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
         </label>
         <label>
           Titulo
@@ -104,6 +210,10 @@
             <label class="wide">
               URL
               <input type="text" [(ngModel)]="image.draft.fileUrl" />
+            </label>
+            <label class="wide">
+              Subir imagen (archivo)
+              <input type="file" accept="image/*" (change)="uploadImageForExisting(image, $event)" />
             </label>
             <label>
               Titulo

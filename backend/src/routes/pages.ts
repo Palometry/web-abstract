@@ -4,8 +4,6 @@ import { authenticate, requireRole } from '../middleware/auth';
 
 export const pagesRouter = Router();
 
-pagesRouter.use(authenticate);
-
 const parseJson = (value: unknown) => {
   if (typeof value === 'string') {
     try {
@@ -16,6 +14,83 @@ const parseJson = (value: unknown) => {
   }
   return value;
 };
+
+pagesRouter.get('/public/:slug', async (req, res) => {
+  const slug = String(req.params['slug'] ?? '').trim();
+  if (!slug) {
+    return res.status(400).json({ error: 'Invalid slug.' });
+  }
+
+  const [pageRows] = await db.query(
+    `SELECT id, title, slug, status, meta_title, meta_description
+     FROM pages WHERE slug = ? AND status = 'published' LIMIT 1`,
+    [slug]
+  );
+  const page = Array.isArray(pageRows) ? pageRows[0] : undefined;
+  if (!page) {
+    return res.status(404).json({ error: 'Page not found.' });
+  }
+
+  const [sectionRows] = await db.query(
+    `SELECT id, section_key, title, description, image_url, sort_order, is_visible
+     FROM page_sections
+     WHERE page_id = ? AND is_visible = 1
+     ORDER BY sort_order ASC, id ASC`,
+    [page.id]
+  );
+  const sections = Array.isArray(sectionRows)
+    ? sectionRows.map((row: any) => ({
+        id: row.id,
+        sectionKey: row.section_key,
+        title: row.title,
+        description: row.description,
+        imageUrl: row.image_url,
+        sortOrder: row.sort_order,
+        isVisible: !!row.is_visible,
+        blocks: [] as any[]
+      }))
+    : [];
+
+  const sectionIds = sections.map((section) => section.id);
+  const blocksBySection = new Map<number, any[]>();
+  if (sectionIds.length) {
+    const [blockRows] = await db.query(
+      `SELECT id, section_id, block_type, content_json, sort_order, is_visible
+       FROM section_blocks
+       WHERE section_id IN (?) AND is_visible = 1
+       ORDER BY sort_order ASC, id ASC`,
+      [sectionIds]
+    );
+    if (Array.isArray(blockRows)) {
+      blockRows.forEach((row: any) => {
+        const list = blocksBySection.get(row.section_id) ?? [];
+        list.push({
+          id: row.id,
+          blockType: row.block_type,
+          content: parseJson(row.content_json),
+          sortOrder: row.sort_order,
+          isVisible: !!row.is_visible
+        });
+        blocksBySection.set(row.section_id, list);
+      });
+    }
+  }
+
+  return res.json({
+    id: page.id,
+    title: page.title,
+    slug: page.slug,
+    status: page.status,
+    metaTitle: page.meta_title,
+    metaDescription: page.meta_description,
+    sections: sections.map((section) => ({
+      ...section,
+      blocks: blocksBySection.get(section.id) ?? []
+    }))
+  });
+});
+
+pagesRouter.use(authenticate);
 
 pagesRouter.get('/', requireRole(['admin', 'editor']), async (_req, res) => {
   const [rows] = await db.query(
