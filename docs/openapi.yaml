@@ -1,0 +1,2313 @@
+openapi: 3.0.3
+info:
+  title: ArquiNelson API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:4001
+    description: Local
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+      example:
+        error: Invalid credentials.
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+      example:
+        ok: true
+    IdResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+      required: [id]
+      example:
+        id: 123
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      example:
+        email: admin@example.com
+        password: secret
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserSummary'
+      required: [token, user]
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+      required: [id, email, fullName, roles]
+    UserDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+      required: [id, email, fullName, isActive, roles]
+    CreateUserRequest:
+      type: object
+      required: [fullName, email, password]
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+      example:
+        fullName: Jane Doe
+        email: jane@example.com
+        password: secret
+        roles: [client]
+    UpdateUserStatusRequest:
+      type: object
+      properties:
+        active:
+          type: boolean
+      required: [active]
+      example:
+        active: false
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        displayOrder:
+          type: integer
+        public:
+          type: boolean
+        isAddon:
+          type: boolean
+        pricingType:
+          type: string
+          enum: [flat, per_m2, percent]
+        price:
+          type: number
+        currency:
+          type: string
+        isActive:
+          type: boolean
+      required: [id, name, description, displayOrder, public, isAddon, pricingType, price, currency, isActive]
+    CreateServiceRequest:
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        displayOrder:
+          type: integer
+        isPublic:
+          type: boolean
+        isAddon:
+          type: boolean
+        pricingType:
+          type: string
+          enum: [flat, per_m2, percent]
+        price:
+          type: number
+        currency:
+          type: string
+        isActive:
+          type: boolean
+      example:
+        name: Planos
+        description: Descripcion
+        icon: null
+        displayOrder: 0
+        isPublic: true
+        isAddon: false
+        pricingType: flat
+        price: 100
+        currency: PEN
+        isActive: true
+    UpdateServiceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        displayOrder:
+          type: integer
+        isPublic:
+          type: boolean
+        isAddon:
+          type: boolean
+        pricingType:
+          type: string
+          enum: [flat, per_m2, percent]
+        price:
+          type: number
+        currency:
+          type: string
+        isActive:
+          type: boolean
+
+    DashboardPublicResponse:
+      type: object
+      properties:
+        activeProjects:
+          type: integer
+        newQuotes:
+          type: integer
+      required: [activeProjects, newQuotes]
+    DashboardAdminResponse:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            activeProjects:
+              type: integer
+            newQuotes:
+              type: integer
+            sentQuotes:
+              type: integer
+            publishedPages:
+              type: integer
+          required: [activeProjects, newQuotes, sentQuotes, publishedPages]
+        activity:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              message:
+                type: string
+              happenedAt:
+                type: string
+                format: date-time
+            required: [type, message, happenedAt]
+      required: [stats, activity]
+
+    PageListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+        sections:
+          type: integer
+      required: [id, title, slug, status, sections]
+    PageSection:
+      type: object
+      properties:
+        id:
+          type: integer
+        sectionKey:
+          type: string
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+      required: [id, sectionKey, sortOrder, isVisible]
+    PageBlock:
+      type: object
+      properties:
+        id:
+          type: integer
+        blockType:
+          type: string
+        content:
+          type: object
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+      required: [id, blockType, sortOrder, isVisible]
+    PageDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+        metaTitle:
+          type: string
+          nullable: true
+        metaDescription:
+          type: string
+          nullable: true
+        sections:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/PageSection'
+              - type: object
+                properties:
+                  blocks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PageBlock'
+      required: [id, title, slug, status, sections]
+    CreatePageRequest:
+      type: object
+      required: [title, slug]
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+        metaTitle:
+          type: string
+          nullable: true
+        metaDescription:
+          type: string
+          nullable: true
+    UpdatePageRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+        metaTitle:
+          type: string
+          nullable: true
+        metaDescription:
+          type: string
+          nullable: true
+    CreateSectionRequest:
+      type: object
+      required: [sectionKey]
+      properties:
+        sectionKey:
+          type: string
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+    UpdateSectionRequest:
+      type: object
+      properties:
+        sectionKey:
+          type: string
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+    CreateBlockRequest:
+      type: object
+      required: [blockType]
+      properties:
+        blockType:
+          type: string
+        content:
+          type: object
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+    UpdateBlockRequest:
+      type: object
+      properties:
+        blockType:
+          type: string
+        content:
+          type: object
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+
+    ProjectListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        clientName:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+        portfolio:
+          type: boolean
+      required: [id, name, clientName, address, status, portfolio]
+    ProjectImage:
+      type: object
+      properties:
+        id:
+          type: integer
+        mediaId:
+          type: integer
+        fileUrl:
+          type: string
+        title:
+          type: string
+          nullable: true
+        altText:
+          type: string
+          nullable: true
+        isCover:
+          type: boolean
+        sortOrder:
+          type: integer
+      required: [id, mediaId, fileUrl, isCover, sortOrder]
+    ProjectPortfolioEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        titleOverride:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+      required: [id, sortOrder, isVisible]
+    ProjectDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        clientName:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        startDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        details:
+          type: object
+          nullable: true
+        portfolio:
+          type: boolean
+        portfolioEntry:
+          allOf:
+            - $ref: '#/components/schemas/ProjectPortfolioEntry'
+          nullable: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectImage'
+      required: [id, name, clientName, address, status, portfolio, images]
+    CreateProjectRequest:
+      type: object
+      required: [name, clientName, address]
+      properties:
+        name:
+          type: string
+        clientName:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        startDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        details:
+          type: object
+          nullable: true
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        clientName:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        startDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        details:
+          type: object
+          nullable: true
+    UpsertProjectPortfolioRequest:
+      type: object
+      properties:
+        titleOverride:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        summary:
+          type: string
+          nullable: true
+        autocadUrl:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+    CreateProjectImageRequest:
+      type: object
+      required: [fileUrl]
+      properties:
+        fileUrl:
+          type: string
+        title:
+          type: string
+          nullable: true
+        altText:
+          type: string
+          nullable: true
+        isCover:
+          type: boolean
+        sortOrder:
+          type: integer
+    UpdateProjectImageRequest:
+      type: object
+      properties:
+        fileUrl:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        altText:
+          type: string
+          nullable: true
+        isCover:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    PortfolioPublicItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        coverImage:
+          type: string
+          nullable: true
+      required: [id, title]
+    PortfolioPublicDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        autocadUrl:
+          type: string
+          nullable: true
+        heroImages:
+          type: array
+          items:
+            type: string
+        coverImage:
+          type: string
+          nullable: true
+        gallery:
+          type: array
+          items:
+            type: string
+        specs:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+            required: [label, value]
+        tags:
+          type: array
+          items:
+            type: string
+        blocks:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              text:
+                type: string
+                nullable: true
+              src:
+                type: string
+                nullable: true
+              caption:
+                type: string
+                nullable: true
+              layout:
+                type: string
+            required: [type]
+      required: [id, title, heroImages, gallery, specs, tags, blocks]
+    PortfolioAdminListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        order:
+          type: integer
+        project:
+          type: string
+        visible:
+          type: boolean
+        titleOverride:
+          type: string
+          nullable: true
+      required: [id, projectId, order, project, visible]
+    PortfolioAdminDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        projectName:
+          type: string
+          nullable: true
+        titleOverride:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        summary:
+          type: string
+          nullable: true
+        autocadUrl:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+        images:
+          type: object
+          properties:
+            cover:
+              $ref: '#/components/schemas/ProjectImage'
+              nullable: true
+            hero:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProjectImage'
+            gallery:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProjectImage'
+        specs:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              label:
+                type: string
+              value:
+                type: string
+              sortOrder:
+                type: integer
+            required: [id, label, value, sortOrder]
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              tag:
+                type: string
+              sortOrder:
+                type: integer
+            required: [id, tag, sortOrder]
+        blocks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              blockType:
+                type: string
+              textContent:
+                type: string
+                nullable: true
+              mediaId:
+                type: integer
+                nullable: true
+              fileUrl:
+                type: string
+                nullable: true
+              caption:
+                type: string
+                nullable: true
+              layout:
+                type: string
+              sortOrder:
+                type: integer
+              isVisible:
+                type: boolean
+            required: [id, blockType, sortOrder, isVisible]
+      required: [id, projectId, sortOrder, isVisible, images, specs, tags, blocks]
+    UpdatePortfolioRequest:
+      type: object
+      properties:
+        titleOverride:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        summary:
+          type: string
+          nullable: true
+        autocadUrl:
+          type: string
+          nullable: true
+        sortOrder:
+          type: integer
+        isVisible:
+          type: boolean
+        coverMediaId:
+          type: integer
+          nullable: true
+        heroMediaIds:
+          type: array
+          items:
+            type: integer
+        galleryMediaIds:
+          type: array
+          items:
+            type: integer
+        specs:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+            required: [label, value]
+        tags:
+          type: array
+          items:
+            type: string
+        blocks:
+          type: array
+          items:
+            type: object
+            properties:
+              blockType:
+                type: string
+                enum: [text, image]
+              textContent:
+                type: string
+                nullable: true
+              mediaId:
+                type: integer
+                nullable: true
+              caption:
+                type: string
+                nullable: true
+              layout:
+                type: string
+                enum: [wide, inline]
+              isVisible:
+                type: boolean
+            required: [blockType]
+
+    PricingRate:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        basePricePerM2:
+          type: number
+        currency:
+          type: string
+        minDays:
+          type: integer
+          nullable: true
+        maxDays:
+          type: integer
+          nullable: true
+        isActive:
+          type: boolean
+      required: [id, name, basePricePerM2, currency, isActive]
+    QuoteService:
+      type: object
+      properties:
+        id:
+          type: integer
+        serviceId:
+          type: integer
+        name:
+          type: string
+        pricingType:
+          type: string
+          enum: [flat, per_m2, percent]
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        lineTotal:
+          type: number
+      required: [id, serviceId, name, pricingType, quantity, unitPrice, lineTotal]
+    QuoteListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        projectName:
+          type: string
+        areaM2:
+          type: number
+        totalCost:
+          type: number
+        status:
+          type: string
+        currency:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, fullName, projectName, areaM2, totalCost, status, currency, createdAt]
+    QuoteDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        documentType:
+          type: string
+          nullable: true
+        documentNumber:
+          type: string
+          nullable: true
+        projectName:
+          type: string
+        projectAddress:
+          type: string
+          nullable: true
+        areaM2:
+          type: number
+        areaCoveredM2:
+          type: number
+          nullable: true
+        areaUncoveredPercent:
+          type: number
+          nullable: true
+        floorCount:
+          type: number
+          nullable: true
+        baseRatePerM2:
+          type: number
+        baseCost:
+          type: number
+        extrasCost:
+          type: number
+        totalCost:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date
+          nullable: true
+        pricingRateId:
+          type: integer
+          nullable: true
+        pricingRateName:
+          type: string
+          nullable: true
+        planName:
+          type: string
+          nullable: true
+        planMinDays:
+          type: integer
+          nullable: true
+        planMaxDays:
+          type: integer
+          nullable: true
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteService'
+      required: [id, fullName, phone, email, projectName, areaM2, baseRatePerM2, baseCost, extrasCost, totalCost, currency, status, createdAt, services]
+    QuoteOptionsResponse:
+      type: object
+      properties:
+        pricingRates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricingRate'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/Service'
+      required: [pricingRates, services]
+    CreateQuoteRequest:
+      type: object
+      required: [fullName, phone, email, projectName, areaM2]
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        documentType:
+          type: string
+        documentNumber:
+          type: string
+        projectName:
+          type: string
+        projectAddress:
+          type: string
+        areaM2:
+          type: number
+        areaCoveredM2:
+          type: number
+        areaUncoveredPercent:
+          type: number
+        floorCount:
+          type: number
+        baseRatePerM2:
+          type: number
+        pricingRateId:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+        planName:
+          type: string
+        planMinDays:
+          type: integer
+        planMaxDays:
+          type: integer
+        status:
+          type: string
+        expiresAt:
+          type: string
+          format: date
+        notes:
+          type: string
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              serviceId:
+                type: integer
+              quantity:
+                type: number
+              unitPrice:
+                type: number
+    UpdateQuoteRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        documentType:
+          type: string
+        documentNumber:
+          type: string
+        projectName:
+          type: string
+        projectAddress:
+          type: string
+        areaM2:
+          type: number
+        areaCoveredM2:
+          type: number
+        areaUncoveredPercent:
+          type: number
+        floorCount:
+          type: number
+        baseRatePerM2:
+          type: number
+        pricingRateId:
+          type: integer
+          nullable: true
+        currency:
+          type: string
+        planName:
+          type: string
+        planMinDays:
+          type: integer
+        planMaxDays:
+          type: integer
+        status:
+          type: string
+        expiresAt:
+          type: string
+          format: date
+        notes:
+          type: string
+
+    CreateQuoteServiceRequest:
+      type: object
+      required: [serviceId]
+      properties:
+        serviceId:
+          type: integer
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+    UpdateQuoteServiceRequest:
+      type: object
+      properties:
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+
+    MediaUploadRequest:
+      type: object
+      required: [filename, data]
+      properties:
+        filename:
+          type: string
+        data:
+          type: string
+          description: base64 or data URL
+        mimeType:
+          type: string
+        title:
+          type: string
+        altText:
+          type: string
+    MediaUploadResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        fileUrl:
+          type: string
+      required: [id, fileUrl]
+
+paths:
+  /api/health:
+    get:
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/users:
+    get:
+      tags: [users]
+      summary: List users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDetail'
+    post:
+      tags: [users]
+      summary: Create user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users/{id}/status:
+    patch:
+      tags: [users]
+      summary: Update user status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserStatusRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/services:
+    get:
+      tags: [services]
+      summary: List services
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+    post:
+      tags: [services]
+      summary: Create service
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/services/{id}:
+    patch:
+      tags: [services]
+      summary: Update service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateServiceRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [services]
+      summary: Delete service (soft)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/dashboard/public:
+    get:
+      tags: [dashboard]
+      summary: Public dashboard stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardPublicResponse'
+  /api/dashboard:
+    get:
+      tags: [dashboard]
+      summary: Admin dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardAdminResponse'
+
+  /api/pages/public/{slug}:
+    get:
+      tags: [pages]
+      summary: Public page by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/pages:
+    get:
+      tags: [pages]
+      summary: List pages
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PageListItem'
+    post:
+      tags: [pages]
+      summary: Create page
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePageRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/pages/{id}:
+    get:
+      tags: [pages]
+      summary: Page detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [pages]
+      summary: Update page
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePageRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [pages]
+      summary: Delete page
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+  /api/pages/{id}/sections:
+    get:
+      tags: [pages]
+      summary: List sections for page
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PageSection'
+    post:
+      tags: [pages]
+      summary: Create section
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSectionRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/pages/sections/{id}:
+    patch:
+      tags: [pages]
+      summary: Update section
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSectionRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+    delete:
+      tags: [pages]
+      summary: Delete section
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+  /api/pages/sections/{id}/blocks:
+    get:
+      tags: [pages]
+      summary: List blocks for section
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PageBlock'
+    post:
+      tags: [pages]
+      summary: Create block
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlockRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /api/pages/blocks/{id}:
+    patch:
+      tags: [pages]
+      summary: Update block
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBlockRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+    delete:
+      tags: [pages]
+      summary: Delete block
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+
+  /api/projects:
+    get:
+      tags: [projects]
+      summary: List projects
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectListItem'
+    post:
+      tags: [projects]
+      summary: Create project
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /api/projects/{id}:
+    get:
+      tags: [projects]
+      summary: Project detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [projects]
+      summary: Update project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+    delete:
+      tags: [projects]
+      summary: Delete project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+  /api/projects/{id}/portfolio:
+    put:
+      tags: [projects]
+      summary: Upsert portfolio entry for project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertProjectPortfolioRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+    delete:
+      tags: [projects]
+      summary: Delete portfolio entry for project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+  /api/projects/{id}/images:
+    get:
+      tags: [projects]
+      summary: List project images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectImage'
+    post:
+      tags: [projects]
+      summary: Add project image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectImageRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /api/projects/{id}/images/{imageId}:
+    patch:
+      tags: [projects]
+      summary: Update project image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectImageRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+    delete:
+      tags: [projects]
+      summary: Delete project image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+
+  /api/portfolio/public:
+    get:
+      tags: [portfolio]
+      summary: Public portfolio list
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortfolioPublicItem'
+  /api/portfolio/public/{id}:
+    get:
+      tags: [portfolio]
+      summary: Public portfolio detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioPublicDetail'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/portfolio:
+    get:
+      tags: [portfolio]
+      summary: Portfolio admin list
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortfolioAdminListItem'
+  /api/portfolio/{id}:
+    get:
+      tags: [portfolio]
+      summary: Portfolio admin detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioAdminDetail'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [portfolio]
+      summary: Update portfolio entry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePortfolioRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+
+  /api/quotes/options:
+    get:
+      tags: [quotes]
+      summary: Quote options
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteOptionsResponse'
+  /api/quotes:
+    get:
+      tags: [quotes]
+      summary: List quotes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuoteListItem'
+    post:
+      tags: [quotes]
+      summary: Create quote
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/quotes/{id}:
+    get:
+      tags: [quotes]
+      summary: Quote detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteDetail'
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [quotes]
+      summary: Update quote
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuoteRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+  /api/quotes/{id}/services:
+    post:
+      tags: [quotes]
+      summary: Add quote service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteServiceRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdResponse'
+  /api/quotes/{id}/services/{serviceId}:
+    patch:
+      tags: [quotes]
+      summary: Update quote service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: serviceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuoteServiceRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+    delete:
+      tags: [quotes]
+      summary: Delete quote service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: serviceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No content
+
+  /api/media:
+    post:
+      tags: [media]
+      summary: Upload media
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaUploadRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaUploadResponse'
