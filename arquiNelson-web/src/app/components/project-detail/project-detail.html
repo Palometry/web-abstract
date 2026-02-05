@@ -34,28 +34,28 @@
       </div>
       <div class="hero-text">
         <h2>{{ project.title }}</h2>
-        <p class="location">Ubicacion: {{ project.location }}</p>
+        <p class="location">Ubicacion: {{ project.location || 'Por definir' }}</p>
       </div>
     </section>
 
     <section class="project-ficha">
       <h3>Ficha de datos</h3>
       <table class="ficha-table">
-        <tr><th>Promotor</th><td>{{ project.promoter }}</td></tr>
-        <tr><th>Estado</th><td>{{ project.status }}</td></tr>
-        <tr><th>Tipo</th><td>{{ project.type }}</td></tr>
-        <tr><th>Ubicacion</th><td>{{ project.location }}</td></tr>
-        <tr><th>Area del terreno</th><td>{{ project.landArea }}</td></tr>
-        <tr><th>Unidades</th><td>{{ project.units }}</td></tr>
-        <tr><th>Areas comunes</th><td>{{ project.amenities.join(', ') }}</td></tr>
-        <tr><th>Inicio de obra</th><td>{{ project.startYear }}</td></tr>
-        <tr><th>Entrega estimada</th><td>{{ project.deliveryYear }}</td></tr>
+        <tr><th>Promotor</th><td>{{ project.promoter || 'Por definir' }}</td></tr>
+        <tr><th>Estado</th><td>{{ project.status || 'Por definir' }}</td></tr>
+        <tr><th>Tipo</th><td>{{ project.type || 'Por definir' }}</td></tr>
+        <tr><th>Ubicacion</th><td>{{ project.location || 'Por definir' }}</td></tr>
+        <tr><th>Area del terreno</th><td>{{ project.landArea || '-' }}</td></tr>
+        <tr><th>Unidades</th><td>{{ project.units || '-' }}</td></tr>
+        <tr><th>Areas comunes</th><td>{{ project.amenities?.length ? project.amenities.join(', ') : 'Por definir' }}</td></tr>
+        <tr><th>Inicio de obra</th><td>{{ project.startYear || '-' }}</td></tr>
+        <tr><th>Entrega estimada</th><td>{{ project.deliveryYear || '-' }}</td></tr>
       </table>
     </section>
 
     <section class="project-description">
       <h3>Descripcion</h3>
-      <p>{{ project.description }}</p>
+      <p>{{ project.description || 'Sin descripcion.' }}</p>
     </section>
 
     @if (project.mapUrl || mapEmbedSafeUrl) {

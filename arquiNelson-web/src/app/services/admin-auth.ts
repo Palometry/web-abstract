@@ -2,6 +2,7 @@ import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from './api-config';
 
 type StoredUser = {
   id: number;
@@ -24,7 +25,7 @@ export class AdminAuthService {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly userSignal = signal<AdminUser | null>(null);
   private readonly http = inject(HttpClient);
-  private readonly apiBaseUrl = 'http://localhost:4001/api';
+  private readonly apiBaseUrl = API_BASE_URL;
 
   constructor() {
     this.restoreSession();

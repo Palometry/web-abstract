@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 
 interface Service {
   id: number;
-  icon: string;
+  icon?: string | null;
   title: string;
   description: string;
   url?: string;

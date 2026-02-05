@@ -75,7 +75,8 @@ export class AdminPortfolioDetailComponent implements OnInit {
     }
     this.route.paramMap.subscribe((params) => {
       const rawId = params.get('id');
-      if (rawId === 'new') {
+      const isNewRoute = rawId === 'new' || (!rawId && this.router.url.endsWith('/portfolio/new'));
+      if (isNewRoute) {
         this.isCreate = true;
         this.entryId = 0;
         this.loadCreateData();

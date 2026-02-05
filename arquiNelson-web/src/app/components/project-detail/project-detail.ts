@@ -1,5 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { PublicProjectsService, PublicProject } from '../../services/public-projects';
 import { ProjectService, ProjectData } from '../../services/project';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -20,7 +21,8 @@ type HousePlan = {
   styleUrl: './project-detail.scss'
 })
 export class ProjectDetailComponent implements OnInit, OnDestroy {
-  project: ProjectData | undefined;
+  private readonly fallbackImage = '/LOGO.jpg';
+  project: PublicProject | ProjectData | undefined;
   bannerImages: string[] = [];
   currentBannerIndex = 0;
   housePlans: HousePlan[] = [];
@@ -34,21 +36,42 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
-    private projectService: ProjectService,
-    private sanitizer: DomSanitizer
+    private projectService: PublicProjectsService,
+    private legacyProjectService: ProjectService,
+    private sanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    this.sub = this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-      // Reset before loading the next project to avoid showing stale data
+    this.sub = this.route.paramMap.subscribe(async (params) => {
+      const rawId = params.get('id');
       this.project = undefined;
-      if (id) {
-        this.project = this.projectService.getProjectById(id) ?? undefined;
+      if (rawId) {
+        const id = Number(rawId);
+        if (Number.isFinite(id)) {
+          const project = await this.projectService.getProjectById(id);
+          if (project) {
+            if (!project.image) {
+              project.image = this.fallbackImage;
+            }
+            if (!project.thumbImage) {
+              project.thumbImage = project.image || this.fallbackImage;
+            }
+          }
+          this.project = project ?? undefined;
+        } else {
+          const legacy = this.legacyProjectService.getProjectById(rawId) ?? undefined;
+          if (legacy) {
+            legacy.image = legacy.image || this.fallbackImage;
+            legacy.thumbImage = legacy.thumbImage || legacy.image || this.fallbackImage;
+          }
+          this.project = legacy;
+        }
       }
       this.setupBanner();
       this.setupHousePlans();
       this.setupMap();
+      this.cdr.detectChanges();
     });
   }
 
