@@ -248,6 +248,16 @@ export type AdminService = {
   isActive: boolean;
 };
 
+export type AdminServiceListItem = {
+  id: number;
+  name: string;
+  description: string;
+  public: boolean;
+  isActive: boolean;
+};
+
+export type AdminServiceDetail = AdminService;
+
 export type AdminDashboardActivity = {
   type: string;
   message: string;
@@ -974,11 +984,18 @@ export class AdminDataService {
     }
   }
 
-  async getServices(): Promise<AdminService[]> {
+  async getServices(): Promise<AdminServiceListItem[]> {
     if (!this.isBrowser) {
       return [];
     }
-    return this.safeGet<AdminService[]>(`${this.apiBaseUrl}/services`, []);
+    return this.safeGet<AdminServiceListItem[]>(`${this.apiBaseUrl}/services`, []);
+  }
+
+  async getServiceDetail(serviceId: number): Promise<AdminServiceDetail | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    return this.safeGet<AdminServiceDetail | null>(`${this.apiBaseUrl}/services/${serviceId}`, null);
   }
 
   async getDashboard(): Promise<AdminDashboardData> {

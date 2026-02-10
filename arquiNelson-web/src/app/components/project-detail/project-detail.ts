@@ -192,14 +192,87 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   }
 
   private setupMap() {
-    if (this.project?.mapEmbedUrl) {
-      this.mapEmbedSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
-        this.project.mapEmbedUrl
-      );
+    if (!this.project) {
+      this.mapEmbedSafeUrl = null;
+      return;
+    }
+
+    const embedUrl =
+      this.extractIframeSrc(this.project.mapEmbedUrl) ||
+      this.buildEmbedUrlFromMapUrl(this.project.mapUrl);
+
+    if (embedUrl) {
+      this.mapEmbedSafeUrl =
+        this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
       return;
     }
 
     this.mapEmbedSafeUrl = null;
+  }
+
+  private extractIframeSrc(value?: string | null): string | null {
+    if (!value) {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    if (!trimmed.toLowerCase().includes('<iframe')) {
+      return trimmed;
+    }
+    const match = trimmed.match(/src=["']([^"']+)["']/i);
+    return match?.[1]?.trim() ?? null;
+  }
+
+  private buildEmbedUrlFromMapUrl(mapUrl?: string | null): string | null {
+    if (!mapUrl) {
+      return null;
+    }
+
+    const trimmed = mapUrl.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (trimmed.toLowerCase().includes('<iframe')) {
+      const match = trimmed.match(/src=["']([^"']+)["']/i);
+      if (match?.[1]) {
+        mapUrl = match[1].trim();
+      }
+    }
+
+    try {
+      const url = new URL(mapUrl);
+      if (url.hostname.includes('google.com') && url.pathname.includes('/maps/embed')) {
+        return url.toString();
+      }
+      if (url.hostname.includes('google.com')) {
+        const placeMatch = url.pathname.match(/\/place\/([^/]+)/i);
+        if (placeMatch?.[1]) {
+          return `https://www.google.com/maps?q=${encodeURIComponent(
+            decodeURIComponent(placeMatch[1])
+          )}&output=embed`;
+        }
+
+        const query = url.searchParams.get('q');
+        if (query) {
+          return `https://www.google.com/maps?q=${encodeURIComponent(
+            query
+          )}&output=embed`;
+        }
+      }
+
+      if (url.hostname.includes('maps.app.goo.gl') || url.hostname.includes('goo.gl')) {
+        return `https://www.google.com/maps?q=${encodeURIComponent(
+          mapUrl
+        )}&output=embed`;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
   }
 
 }

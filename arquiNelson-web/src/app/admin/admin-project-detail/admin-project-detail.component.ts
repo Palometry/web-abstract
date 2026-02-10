@@ -34,6 +34,8 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
   uploading = false;
   imageUploadStates: Record<number, boolean> = {};
   error = '';
+  successMessage = '';
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private loaded = false;
   private readonly isBrowser: boolean;
 
@@ -172,22 +174,26 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     }
     this.saving = true;
     this.error = '';
-    const result = await this.data.updateProject(this.project.id, {
-      name,
-      clientName,
-      address,
-      description: this.draft.description || null,
-      status: this.draft.status,
-      startDate: this.draft.startDate || null,
-      endDate: this.draft.endDate || null,
-      details: this.buildDetailsPayload()
-    });
-    this.saving = false;
-    if (!result.ok) {
-      this.error = result.error ?? 'No se pudo guardar el proyecto.';
-      return;
+    try {
+      const result = await this.data.updateProject(this.project.id, {
+        name,
+        clientName,
+        address,
+        description: this.draft.description || null,
+        status: this.draft.status,
+        startDate: this.draft.startDate || null,
+        endDate: this.draft.endDate || null,
+        details: this.buildDetailsPayload()
+      });
+      if (!result.ok) {
+        this.error = result.error ?? 'No se pudo guardar el proyecto.';
+        return;
+      }
+      await this.loadProject();
+      this.showToast('Proyecto actualizado.');
+    } finally {
+      this.saving = false;
     }
-    await this.loadProject();
   }
 
   async addImage() {
@@ -304,6 +310,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
         return;
       }
       await this.loadProject();
+      this.showToast('Portafolio actualizado.');
       return;
     }
 
@@ -317,6 +324,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       return;
     }
     await this.loadProject();
+    this.showToast('Portafolio actualizado.');
   }
 
   async uploadDetailImage(event: Event, field: keyof typeof this.detailsDraft) {
@@ -419,6 +427,18 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     return trimmed ? trimmed : null;
   }
 
+  private extractIframeSrc(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return '';
+    }
+    if (!trimmed.toLowerCase().includes('<iframe')) {
+      return trimmed;
+    }
+    const match = trimmed.match(/src=["']([^"']+)["']/i);
+    return match?.[1]?.trim() ?? '';
+  }
+
   private parseHouseModels(text: string) {
     return this.splitLines(text)
       .map((line) => line.split('|').map((part) => part.trim()))
@@ -463,6 +483,8 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     const houseModels = this.parseHouseModels(this.detailsDraft.houseModelsText);
     const housePlans = this.parseHousePlans(this.detailsDraft.housePlansText);
     const lots = this.parseLots(this.detailsDraft.lotsText);
+    const mapUrl = this.extractIframeSrc(this.detailsDraft.mapUrl);
+    const mapEmbedUrl = this.extractIframeSrc(this.detailsDraft.mapEmbedUrl);
 
     return {
       shortDesc: this.nullIfEmpty(this.detailsDraft.shortDesc),
@@ -475,8 +497,8 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       amenities,
       startYear: this.detailsDraft.startYear ? Number(this.detailsDraft.startYear) : null,
       deliveryYear: this.detailsDraft.deliveryYear ? Number(this.detailsDraft.deliveryYear) : null,
-      mapUrl: this.nullIfEmpty(this.detailsDraft.mapUrl),
-      mapEmbedUrl: this.nullIfEmpty(this.detailsDraft.mapEmbedUrl),
+      mapUrl: this.nullIfEmpty(mapUrl),
+      mapEmbedUrl: this.nullIfEmpty(mapEmbedUrl),
       masterplanImage: this.nullIfEmpty(this.detailsDraft.masterplanImage),
       bannerImages,
       gallery,
@@ -517,5 +539,18 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
         ? details.lots.map((l) => `${l.id} | ${l.area} | ${l.status}`).join('\n')
         : ''
     };
+  }
+
+  private showToast(message: string) {
+    this.successMessage = message;
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
+    this.toastTimer = setTimeout(() => {
+      this.successMessage = '';
+      this.toastTimer = null;
+      this.cdr.detectChanges();
+    }, 3000);
+    this.cdr.detectChanges();
   }
 }

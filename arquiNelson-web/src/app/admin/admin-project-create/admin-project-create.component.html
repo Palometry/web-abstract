@@ -29,6 +29,7 @@
     </button>
   </div>
 
+  <div class="toast" *ngIf="successMessage">{{ successMessage }}</div>
   <p class="error" *ngIf="error">{{ error }}</p>
   <p class="hint" *ngIf="loading">Cargando proyecto...</p>
 
@@ -78,18 +79,25 @@
         <input type="text" [(ngModel)]="detailsDraft.shortDesc" />
       </label>
       <label>
-        Ubicación (texto)
+        <!-- Direccion -->
+        Ubicación (texto) 
         <input type="text" [(ngModel)]="detailsDraft.location" />
       </label>
       <label>
+      ||<!--Cliente -->
         Promotor
         <input type="text" [(ngModel)]="detailsDraft.promoter" />
       </label>
       <label>
+        <!--Tipo de edificacion (Vivienda, ...)-->
+        <!-- Habilitaciones Urbanas(Industriales, ...)-->
         Estado público
         <input type="text" [(ngModel)]="detailsDraft.publicStatus" />
       </label>
+      <!--Subclase 1 -->
+      <!--Subclase 2-->
       <label>
+        <!-- -->
         Tipo público
         <input type="text" [(ngModel)]="detailsDraft.publicType" />
       </label>

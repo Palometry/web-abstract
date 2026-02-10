@@ -11,6 +11,7 @@
     </button>
   </div>
 
+  <div class="toast" *ngIf="successMessage">{{ successMessage }}</div>
   <p class="error" *ngIf="error">{{ error }}</p>
 
   <div class="panel" *ngIf="project">

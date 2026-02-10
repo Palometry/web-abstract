@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -23,7 +23,8 @@ export class AdminLoginComponent implements OnInit {
   constructor(
     private auth: AdminAuthService,
     private data: AdminDataService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -50,5 +51,6 @@ export class AdminLoginComponent implements OnInit {
     this.statsLoading = true;
     this.stats = await this.data.getPublicDashboardStats();
     this.statsLoading = false;
+    this.cdr.detectChanges();
   }
 }

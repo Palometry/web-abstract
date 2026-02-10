@@ -36,7 +36,17 @@ export class AdminAuthService {
   }
 
   isLoggedIn(): boolean {
-    return this.userSignal() !== null || this.hasToken();
+    const token = this.getToken();
+    if (!token) {
+      this.userSignal.set(null);
+      return false;
+    }
+    if (this.isTokenExpired(token)) {
+      this.clearToken();
+      this.userSignal.set(null);
+      return false;
+    }
+    return this.userSignal() !== null || true;
   }
 
   canManageUsers(): boolean {
@@ -149,6 +159,11 @@ export class AdminAuthService {
     if (!token) {
       return;
     }
+    if (this.isTokenExpired(token)) {
+      this.clearToken();
+      this.userSignal.set(null);
+      return;
+    }
     try {
       const response = await firstValueFrom(
         this.http.get<AdminUser & { isActive?: boolean }>(`${this.apiBaseUrl}/auth/me`, {
@@ -179,6 +194,32 @@ export class AdminAuthService {
       return null;
     }
     return localStorage.getItem(STORAGE_KEYS.token);
+  }
+
+  private isTokenExpired(token: string): boolean {
+    const payload = this.decodeTokenPayload(token);
+    if (!payload || typeof payload.exp !== 'number') {
+      return true;
+    }
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp <= now + 5;
+  }
+
+  private decodeTokenPayload(token: string): any | null {
+    const parts = token.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+    const payload = parts[1];
+    try {
+      const padded = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padLength = (4 - (padded.length % 4)) % 4;
+      const normalized = padded + '='.repeat(padLength);
+      const json = atob(normalized);
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
   }
 
   private setToken(token: string) {

@@ -1,9 +1,16 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminDataService, AdminService } from '../../services/admin-data';
+import {
+  AdminDataService,
+  AdminServiceDetail,
+  AdminServiceListItem
+} from '../../services/admin-data';
 
-type ServiceView = AdminService & {
+type ServiceView = AdminServiceListItem &
+  Partial<Omit<AdminServiceDetail, keyof AdminServiceListItem>> & {
+    detailsLoaded: boolean;
+  } & {
   draft: {
     name: string;
     description: string;
@@ -82,21 +89,20 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
     this.loading = true;
     try {
       const services = await this.data.getServices();
-      this.services = services.map((service) => ({
-        ...service,
-        draft: {
-          name: service.name,
-          description: service.description,
-          icon: service.icon ?? '',
-          displayOrder: service.displayOrder,
-          public: service.public,
-          isAddon: service.isAddon,
-          pricingType: service.pricingType,
-          price: service.price,
-          currency: service.currency,
-          isActive: service.isActive
-        }
-      }));
+      this.services = services.map((service) => {
+        const view: ServiceView = {
+          ...service,
+          icon: null,
+          displayOrder: 0,
+          isAddon: false,
+          pricingType: 'flat',
+          price: 0,
+          currency: 'PEN',
+          detailsLoaded: false,
+          draft: this.buildDraft(service)
+        };
+        return view;
+      });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -151,9 +157,22 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
     await this.loadServices();
   }
 
-  startEdit(service: ServiceView) {
+  async startEdit(service: ServiceView) {
+    this.error = '';
+    if (!service.detailsLoaded) {
+      this.saving = true;
+      const detail = await this.data.getServiceDetail(service.id);
+      this.saving = false;
+      if (!detail) {
+        this.error = 'No se pudo cargar el detalle del servicio.';
+        this.cdr.detectChanges();
+        return;
+      }
+      Object.assign(service, detail, { detailsLoaded: true });
+    }
     this.editingId = service.id;
     this.resetDraft(service);
+    this.cdr.detectChanges();
   }
 
   cancelEdit(service: ServiceView) {
@@ -222,17 +241,25 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
   }
 
   private resetDraft(service: ServiceView) {
-    service.draft = {
+    service.draft = this.buildDraft(service);
+  }
+
+  private buildDraft(service: Partial<AdminServiceDetail> & AdminServiceListItem) {
+    return {
       name: service.name,
       description: service.description,
       icon: service.icon ?? '',
-      displayOrder: service.displayOrder,
+      displayOrder:
+        typeof service.displayOrder === 'number' && Number.isFinite(service.displayOrder)
+          ? service.displayOrder
+          : 0,
       public: service.public,
-      isAddon: service.isAddon,
-      pricingType: service.pricingType,
-      price: service.price,
-      currency: service.currency,
-      isActive: service.isActive
+      isAddon: service.isAddon ?? false,
+      pricingType: service.pricingType ?? 'flat',
+      price:
+        typeof service.price === 'number' && Number.isFinite(service.price) ? service.price : 0,
+      currency: service.currency ?? 'PEN',
+      isActive: typeof service.isActive === 'boolean' ? service.isActive : true
     };
   }
 
