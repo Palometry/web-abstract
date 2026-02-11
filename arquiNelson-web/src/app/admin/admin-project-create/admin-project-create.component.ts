@@ -19,6 +19,15 @@ type ProjectImageView = AdminProjectImage & {
   };
 };
 
+type HouseModelDraft = {
+  name: string;
+  description: string;
+  rooms: string;
+  featuresText: string;
+  images: string[];
+  newImageUrl: string;
+};
+
 @Component({
   selector: 'app-admin-project-create',
   standalone: true,
@@ -65,7 +74,6 @@ export class AdminProjectCreateComponent {
     bannerImagesText: '',
     galleryText: '',
     enjoyAreasText: '',
-    houseModelsText: '',
     housePlansText: '',
     lotsText: ''
   };
@@ -77,6 +85,10 @@ export class AdminProjectCreateComponent {
     isCover: false,
     sortOrder: 0
   };
+
+  houseModels: HouseModelDraft[] = [];
+  activeHouseModelIndex = 0;
+  activeHouseImageIndex = 0;
 
   portfolioDraft = {
     enabled: false,
@@ -370,25 +382,11 @@ export class AdminProjectCreateComponent {
   }
 
   async appendHouseModelImage(event: Event) {
-    const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) {
+    const model = this.activeHouseModel;
+    if (!model) {
       return;
     }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: file.name });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
-      return;
-    }
-    const line = `Modelo | Descripcion | ${result.fileUrl}`;
-    this.detailsDraft.houseModelsText = this.detailsDraft.houseModelsText
-      ? `${this.detailsDraft.houseModelsText}\n${line}`
-      : line;
-    if (input) {
-      input.value = '';
-    }
+    await this.uploadHouseModelImage(model, event);
   }
 
   async appendHousePlanImage(event: Event) {
@@ -411,6 +409,178 @@ export class AdminProjectCreateComponent {
     if (input) {
       input.value = '';
     }
+  }
+
+  get activeHouseModel(): HouseModelDraft | null {
+    if (!this.houseModels.length) {
+      return null;
+    }
+    return this.houseModels[this.activeHouseModelIndex] ?? this.houseModels[0];
+  }
+
+  get activeHouseImage(): string | null {
+    const model = this.activeHouseModel;
+    if (!model || !model.images.length) {
+      return null;
+    }
+    return model.images[this.activeHouseImageIndex] ?? model.images[0];
+  }
+
+  getHouseModelFeatures(model: HouseModelDraft): string[] {
+    return this.splitLines(model.featuresText);
+  }
+
+  selectHouseModel(index: number) {
+    if (index < 0 || index >= this.houseModels.length) {
+      return;
+    }
+    this.activeHouseModelIndex = index;
+    this.activeHouseImageIndex = 0;
+  }
+
+  addHouseModel() {
+    this.houseModels.push({
+      name: '',
+      description: '',
+      rooms: '',
+      featuresText: '',
+      images: [],
+      newImageUrl: ''
+    });
+    this.activeHouseModelIndex = this.houseModels.length - 1;
+    this.activeHouseImageIndex = 0;
+  }
+
+  removeHouseModel(index: number) {
+    if (index < 0 || index >= this.houseModels.length) {
+      return;
+    }
+    this.houseModels.splice(index, 1);
+    if (this.activeHouseModelIndex >= this.houseModels.length) {
+      this.activeHouseModelIndex = Math.max(0, this.houseModels.length - 1);
+    }
+    this.activeHouseImageIndex = 0;
+  }
+
+  addHouseModelImageUrl(model: HouseModelDraft) {
+    const url = model.newImageUrl.trim();
+    if (!url) {
+      return;
+    }
+    model.images.push(url);
+    model.newImageUrl = '';
+    this.activeHouseImageIndex = 0;
+  }
+
+  async uploadHouseModelImage(model: HouseModelDraft, event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.uploading = true;
+    const result = await this.data.uploadMedia(file, { title: file.name });
+    this.uploading = false;
+    if (!result.ok || !result.fileUrl) {
+      this.error = result.error ?? 'No se pudo subir la imagen.';
+      return;
+    }
+    model.images.push(result.fileUrl);
+    this.activeHouseImageIndex = 0;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  removeHouseModelImage(model: HouseModelDraft, index: number) {
+    if (index < 0 || index >= model.images.length) {
+      return;
+    }
+    model.images.splice(index, 1);
+    if (this.activeHouseImageIndex >= model.images.length) {
+      this.activeHouseImageIndex = 0;
+    }
+  }
+
+  nextHouseImage() {
+    const model = this.activeHouseModel;
+    if (!model || !model.images.length) {
+      return;
+    }
+    this.activeHouseImageIndex = (this.activeHouseImageIndex + 1) % model.images.length;
+  }
+
+  prevHouseImage() {
+    const model = this.activeHouseModel;
+    if (!model || !model.images.length) {
+      return;
+    }
+    this.activeHouseImageIndex =
+      (this.activeHouseImageIndex - 1 + model.images.length) % model.images.length;
+  }
+
+  goToHouseImage(index: number) {
+    const model = this.activeHouseModel;
+    if (!model || !model.images.length) {
+      return;
+    }
+    if (index >= 0 && index < model.images.length) {
+      this.activeHouseImageIndex = index;
+    }
+  }
+
+  private buildHouseModelsPayload() {
+    return this.houseModels
+      .map((model) => {
+        const name = model.name.trim();
+        if (!name) {
+          return null;
+        }
+        const images = model.images.map((img) => img.trim()).filter(Boolean);
+        const roomsValue = model.rooms ? Number(model.rooms) : null;
+        return {
+          name,
+          description: this.nullIfEmpty(model.description),
+          rooms: roomsValue !== null && Number.isFinite(roomsValue) ? roomsValue : null,
+          features: this.splitLines(model.featuresText),
+          images
+        };
+      })
+      .filter(
+        (
+          model
+        ): model is {
+          name: string;
+          description: string | null;
+          rooms: number | null;
+          features: string[];
+          images: string[];
+        } => Boolean(model)
+      );
+  }
+
+  private normalizeHouseModels(models?: AdminProjectDetails['houseModels'] | null): HouseModelDraft[] {
+    if (!models?.length) {
+      return [];
+    }
+    return models.map((model) => {
+      const images = Array.isArray(model.images)
+        ? model.images
+        : model.image
+          ? [model.image]
+          : [];
+      const features = Array.isArray(model.features) ? model.features : [];
+      const rooms =
+        model.rooms !== undefined && model.rooms !== null ? String(model.rooms) : '';
+      return {
+        name: model.name ?? '',
+        description: model.description ?? '',
+        rooms,
+        featuresText: features.join('\n'),
+        images: images.filter(Boolean),
+        newImageUrl: ''
+      };
+    });
   }
 
   private splitLines(value: string): string[] {
@@ -439,17 +609,6 @@ export class AdminProjectCreateComponent {
     }
     const match = trimmed.match(/src=["']([^"']+)["']/i);
     return match?.[1]?.trim() ?? '';
-  }
-
-  private parseHouseModels(text: string) {
-    return this.splitLines(text)
-      .map((line) => line.split('|').map((part) => part.trim()))
-      .filter((parts) => parts[0])
-      .map((parts) => ({
-        name: parts[0] ?? '',
-        description: parts[1] ?? '',
-        image: parts[2] ?? ''
-      }));
   }
 
   private parseHousePlans(text: string) {
@@ -482,7 +641,7 @@ export class AdminProjectCreateComponent {
     const bannerImages = this.splitLines(this.detailsDraft.bannerImagesText);
     const gallery = this.splitLines(this.detailsDraft.galleryText);
     const enjoyAreas = this.splitLines(this.detailsDraft.enjoyAreasText);
-    const houseModels = this.parseHouseModels(this.detailsDraft.houseModelsText);
+    const houseModels = this.buildHouseModelsPayload();
     const housePlans = this.parseHousePlans(this.detailsDraft.housePlansText);
     const lots = this.parseLots(this.detailsDraft.lotsText);
     const mapUrl = this.extractIframeSrc(this.detailsDraft.mapUrl);
@@ -542,9 +701,6 @@ export class AdminProjectCreateComponent {
       bannerImagesText: this.joinLines(details?.bannerImages),
       galleryText: this.joinLines(details?.gallery),
       enjoyAreasText: this.joinLines(details?.enjoyAreas),
-      houseModelsText: details?.houseModels?.length
-        ? details.houseModels.map((m) => `${m.name} | ${m.description} | ${m.image}`).join('\n')
-        : '',
       housePlansText: details?.housePlans?.length
         ? details.housePlans
             .map((p) => `${p.name} | ${p.ambientes} | ${p.totalArea} | ${p.coveredArea} | ${p.image}`)
@@ -554,5 +710,8 @@ export class AdminProjectCreateComponent {
         ? details.lots.map((l) => `${l.id} | ${l.area} | ${l.status}`).join('\n')
         : ''
     };
+    this.houseModels = this.normalizeHouseModels(details?.houseModels);
+    this.activeHouseModelIndex = 0;
+    this.activeHouseImageIndex = 0;
   }
 }

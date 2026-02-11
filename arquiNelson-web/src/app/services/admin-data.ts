@@ -68,7 +68,14 @@ export type AdminProjectDetails = {
   masterplanImage?: string | null;
   gallery?: string[];
   enjoyAreas?: string[];
-  houseModels?: { name: string; description: string; image: string }[];
+  houseModels?: {
+    name: string;
+    description?: string | null;
+    rooms?: number | null;
+    features?: string[];
+    images?: string[];
+    image?: string | null;
+  }[];
   housePlans?: {
     name: string;
     ambientes: number;
@@ -107,7 +114,7 @@ export type AdminPortfolioEntryDetail = {
 
 export type AdminPortfolioEntry = {
   id: number;
-  projectId: number;
+  projectId: number | null;
   order: number;
   project: string;
   visible: boolean;
@@ -145,7 +152,7 @@ export type AdminPortfolioBlock = {
 
 export type AdminPortfolioDetail = {
   id: number;
-  projectId: number;
+  projectId: number | null;
   projectName: string | null;
   titleOverride: string | null;
   category: string | null;
@@ -745,6 +752,35 @@ export class AdminDataService {
     );
   }
 
+  async createPortfolioEntry(payload: {
+    projectId?: number | null;
+    titleOverride: string;
+    category?: string | null;
+    summary?: string | null;
+    sortOrder?: number;
+    isVisible?: boolean;
+  }): Promise<{ ok: boolean; id?: number; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ id: number }>(`${this.apiBaseUrl}/portfolio`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true, id: response.id };
+    } catch (error: any) {
+      if (error?.status === 422) {
+        return { ok: false, error: 'El titulo es obligatorio.' };
+      }
+      if (error?.status === 404) {
+        return { ok: false, error: 'Proyecto no encontrado.' };
+      }
+      return { ok: false, error: 'No se pudo crear el portafolio.' };
+    }
+  }
+
   async updatePortfolioEntry(
     entryId: number,
     payload: {
@@ -781,6 +817,22 @@ export class AdminDataService {
       return { ok: true };
     } catch {
       return { ok: false, error: 'No se pudo actualizar el portafolio.' };
+    }
+  }
+
+  async deletePortfolioEntry(entryId: number): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiBaseUrl}/portfolio/${entryId}`, {
+          headers: this.authHeaders()
+        })
+      );
+      return true;
+    } catch {
+      return false;
     }
   }
 

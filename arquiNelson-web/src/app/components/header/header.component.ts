@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, HostListener, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ProjectService, ProjectData } from '../../services/project';
 
@@ -13,9 +13,16 @@ import { ProjectService, ProjectData } from '../../services/project';
 export class HeaderComponent {
   isMenuOpen = false;
   projects: ProjectData[] = [];
+  isExpanded = true;
+  private readonly isBrowser: boolean;
 
-  constructor(private projectService: ProjectService) {
+  constructor(
+    private projectService: ProjectService,
+    @Inject(PLATFORM_ID) platformId: object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
     this.projects = this.projectService.getProjects();
+    this.updateExpanded();
   }
 
   toggleMenu() {
@@ -24,6 +31,18 @@ export class HeaderComponent {
 
   closeMenu() {
     this.isMenuOpen = false;
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll() {
+    this.updateExpanded();
+  }
+
+  private updateExpanded() {
+    if (!this.isBrowser) {
+      return;
+    }
+    this.isExpanded = window.scrollY < 40;
   }
 
   menuItems = [

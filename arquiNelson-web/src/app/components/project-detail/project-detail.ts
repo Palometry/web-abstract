@@ -14,6 +14,14 @@ type HousePlan = {
   image: string;
 };
 
+type HouseModelView = {
+  name: string;
+  description: string;
+  rooms: number | null;
+  features: string[];
+  images: string[];
+};
+
 @Component({
   selector: 'app-project-detail',
   imports: [RouterLink, CommonModule],
@@ -21,7 +29,7 @@ type HousePlan = {
   styleUrl: './project-detail.scss'
 })
 export class ProjectDetailComponent implements OnInit, OnDestroy {
-  private readonly fallbackImage = '/LOGO.jpg';
+  readonly fallbackImage = '/LOGO.jpg';
   project: PublicProject | ProjectData | undefined;
   bannerImages: string[] = [];
   currentBannerIndex = 0;
@@ -30,7 +38,11 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   planOptions: number[] = [];
   selectedAmbientes = 0;
   currentPlanIndex = 0;
+  houseModels: HouseModelView[] = [];
+  activeHouseModelIndex = 0;
+  activeHouseImageIndex = 0;
   mapEmbedSafeUrl: SafeResourceUrl | null = null;
+  fichaExpanded = false;
   private sub?: Subscription;
   private bannerTimer?: ReturnType<typeof setInterval>;
 
@@ -70,6 +82,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       }
       this.setupBanner();
       this.setupHousePlans();
+      this.setupHouseModels();
       this.setupMap();
       this.cdr.detectChanges();
     });
@@ -97,6 +110,59 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   goToBanner(index: number) {
     if (index >= 0 && index < this.bannerImages.length) {
       this.currentBannerIndex = index;
+    }
+  }
+
+  get activeHouseModel(): HouseModelView | null {
+    if (!this.houseModels.length) {
+      return null;
+    }
+    return this.houseModels[this.activeHouseModelIndex] ?? this.houseModels[0];
+  }
+
+  get activeHouseImage(): string | null {
+    const model = this.activeHouseModel;
+    if (!model) {
+      return null;
+    }
+    if (!model.images.length) {
+      return this.fallbackImage;
+    }
+    return model.images[this.activeHouseImageIndex] ?? model.images[0];
+  }
+
+  selectHouseModel(index: number) {
+    if (index < 0 || index >= this.houseModels.length) {
+      return;
+    }
+    this.activeHouseModelIndex = index;
+    this.activeHouseImageIndex = 0;
+  }
+
+  nextHouseImage() {
+    const model = this.activeHouseModel;
+    if (!model || !model.images.length) {
+      return;
+    }
+    this.activeHouseImageIndex = (this.activeHouseImageIndex + 1) % model.images.length;
+  }
+
+  prevHouseImage() {
+    const model = this.activeHouseModel;
+    if (!model || !model.images.length) {
+      return;
+    }
+    this.activeHouseImageIndex =
+      (this.activeHouseImageIndex - 1 + model.images.length) % model.images.length;
+  }
+
+  goToHouseImage(index: number) {
+    const model = this.activeHouseModel;
+    if (!model || !model.images.length) {
+      return;
+    }
+    if (index >= 0 && index < model.images.length) {
+      this.activeHouseImageIndex = index;
     }
   }
 
@@ -129,6 +195,10 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedAmbientes = Number(value);
     this.applyPlanFilter();
+  }
+
+  toggleFicha() {
+    this.fichaExpanded = !this.fichaExpanded;
   }
 
   ngOnDestroy() {
@@ -171,6 +241,47 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     this.planOptions = [];
     this.selectedAmbientes = 0;
     this.currentPlanIndex = 0;
+  }
+
+  private setupHouseModels() {
+    this.houseModels = this.normalizeHouseModels(this.project?.houseModels);
+    this.activeHouseModelIndex = 0;
+    this.activeHouseImageIndex = 0;
+  }
+
+  private normalizeHouseModels(
+    models?: PublicProject['houseModels'] | ProjectData['houseModels'] | null
+  ): HouseModelView[] {
+    if (!models?.length) {
+      return [];
+    }
+    return models
+      .map((model) => {
+        const name = model.name?.trim() ?? '';
+        if (!name) {
+          return null;
+        }
+        const imageList = Array.isArray((model as any).images) ? (model as any).images : [];
+        const images =
+          imageList.length > 0
+            ? imageList
+            : model.image
+              ? [model.image]
+              : [];
+        const roomsRaw = (model as any).rooms;
+        const rooms =
+          roomsRaw === undefined || roomsRaw === null || roomsRaw === ''
+            ? null
+            : Number(roomsRaw);
+        return {
+          name,
+          description: model.description ?? '',
+          rooms: Number.isFinite(rooms) ? rooms : null,
+          features: Array.isArray((model as any).features) ? (model as any).features : [],
+          images: images.filter(Boolean)
+        };
+      })
+      .filter(Boolean) as HouseModelView[];
   }
 
   private applyPlanFilter() {

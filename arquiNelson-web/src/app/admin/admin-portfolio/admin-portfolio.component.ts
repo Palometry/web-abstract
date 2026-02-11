@@ -72,8 +72,14 @@ export class AdminPortfolioComponent implements OnInit, AfterViewInit {
   async saveEntry(entry: PortfolioEntryView) {
     this.saving = true;
     this.error = '';
-    const result = await this.data.updateProjectPortfolio(entry.projectId, {
-      titleOverride: entry.draft.titleOverride.trim() || null,
+    const titleOverride = entry.draft.titleOverride.trim() || null;
+    if (!entry.projectId && !titleOverride) {
+      this.saving = false;
+      this.error = 'El titulo es obligatorio para entradas sin proyecto.';
+      return;
+    }
+    const result = await this.data.updatePortfolioEntry(entry.id, {
+      titleOverride,
       sortOrder: entry.draft.sortOrder,
       isVisible: entry.draft.isVisible
     });
@@ -86,13 +92,17 @@ export class AdminPortfolioComponent implements OnInit, AfterViewInit {
   }
 
   async removeEntry(entry: PortfolioEntryView) {
-    const confirmed = confirm('Quitar este proyecto del portafolio?');
+    const confirmed = confirm(
+      entry.projectId ? 'Quitar este proyecto del portafolio?' : 'Eliminar este portafolio?'
+    );
     if (!confirmed) {
       return;
     }
     this.saving = true;
     this.error = '';
-    const ok = await this.data.removeProjectPortfolio(entry.projectId);
+    const ok = entry.projectId
+      ? await this.data.removeProjectPortfolio(entry.projectId)
+      : await this.data.deletePortfolioEntry(entry.id);
     this.saving = false;
     if (!ok) {
       this.error = 'No se pudo quitar del portafolio.';

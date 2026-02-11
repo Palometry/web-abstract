@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AdminDataService, AdminPricingRateOption } from '../../services/admin-data';
@@ -11,11 +11,13 @@ import { AdminDataService, AdminPricingRateOption } from '../../services/admin-d
   templateUrl: './admin-quote-create.component.html',
   styleUrls: ['./admin-quote-create.component.scss']
 })
-export class AdminQuoteCreateComponent implements OnInit {
+export class AdminQuoteCreateComponent implements OnInit, AfterViewInit {
   saving = false;
   loading = false;
   error = '';
   rates: AdminPricingRateOption[] = [];
+  private loaded = false;
+  private readonly isBrowser: boolean;
   readonly todayLabel = new Date().toLocaleDateString('es-PE');
   readonly docTypes = [
     { value: 'DNI', label: 'DNI' },
@@ -47,10 +49,29 @@ export class AdminQuoteCreateComponent implements OnInit {
     notes: ''
   };
 
-  constructor(private data: AdminDataService, private router: Router) {}
+  constructor(
+    private data: AdminDataService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) platformId: object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit() {
-    this.loadOptions();
+    this.tryLoad();
+  }
+
+  ngAfterViewInit() {
+    this.tryLoad();
+  }
+
+  private async tryLoad() {
+    if (!this.isBrowser || this.loaded) {
+      return;
+    }
+    this.loaded = true;
+    await this.loadOptions();
   }
 
   private async loadOptions() {
@@ -59,14 +80,15 @@ export class AdminQuoteCreateComponent implements OnInit {
     try {
       const options = await this.data.getQuoteOptions();
       this.rates = options.pricingRates.filter((rate) => rate.isActive);
-      if (this.rates.length && !this.draft.pricingRateId) {
-        this.draft.pricingRateId = this.rates[0].id;
+      if (!this.draft.pricingRateId) {
+        this.draft.pricingRateId = null;
         this.onRateChange();
       }
     } catch {
       this.error = 'No se pudieron cargar las opciones. Verifica el backend.';
     } finally {
       this.loading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -78,7 +100,12 @@ export class AdminQuoteCreateComponent implements OnInit {
       this.draft.planName = selected.name;
       this.draft.planMinDays = selected.minDays ?? null;
       this.draft.planMaxDays = selected.maxDays ?? null;
+      return;
     }
+    this.draft.baseRatePerM2 = 0;
+    this.draft.planName = '';
+    this.draft.planMinDays = null;
+    this.draft.planMaxDays = null;
   }
 
   updateAreaCovered() {

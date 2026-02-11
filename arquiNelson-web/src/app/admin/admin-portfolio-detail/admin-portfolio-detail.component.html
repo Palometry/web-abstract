@@ -6,7 +6,7 @@
       <p>Administra el articulo y los elementos visibles en la web.</p>
       <p class="project-name" *ngIf="!isCreate && entry?.projectName">Proyecto base: {{ entry?.projectName }}</p>
     </div>
-    <button type="button" (click)="save()" [disabled]="saving || loading || (isCreate && !selectedProjectId)">
+    <button type="button" (click)="save()" [disabled]="saving || loading">
       {{ saving ? 'Guardando...' : (isCreate ? 'Crear' : 'Guardar cambios') }}
     </button>
   </header>
@@ -21,18 +21,6 @@
     <div class="panel">
       <h3>Informacion principal</h3>
       <div class="form-grid">
-        <label class="full" *ngIf="isCreate">
-          Proyecto base
-          <select [(ngModel)]="selectedProjectId">
-            <option [ngValue]="0">Selecciona un proyecto</option>
-            <option *ngFor="let project of availableProjects" [ngValue]="project.id">
-              {{ project.name }}
-            </option>
-          </select>
-        </label>
-        <p class="hint" *ngIf="isCreate && !availableProjects.length">
-          No hay proyectos disponibles para agregar al portafolio.
-        </p>
         <label>
           Titulo
           <input [(ngModel)]="form.titleOverride" placeholder="Titulo en portafolio" />

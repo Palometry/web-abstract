@@ -7,7 +7,14 @@ export interface ProjectData {
   image: string;
   thumbImage: string;
   masterplanImage?: string;
-  houseModels?: { name: string; description: string; image: string }[];
+  houseModels?: {
+    name: string;
+    description?: string;
+    rooms?: number;
+    features?: string[];
+    images?: string[];
+    image?: string;
+  }[];
   housePlans?: { name: string; ambientes: number; totalArea: string; coveredArea: string; image: string }[];
   autocad360Url?: string;
   mapUrl?: string;
@@ -55,16 +62,25 @@ export class ProjectService {
         {
           name: 'Modelo Aura',
           description: 'Distribucion eficiente para familias con patios amplios.',
+          rooms: 2,
+          features: ['Amplias mamparas', 'Excelente ventilacion', 'Distribucion flexible'],
+          images: ['img/1_3 - Photo.jpg', 'img/1_5 - Photo.jpg'],
           image: 'img/1_3 - Photo.jpg',
         },
         {
           name: 'Modelo Brisa',
           description: 'Espacios integrados y ventilacion cruzada para mayor confort.',
+          rooms: 3,
+          features: ['Sala comedor integrada', 'Cocina abierta', 'Patio interior'],
+          images: ['img/1_5 - Photo.jpg', 'img/1_6 - Photo.jpg'],
           image: 'img/1_5 - Photo.jpg',
         },
         {
           name: 'Modelo Rio',
           description: 'Propuesta flexible para ampliaciones y crecimiento familiar.',
+          rooms: 4,
+          features: ['Zona social amplia', 'Dormitorios ventilados', 'Espacio para ampliacion'],
+          images: ['img/1_6 - Photo.jpg', 'img/1_7 - Photo.jpg'],
           image: 'img/1_6 - Photo.jpg',
         },
       ],

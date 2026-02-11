@@ -1,5 +1,5 @@
 <section class="project-detail">
-  <a routerLink="/admin/projects" class="back-link">‚Üê Volver a proyectos</a>
+  <a routerLink="/admin/projects" class="back-link">? Volver a proyectos</a>
 
   <div class="header">
     <div>
@@ -53,10 +53,10 @@
   </div>
 
   <div class="panel" *ngIf="project">
-    <h3>Detalle p√∫blico del proyecto</h3>
+    <h3>Detalle p˙blico del proyecto</h3>
     <p class="hint">
       Completa estos campos para mostrar el proyecto como Fundo Bellaca. Los listados deben ir
-      separados por l√≠nea.
+      separados por lÌnea.
     </p>
     <div class="form-grid">
       <label class="wide">
@@ -72,11 +72,11 @@
         <input type="text" [(ngModel)]="detailsDraft.promoter" />
       </label>
       <label>
-        Estado p√∫blico
+        Estado p˙blico
         <input type="text" [(ngModel)]="detailsDraft.publicStatus" />
       </label>
       <label>
-        Tipo p√∫blico
+        Tipo p˙blico
         <input type="text" [(ngModel)]="detailsDraft.publicType" />
       </label>
       <label>
@@ -88,11 +88,11 @@
         <input type="number" [(ngModel)]="detailsDraft.units" />
       </label>
       <label>
-        A√±o inicio
+        AÒo inicio
         <input type="number" [(ngModel)]="detailsDraft.startYear" />
       </label>
       <label>
-        A√±o entrega
+        AÒo entrega
         <input type="number" [(ngModel)]="detailsDraft.deliveryYear" />
       </label>
       <label class="wide">
@@ -104,7 +104,7 @@
         <input type="text" [(ngModel)]="detailsDraft.mapEmbedUrl" />
       </label>
       <label class="wide">
-        Imagen masterplan / lotizaci√≥n
+        Imagen masterplan / lotizaciÛn
         <input type="text" [(ngModel)]="detailsDraft.masterplanImage" />
       </label>
       <label class="wide">
@@ -112,11 +112,11 @@
         <input type="file" accept="image/*" (change)="uploadDetailImage($event, 'masterplanImage')" />
       </label>
       <label class="wide">
-        Amenities / √Åreas comunes (una por l√≠¬≠nea)
+        Amenities / ¡reas comunes (una por lÌnea)
         <textarea rows="4" [(ngModel)]="detailsDraft.amenitiesText"></textarea>
       </label>
       <label class="wide">
-        Banner de im√°genes (una URL por l√≠nea)
+        Banner de im·genes (una URL por lÌnea)
         <textarea rows="4" [(ngModel)]="detailsDraft.bannerImagesText"></textarea>
       </label>
       <label class="wide">
@@ -124,25 +124,139 @@
         <input type="file" accept="image/*" (change)="appendDetailImage($event, 'bannerImagesText')" />
       </label>
       <label class="wide">
-        Galeria final (una URL por l√≠¬≠nea)
+        GalerÌa final (una URL por lÌnea)
         <textarea rows="4" [(ngModel)]="detailsDraft.galleryText"></textarea>
       </label>
       <label class="wide">
-        Subir imagen a galer√≠a final
+        Subir imagen a galerÌa final
         <input type="file" accept="image/*" (change)="appendDetailImage($event, 'galleryText')" />
       </label>
       <label class="wide">
-        Areas para disfrutar (una por l√≠nea)
+        ¡reas para disfrutar (una por lÌnea)
         <textarea rows="4" [(ngModel)]="detailsDraft.enjoyAreasText"></textarea>
       </label>
-      <label class="wide">
-        Modelos de casas (Nombre | Descripci√≥n | URL)
-        <textarea rows="4" [(ngModel)]="detailsDraft.houseModelsText"></textarea>
-      </label>
-      <label class="wide">
-        Subir imagen para modelo de casa
-        <input type="file" accept="image/*" (change)="appendHouseModelImage($event)" />
-      </label>
+      <div class="house-models wide">
+        <div class="house-header">
+          <h4>Modelos de casas</h4>
+          <button type="button" class="ghost" (click)="addHouseModel()">
+            Agregar modelo
+          </button>
+        </div>
+        <div class="house-tabs" *ngIf="houseModels.length; else emptyHouseModels">
+          <button
+            type="button"
+            *ngFor="let model of houseModels; let i = index"
+            [class.active]="i === activeHouseModelIndex"
+            (click)="selectHouseModel(i)"
+          >
+            <span class="tab-title">{{ model.name || ('Modelo ' + (i + 1)) }}</span>
+            <span class="tab-sub" *ngIf="model.rooms">{{ model.rooms }} hab.</span>
+            <span class="tab-remove" (click)="removeHouseModel(i); $event.stopPropagation()">
+              ◊
+            </span>
+          </button>
+        </div>
+        <ng-template #emptyHouseModels>
+          <p class="hint">Agrega los modelos que deseas mostrar.</p>
+        </ng-template>
+
+        <div class="house-editor" *ngIf="activeHouseModel as model">
+          <div class="form-grid">
+            <label>
+              Nombre del modelo
+              <input type="text" [(ngModel)]="model.name" />
+            </label>
+            <label>
+              Habitaciones
+              <input type="number" min="0" [(ngModel)]="model.rooms" />
+            </label>
+            <label class="wide">
+              DescripciÛn
+              <textarea rows="3" [(ngModel)]="model.description"></textarea>
+            </label>
+            <label class="wide">
+              CaracterÌsticas (una por lÌnea)
+              <textarea rows="4" [(ngModel)]="model.featuresText"></textarea>
+            </label>
+          </div>
+
+          <div class="house-images">
+            <div class="house-images-header">
+              <label class="wide">
+                Agregar imagen (URL)
+                <div class="inline-input">
+                  <input type="text" [(ngModel)]="model.newImageUrl" placeholder="https://..." />
+                  <button type="button" (click)="addHouseModelImageUrl(model)">Agregar</button>
+                </div>
+              </label>
+              <label class="wide">
+                Subir imagen (archivo)
+                <input type="file" accept="image/*" (change)="uploadHouseModelImage(model, $event)" />
+              </label>
+            </div>
+
+            <div class="house-gallery" *ngIf="model.images.length; else emptyHouseImages">
+              <div class="gallery-frame">
+                <img [src]="activeHouseImage" [alt]="model.name" />
+                <button
+                  class="gallery-nav prev"
+                  type="button"
+                  aria-label="Imagen anterior"
+                  (click)="prevHouseImage()"
+                  *ngIf="model.images.length > 1"
+                >
+                  &lt;
+                </button>
+                <button
+                  class="gallery-nav next"
+                  type="button"
+                  aria-label="Imagen siguiente"
+                  (click)="nextHouseImage()"
+                  *ngIf="model.images.length > 1"
+                >
+                  &gt;
+                </button>
+              </div>
+              <div class="gallery-dots" *ngIf="model.images.length > 1">
+                <button
+                  type="button"
+                  *ngFor="let img of model.images; let i = index"
+                  [class.active]="i === activeHouseImageIndex"
+                  (click)="goToHouseImage(i)"
+                  aria-label="Ir a imagen {{ i + 1 }}"
+                ></button>
+              </div>
+              <div class="gallery-list">
+                <div class="gallery-item" *ngFor="let img of model.images; let i = index">
+                  <span>{{ i + 1 }}.</span>
+                  <input type="text" [(ngModel)]="model.images[i]" />
+                  <button type="button" class="danger" (click)="removeHouseModelImage(model, i)">
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <ng-template #emptyHouseImages>
+              <p class="hint">Agrega im·genes para este modelo.</p>
+            </ng-template>
+          </div>
+
+          <div class="house-preview" *ngIf="model.name || model.description || getHouseModelFeatures(model).length">
+            <div class="preview-card">
+              <div class="preview-meta">
+                <div class="preview-rooms" *ngIf="model.rooms">
+                  Habitaciones <span>{{ model.rooms }}</span>
+                </div>
+                <h5>{{ model.name || 'Modelo' }}</h5>
+                <p>{{ model.description || 'Agrega una descripciÛn para este modelo.' }}</p>
+              </div>
+              <ul class="preview-features" *ngIf="getHouseModelFeatures(model).length">
+                <li *ngFor="let feature of getHouseModelFeatures(model)">{{ feature }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
       <label class="wide">
         Planos de casas (Nombre | Ambientes | Area total | Area techada | URL)
         <textarea rows="4" [(ngModel)]="detailsDraft.housePlansText"></textarea>
@@ -250,3 +364,7 @@
 
   <p class="hint" *ngIf="loading">Cargando proyecto...</p>
 </section>
+
+
+
+

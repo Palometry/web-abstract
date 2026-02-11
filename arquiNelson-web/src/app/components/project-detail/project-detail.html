@@ -39,15 +39,20 @@
     </section>
 
     <section class="project-ficha">
-      <h3>Ficha de datos</h3>
-      <table class="ficha-table">
+      <div class="ficha-header">
+        <h3>Ficha de datos</h3>
+        <button type="button" class="ficha-toggle" (click)="toggleFicha()">
+          {{ fichaExpanded ? 'Ver menos' : 'Ver mas' }}
+        </button>
+      </div>
+      <table class="ficha-table" [class.expanded]="fichaExpanded">
         <tr><th>Promotor</th><td>{{ project.promoter || 'Por definir' }}</td></tr>
         <tr><th>Estado</th><td>{{ project.status || 'Por definir' }}</td></tr>
         <tr><th>Tipo</th><td>{{ project.type || 'Por definir' }}</td></tr>
         <tr><th>Ubicacion</th><td>{{ project.location || 'Por definir' }}</td></tr>
         <tr><th>Area del terreno</th><td>{{ project.landArea || '-' }}</td></tr>
         <tr><th>Unidades</th><td>{{ project.units || '-' }}</td></tr>
-        <tr><th>Areas comunes</th><td>{{ project.amenities?.length ? project.amenities.join(', ') : 'Por definir' }}</td></tr>
+        <tr><th>Areas comunes</th><td>{{ project.amenities.length ? project.amenities.join(', ') : 'Por definir' }}</td></tr>
         <tr><th>Inicio de obra</th><td>{{ project.startYear || '-' }}</td></tr>
         <tr><th>Entrega estimada</th><td>{{ project.deliveryYear || '-' }}</td></tr>
       </table>
@@ -81,18 +86,75 @@
       </section>
     }
 
-    @if (project.houseModels?.length) {
+    @if (houseModels.length) {
       <section class="project-models">
         <h3>Modelos de casas</h3>
-        <div class="models-grid">
-          @for (model of project.houseModels; track model.name) {
-            <article class="model-card">
-              <img [src]="model.image" [alt]="model.name" />
-              <h4>{{ model.name }}</h4>
-              <p>{{ model.description }}</p>
-            </article>
+        <div class="model-tabs">
+          @for (model of houseModels; track model.name; let i = $index) {
+            <button
+              type="button"
+              [class.active]="i === activeHouseModelIndex"
+              (click)="selectHouseModel(i)"
+            >
+              <span class="tab-title">{{ model.name }}</span>
+              @if (model.rooms) {
+                <span class="tab-sub">{{ model.rooms }} hab.</span>
+              }
+            </button>
           }
         </div>
+
+        @if (activeHouseModel) {
+          <div class="model-showcase">
+            <div class="model-gallery">
+              <div class="gallery-frame">
+                <img [src]="activeHouseImage" [alt]="activeHouseModel.name" />
+                <button
+                  class="gallery-nav prev"
+                  type="button"
+                  aria-label="Imagen anterior"
+                  (click)="prevHouseImage()"
+                  *ngIf="activeHouseModel.images.length > 1"
+                >
+                  &lt;
+                </button>
+                <button
+                  class="gallery-nav next"
+                  type="button"
+                  aria-label="Imagen siguiente"
+                  (click)="nextHouseImage()"
+                  *ngIf="activeHouseModel.images.length > 1"
+                >
+                  &gt;
+                </button>
+              </div>
+              <div class="gallery-dots" *ngIf="activeHouseModel.images.length > 1">
+                @for (img of activeHouseModel.images; track img; let i = $index) {
+                  <button
+                    type="button"
+                    [class.active]="i === activeHouseImageIndex"
+                    (click)="goToHouseImage(i)"
+                    aria-label="Ir a imagen {{ i + 1 }}"
+                  ></button>
+                }
+              </div>
+            </div>
+            <div class="model-card">
+              <div class="model-rooms" *ngIf="activeHouseModel.rooms">
+                Habitaciones <span>{{ activeHouseModel.rooms }}</span>
+              </div>
+              <h4>{{ activeHouseModel.name }}</h4>
+              <p>{{ activeHouseModel.description || 'Sin descripcion.' }}</p>
+              @if (activeHouseModel.features.length) {
+                <ul class="model-features">
+                  @for (feature of activeHouseModel.features; track feature) {
+                    <li>{{ feature }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        }
       </section>
     }
 
@@ -214,3 +276,4 @@
     <p>Proyecto no encontrado.</p>
   </div>
 }
+

@@ -1,5 +1,5 @@
-<header class="header">
-  <div class="header-container">
+<header class="header" [class.expanded]="isExpanded">
+  <div class="header-container" [class.expanded]="isExpanded">
     <div class="logo">
       <a routerLink="/" fragment="home" class="logo-link" (click)="closeMenu()">
         <img src="img/LOGO.jpg" alt="ArquiNelson logo" class="logo-img" />
@@ -52,6 +52,7 @@
     </nav>
   </div>
 </header>
+<div class="header-spacer" [class.expanded]="isExpanded"></div>
 
 
 

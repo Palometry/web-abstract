@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AdminDataService, AdminPortfolioDetail, AdminProject } from '../../services/admin-data';
+import { AdminDataService, AdminPortfolioDetail } from '../../services/admin-data';
 
 type ImageDraft = {
   mediaId: number;
@@ -38,7 +38,6 @@ export class AdminPortfolioDetailComponent implements OnInit {
   entryId = 0;
   isCreate = false;
   selectedProjectId = 0;
-  availableProjects: AdminProject[] = [];
   entry?: AdminPortfolioDetail | null;
   private readonly isBrowser: boolean;
 
@@ -142,11 +141,7 @@ export class AdminPortfolioDetailComponent implements OnInit {
   private async loadCreateData() {
     this.loading = true;
     this.error = '';
-    const [projects, entries] = await Promise.all([
-      this.data.getProjects(),
-      this.data.getPortfolioEntries()
-    ]);
-    this.availableProjects = projects.filter((project) => !project.portfolio);
+    const entries = await this.data.getPortfolioEntries();
     const maxOrder = entries.reduce((max, entry) => Math.max(max, entry.order), 0);
     this.form = {
       titleOverride: '',
@@ -162,11 +157,8 @@ export class AdminPortfolioDetailComponent implements OnInit {
       tags: [],
       blocks: []
     };
-    this.selectedProjectId = this.availableProjects[0]?.id ?? 0;
+    this.selectedProjectId = 0;
     this.loading = false;
-    if (!this.availableProjects.length) {
-      this.error = 'No hay proyectos disponibles para agregar.';
-    }
     this.cdr.detectChanges();
   }
 
@@ -346,16 +338,16 @@ export class AdminPortfolioDetailComponent implements OnInit {
     };
 
     if (this.isCreate) {
-      if (!this.selectedProjectId) {
+      if (!payload.titleOverride) {
         this.saving = false;
-        this.error = 'Selecciona un proyecto.';
+        this.error = 'El titulo es obligatorio para crear el portafolio.';
         return;
       }
-      const createResult = await this.data.updateProjectPortfolio(this.selectedProjectId, {
+      const createResult = await this.data.createPortfolioEntry({
+        projectId: this.selectedProjectId || null,
         titleOverride: payload.titleOverride,
         category: payload.category,
         summary: payload.summary,
-        autocadUrl: payload.autocadUrl,
         sortOrder: payload.sortOrder,
         isVisible: payload.isVisible
       });

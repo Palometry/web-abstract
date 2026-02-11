@@ -131,7 +131,15 @@
       <div class="form-grid">
         <label>
           Plan
-          <select name="pricingRateId" [(ngModel)]="draft.pricingRateId" (change)="onRateChange()">
+          <select
+            name="pricingRateId"
+            [(ngModel)]="draft.pricingRateId"
+            (change)="onRateChange()"
+            [disabled]="loading || !rates.length"
+          >
+            <option *ngIf="loading" [ngValue]="null">Cargando planes...</option>
+            <option *ngIf="!loading && rates.length" [ngValue]="null">Selecciona un plan</option>
+            <option *ngIf="!loading && !rates.length" [ngValue]="null">Sin planes activos</option>
             <option *ngFor="let rate of rates" [ngValue]="rate.id">
               {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
             </option>

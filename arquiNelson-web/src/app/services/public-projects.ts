@@ -12,7 +12,14 @@ export type PublicProject = {
   image: string;
   thumbImage: string;
   masterplanImage?: string | null;
-  houseModels?: { name: string; description: string; image: string }[];
+  houseModels?: {
+    name: string;
+    description?: string | null;
+    rooms?: number | null;
+    features?: string[];
+    images?: string[];
+    image?: string | null;
+  }[];
   housePlans?: { name: string; ambientes: number; totalArea: string; coveredArea: string; image: string }[];
   autocad360Url?: string | null;
   mapUrl?: string | null;
