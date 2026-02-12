@@ -55,8 +55,11 @@ export type AdminProjectDetails = {
   shortDesc?: string | null;
   bannerImages?: string[];
   promoter?: string | null;
+  publicScope?: string | null;
   publicStatus?: string | null;
   publicType?: string | null;
+  publicClassification?: string | null;
+  publicCategory?: string | null;
   location?: string | null;
   landArea?: string | null;
   units?: number | null;

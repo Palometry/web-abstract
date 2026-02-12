@@ -8,6 +8,11 @@ import {
   AdminProjectDetails,
   AdminProjectImage
 } from '../../services/admin-data';
+import {
+  EDIFICACIONES_DATA,
+  HABILITACIONES_DATA,
+  PUBLIC_SCOPE_OPTIONS
+} from '../project-classifications';
 
 type ProjectImageView = AdminProjectImage & {
   draft: {
@@ -62,8 +67,10 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     shortDesc: '',
     location: '',
     promoter: '',
-    publicStatus: '',
+    publicScope: '',
     publicType: '',
+    publicClassification: '',
+    publicCategory: '',
     landArea: '',
     units: '',
     amenitiesText: '',
@@ -98,6 +105,10 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     isVisible: true
   };
 
+  publicScopeOptions = PUBLIC_SCOPE_OPTIONS;
+  private readonly edificacionesData = EDIFICACIONES_DATA;
+  private readonly habilitacionesData = HABILITACIONES_DATA;
+
   constructor(
     private route: ActivatedRoute,
     private data: AdminDataService,
@@ -105,6 +116,59 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     @Inject(PLATFORM_ID) platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  get publicTypeOptions(): string[] {
+    const scope = this.detailsDraft.publicScope;
+    if (scope === 'Edificaciones') {
+      return Object.keys(this.edificacionesData);
+    }
+    if (scope === 'Habilitaciones') {
+      return Object.keys(this.habilitacionesData);
+    }
+    return [];
+  }
+
+  get publicClassificationOptions(): string[] {
+    const scope = this.detailsDraft.publicScope;
+    const type = this.detailsDraft.publicType;
+    if (!type) {
+      return [];
+    }
+    if (scope === 'Edificaciones') {
+      const typeData = this.edificacionesData[type];
+      return typeData ? Object.keys(typeData) : [];
+    }
+    if (scope === 'Habilitaciones') {
+      return this.habilitacionesData[type] ?? [];
+    }
+    return [];
+  }
+
+  get publicCategoryOptions(): string[] {
+    if (this.detailsDraft.publicScope !== 'Edificaciones') {
+      return [];
+    }
+    const typeData = this.edificacionesData[this.detailsDraft.publicType];
+    if (!typeData) {
+      return [];
+    }
+    return typeData[this.detailsDraft.publicClassification] ?? [];
+  }
+
+  onPublicScopeChange() {
+    this.detailsDraft.publicType = '';
+    this.detailsDraft.publicClassification = '';
+    this.detailsDraft.publicCategory = '';
+  }
+
+  onPublicTypeChange() {
+    this.detailsDraft.publicClassification = '';
+    this.detailsDraft.publicCategory = '';
+  }
+
+  onPublicClassificationChange() {
+    this.detailsDraft.publicCategory = '';
   }
 
   ngOnInit() {
@@ -643,14 +707,25 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     const housePlans = this.parseHousePlans(this.detailsDraft.housePlansText);
     const lots = this.parseLots(this.detailsDraft.lotsText);
     const mapUrl = this.extractIframeSrc(this.detailsDraft.mapUrl);
-    const mapEmbedUrl = this.extractIframeSrc(this.detailsDraft.mapEmbedUrl);
+    const embedInput = this.extractIframeSrc(this.detailsDraft.mapEmbedUrl);
+    const mapEmbedUrl = embedInput || this.buildEmbedUrlFromMapUrl(mapUrl);
+    const publicScope = this.nullIfEmpty(this.detailsDraft.publicScope);
+    const publicType = this.nullIfEmpty(this.detailsDraft.publicType);
+    const publicClassification = this.nullIfEmpty(this.detailsDraft.publicClassification);
+    const publicCategory =
+      this.detailsDraft.publicScope === 'Edificaciones'
+        ? this.nullIfEmpty(this.detailsDraft.publicCategory)
+        : null;
 
     return {
       shortDesc: this.nullIfEmpty(this.detailsDraft.shortDesc),
       location: this.nullIfEmpty(this.detailsDraft.location),
       promoter: this.nullIfEmpty(this.detailsDraft.promoter),
-      publicStatus: this.nullIfEmpty(this.detailsDraft.publicStatus),
-      publicType: this.nullIfEmpty(this.detailsDraft.publicType),
+      publicScope,
+      publicStatus: publicScope,
+      publicType,
+      publicClassification,
+      publicCategory,
       landArea: this.nullIfEmpty(this.detailsDraft.landArea),
       units: this.detailsDraft.units ? Number(this.detailsDraft.units) : null,
       amenities,
@@ -668,13 +743,73 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     };
   }
 
+  syncMapEmbedUrl() {
+    const mapUrl = this.extractIframeSrc(this.detailsDraft.mapUrl);
+    const embed = this.buildEmbedUrlFromMapUrl(mapUrl);
+    if (embed) {
+      this.detailsDraft.mapEmbedUrl = embed;
+    }
+  }
+
+  private buildEmbedUrlFromMapUrl(mapUrl?: string | null): string {
+    if (!mapUrl) {
+      return '';
+    }
+
+    const trimmed = mapUrl.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    if (trimmed.toLowerCase().includes('<iframe')) {
+      const match = trimmed.match(/src=["']([^"']+)["']/i);
+      if (match?.[1]) {
+        mapUrl = match[1].trim();
+      }
+    }
+
+    try {
+      const url = new URL(mapUrl);
+      if (url.hostname.includes('google.com') && url.pathname.includes('/maps/embed')) {
+        return url.toString();
+      }
+      if (url.hostname.includes('google.com')) {
+        const placeMatch = url.pathname.match(/\/place\/([^/]+)/i);
+        if (placeMatch?.[1]) {
+          return `https://www.google.com/maps?q=${encodeURIComponent(
+            decodeURIComponent(placeMatch[1])
+          )}&output=embed`;
+        }
+
+        const query = url.searchParams.get('q');
+        if (query) {
+          return `https://www.google.com/maps?q=${encodeURIComponent(
+            query
+          )}&output=embed`;
+        }
+      }
+
+      if (url.hostname.includes('maps.app.goo.gl') || url.hostname.includes('goo.gl')) {
+        return `https://www.google.com/maps?q=${encodeURIComponent(
+          mapUrl
+        )}&output=embed`;
+      }
+    } catch {
+      return '';
+    }
+
+    return '';
+  }
+
   private applyDetailsToDraft(details?: AdminProjectDetails | null) {
     this.detailsDraft = {
       shortDesc: details?.shortDesc ?? '',
       location: details?.location ?? '',
       promoter: details?.promoter ?? '',
-      publicStatus: details?.publicStatus ?? '',
+      publicScope: details?.publicScope ?? details?.publicStatus ?? '',
       publicType: details?.publicType ?? '',
+      publicClassification: details?.publicClassification ?? '',
+      publicCategory: details?.publicCategory ?? '',
       landArea: details?.landArea ?? '',
       units: details?.units !== undefined && details?.units !== null ? String(details.units) : '',
       amenitiesText: this.joinLines(details?.amenities),

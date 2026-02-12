@@ -1,5 +1,5 @@
-<section class="project-detail">
-  <a routerLink="/admin/projects" class="back-link">? Volver a proyectos</a>
+Ôªø<section class="project-detail">
+  <a routerLink="/admin/projects" class="back-link"><- Volver a proyectos</a>
 
   <div class="header">
     <div>
@@ -53,10 +53,10 @@
   </div>
 
   <div class="panel" *ngIf="project">
-    <h3>Detalle p˙blico del proyecto</h3>
+    <h3>Detalle p√∫blico del proyecto</h3>
     <p class="hint">
       Completa estos campos para mostrar el proyecto como Fundo Bellaca. Los listados deben ir
-      separados por lÌnea.
+      separados por l√≠nea.
     </p>
     <div class="form-grid">
       <label class="wide">
@@ -72,12 +72,55 @@
         <input type="text" [(ngModel)]="detailsDraft.promoter" />
       </label>
       <label>
-        Estado p˙blico
-        <input type="text" [(ngModel)]="detailsDraft.publicStatus" />
+        Tipo de proyecto
+        <select [(ngModel)]="detailsDraft.publicScope" (ngModelChange)="onPublicScopeChange()">
+          <option value="">Selecciona...</option>
+          <option *ngFor="let option of publicScopeOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
       </label>
       <label>
-        Tipo p˙blico
-        <input type="text" [(ngModel)]="detailsDraft.publicType" />
+        {{
+          detailsDraft.publicScope === 'Habilitaciones'
+            ? 'Tipo de habilitaci√≥n'
+            : 'Tipo de edificaci√≥n'
+        }}
+        <select
+          [(ngModel)]="detailsDraft.publicType"
+          (ngModelChange)="onPublicTypeChange()"
+          [disabled]="!detailsDraft.publicScope"
+        >
+          <option value="">Selecciona...</option>
+          <option *ngFor="let option of publicTypeOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Clasificaci√≥n
+        <select
+          [(ngModel)]="detailsDraft.publicClassification"
+          (ngModelChange)="onPublicClassificationChange()"
+          [disabled]="!detailsDraft.publicType"
+        >
+          <option value="">Selecciona...</option>
+          <option *ngFor="let option of publicClassificationOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
+      </label>
+      <label *ngIf="detailsDraft.publicScope === 'Edificaciones'">
+        Categor√≠a
+        <select
+          [(ngModel)]="detailsDraft.publicCategory"
+          [disabled]="!detailsDraft.publicClassification"
+        >
+          <option value="">Selecciona...</option>
+          <option *ngFor="let option of publicCategoryOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
       </label>
       <label>
         Area del terreno
@@ -88,23 +131,19 @@
         <input type="number" [(ngModel)]="detailsDraft.units" />
       </label>
       <label>
-        AÒo inicio
+        A√±o inicio
         <input type="number" [(ngModel)]="detailsDraft.startYear" />
       </label>
       <label>
-        AÒo entrega
+        A√±o entrega
         <input type="number" [(ngModel)]="detailsDraft.deliveryYear" />
       </label>
       <label class="wide">
         URL Mapa (Google Maps)
-        <input type="text" [(ngModel)]="detailsDraft.mapUrl" />
+        <input type="text" [(ngModel)]="detailsDraft.mapUrl" (blur)="syncMapEmbedUrl()" />
       </label>
       <label class="wide">
-        URL Mapa embed
-        <input type="text" [(ngModel)]="detailsDraft.mapEmbedUrl" />
-      </label>
-      <label class="wide">
-        Imagen masterplan / lotizaciÛn
+        Imagen masterplan / lotizaci√≥n
         <input type="text" [(ngModel)]="detailsDraft.masterplanImage" />
       </label>
       <label class="wide">
@@ -112,11 +151,11 @@
         <input type="file" accept="image/*" (change)="uploadDetailImage($event, 'masterplanImage')" />
       </label>
       <label class="wide">
-        Amenities / ¡reas comunes (una por lÌnea)
+        Amenities / √Åreas comunes (una por l√≠nea)
         <textarea rows="4" [(ngModel)]="detailsDraft.amenitiesText"></textarea>
       </label>
       <label class="wide">
-        Banner de im·genes (una URL por lÌnea)
+        Banner de im√°genes (una URL por l√≠nea)
         <textarea rows="4" [(ngModel)]="detailsDraft.bannerImagesText"></textarea>
       </label>
       <label class="wide">
@@ -124,15 +163,15 @@
         <input type="file" accept="image/*" (change)="appendDetailImage($event, 'bannerImagesText')" />
       </label>
       <label class="wide">
-        GalerÌa final (una URL por lÌnea)
+        Galer√≠a final (una URL por l√≠nea)
         <textarea rows="4" [(ngModel)]="detailsDraft.galleryText"></textarea>
       </label>
       <label class="wide">
-        Subir imagen a galerÌa final
+        Subir imagen a galer√≠a final
         <input type="file" accept="image/*" (change)="appendDetailImage($event, 'galleryText')" />
       </label>
       <label class="wide">
-        ¡reas para disfrutar (una por lÌnea)
+        √Åreas para disfrutar (una por l√≠nea)
         <textarea rows="4" [(ngModel)]="detailsDraft.enjoyAreasText"></textarea>
       </label>
       <div class="house-models wide">
@@ -152,7 +191,7 @@
             <span class="tab-title">{{ model.name || ('Modelo ' + (i + 1)) }}</span>
             <span class="tab-sub" *ngIf="model.rooms">{{ model.rooms }} hab.</span>
             <span class="tab-remove" (click)="removeHouseModel(i); $event.stopPropagation()">
-              ◊
+              √ó
             </span>
           </button>
         </div>
@@ -171,11 +210,11 @@
               <input type="number" min="0" [(ngModel)]="model.rooms" />
             </label>
             <label class="wide">
-              DescripciÛn
+              Descripci√≥n
               <textarea rows="3" [(ngModel)]="model.description"></textarea>
             </label>
             <label class="wide">
-              CaracterÌsticas (una por lÌnea)
+              Caracter√≠sticas (una por l√≠nea)
               <textarea rows="4" [(ngModel)]="model.featuresText"></textarea>
             </label>
           </div>
@@ -237,7 +276,7 @@
               </div>
             </div>
             <ng-template #emptyHouseImages>
-              <p class="hint">Agrega im·genes para este modelo.</p>
+              <p class="hint">Agrega im√°genes para este modelo.</p>
             </ng-template>
           </div>
 
@@ -248,7 +287,7 @@
                   Habitaciones <span>{{ model.rooms }}</span>
                 </div>
                 <h5>{{ model.name || 'Modelo' }}</h5>
-                <p>{{ model.description || 'Agrega una descripciÛn para este modelo.' }}</p>
+                <p>{{ model.description || 'Agrega una descripci√≥n para este modelo.' }}</p>
               </div>
               <ul class="preview-features" *ngIf="getHouseModelFeatures(model).length">
                 <li *ngFor="let feature of getHouseModelFeatures(model)">{{ feature }}</li>
@@ -364,6 +403,8 @@
 
   <p class="hint" *ngIf="loading">Cargando proyecto...</p>
 </section>
+
+
 
 
 
