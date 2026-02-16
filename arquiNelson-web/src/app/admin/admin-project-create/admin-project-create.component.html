@@ -128,7 +128,7 @@
         </select>
       </label>
       <label *ngIf="detailsDraft.publicScope === 'Edificaciones'">
-        Categoría
+        {{ publicCategoryLabel }}
         <select
           [(ngModel)]="detailsDraft.publicCategory"
           [disabled]="!detailsDraft.publicClassification"
@@ -146,14 +146,6 @@
       <label>
         Unidades
         <input type="number" [(ngModel)]="detailsDraft.units" />
-      </label>
-      <label>
-        Año inicio
-        <input type="number" [(ngModel)]="detailsDraft.startYear" />
-      </label>
-      <label>
-        Año entrega
-        <input type="number" [(ngModel)]="detailsDraft.deliveryYear" />
       </label>
       <label class="wide">
         URL Mapa (Google Maps)

@@ -34,6 +34,10 @@
           <option value="published">Publicado</option>
         </select>
       </label>
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="pageDraft.isHome" />
+        Pagina principal
+      </label>
       <label>
         Meta titulo
         <input type="text" [(ngModel)]="pageDraft.metaTitle" />

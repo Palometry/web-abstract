@@ -111,6 +111,48 @@ class ProjectsController extends Controller
         ]);
     }
 
+    public function catalog()
+    {
+        $rows = DB::table('project_public_catalog')
+            ->select('scope', 'type', 'classification', 'category')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $edificaciones = [];
+        $habilitaciones = [];
+
+        foreach ($rows as $row) {
+            if ($row->scope === 'Edificaciones') {
+                if (!isset($edificaciones[$row->type])) {
+                    $edificaciones[$row->type] = [];
+                }
+                if (!isset($edificaciones[$row->type][$row->classification])) {
+                    $edificaciones[$row->type][$row->classification] = [];
+                }
+                if ($row->category && !in_array($row->category, $edificaciones[$row->type][$row->classification], true)) {
+                    $edificaciones[$row->type][$row->classification][] = $row->category;
+                }
+                continue;
+            }
+
+            if ($row->scope === 'Habilitaciones') {
+                if (!isset($habilitaciones[$row->type])) {
+                    $habilitaciones[$row->type] = [];
+                }
+                if (!in_array($row->classification, $habilitaciones[$row->type], true)) {
+                    $habilitaciones[$row->type][] = $row->classification;
+                }
+            }
+        }
+
+        return response()->json([
+            'scopes' => ['Edificaciones', 'Habilitaciones'],
+            'edificaciones' => $edificaciones,
+            'habilitaciones' => $habilitaciones,
+        ]);
+    }
+
     public function index()
     {
         $rows = DB::select(

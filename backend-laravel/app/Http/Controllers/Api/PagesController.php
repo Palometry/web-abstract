@@ -18,24 +18,8 @@ class PagesController extends Controller
         return $value;
     }
 
-    public function publicBySlug(string $slug)
+    private function buildPublicPayload($page): array
     {
-        $slug = trim($slug);
-        if ($slug === '') {
-            return response()->json(['error' => 'Invalid slug.'], 400);
-        }
-
-        $page = DB::table('pages')
-            ->select('id', 'title', 'slug', 'status', 'meta_title', 'meta_description')
-            ->where('slug', $slug)
-            ->where('status', 'published')
-            ->limit(1)
-            ->first();
-
-        if (!$page) {
-            return response()->json(['error' => 'Page not found.'], 404);
-        }
-
         $sections = DB::table('page_sections')
             ->select('id', 'section_key', 'title', 'description', 'image_url', 'sort_order', 'is_visible')
             ->where('page_id', $page->id)
@@ -82,21 +66,68 @@ class PagesController extends Controller
             return $section;
         }, $sections);
 
-        return response()->json([
+        return [
             'id' => $page->id,
             'title' => $page->title,
             'slug' => $page->slug,
             'status' => $page->status,
             'metaTitle' => $page->meta_title,
             'metaDescription' => $page->meta_description,
+            'isHome' => (bool) ($page->is_home ?? false),
             'sections' => $resultSections,
-        ]);
+        ];
+    }
+
+    public function publicHome()
+    {
+        $page = DB::table('pages')
+            ->select('id', 'title', 'slug', 'status', 'meta_title', 'meta_description', 'is_home')
+            ->where('status', 'published')
+            ->where('is_home', 1)
+            ->limit(1)
+            ->first();
+
+        if (!$page) {
+            $page = DB::table('pages')
+                ->select('id', 'title', 'slug', 'status', 'meta_title', 'meta_description', 'is_home')
+                ->where('status', 'published')
+                ->orderBy('id')
+                ->limit(1)
+                ->first();
+        }
+
+        if (!$page) {
+            return response()->json(['error' => 'Page not found.'], 404);
+        }
+
+        return response()->json($this->buildPublicPayload($page));
+    }
+
+    public function publicBySlug(string $slug)
+    {
+        $slug = trim($slug);
+        if ($slug === '') {
+            return response()->json(['error' => 'Invalid slug.'], 400);
+        }
+
+        $page = DB::table('pages')
+            ->select('id', 'title', 'slug', 'status', 'meta_title', 'meta_description', 'is_home')
+            ->where('slug', $slug)
+            ->where('status', 'published')
+            ->limit(1)
+            ->first();
+
+        if (!$page) {
+            return response()->json(['error' => 'Page not found.'], 404);
+        }
+
+        return response()->json($this->buildPublicPayload($page));
     }
 
     public function index()
     {
         $rows = DB::select(
-            'SELECT p.id, p.title, p.slug, p.status, COUNT(ps.id) AS sections
+            'SELECT p.id, p.title, p.slug, p.status, MAX(p.is_home) AS is_home, COUNT(ps.id) AS sections
              FROM pages p
              LEFT JOIN page_sections ps ON ps.page_id = p.id
              GROUP BY p.id
@@ -109,6 +140,7 @@ class PagesController extends Controller
                 'title' => $row->title,
                 'slug' => $row->slug,
                 'status' => $row->status,
+                'isHome' => (bool) $row->is_home,
                 'sections' => (int) $row->sections,
             ];
         }, $rows);
@@ -124,16 +156,25 @@ class PagesController extends Controller
             return response()->json(['error' => 'Title and slug are required.'], 400);
         }
 
+        $isHome = $request->boolean('isHome');
+
         try {
+            DB::beginTransaction();
+            if ($isHome) {
+                DB::table('pages')->update(['is_home' => 0]);
+            }
             $id = DB::table('pages')->insertGetId([
                 'title' => $title,
                 'slug' => $slug,
                 'status' => $request->input('status', 'draft'),
+                'is_home' => $isHome ? 1 : 0,
                 'meta_title' => $request->input('metaTitle'),
                 'meta_description' => $request->input('metaDescription'),
             ]);
+            DB::commit();
             return response()->json(['id' => $id], 201);
         } catch (QueryException $e) {
+            DB::rollBack();
             if ($e->getCode() === '23000') {
                 return response()->json(['error' => 'Slug already exists.'], 409);
             }
@@ -149,7 +190,7 @@ class PagesController extends Controller
         }
 
         $page = DB::table('pages')
-            ->select('id', 'title', 'slug', 'status', 'meta_title', 'meta_description')
+            ->select('id', 'title', 'slug', 'status', 'meta_title', 'meta_description', 'is_home')
             ->where('id', $pageId)
             ->limit(1)
             ->first();
@@ -209,6 +250,7 @@ class PagesController extends Controller
             'status' => $page->status,
             'metaTitle' => $page->meta_title,
             'metaDescription' => $page->meta_description,
+            'isHome' => (bool) $page->is_home,
             'sections' => $resultSections,
         ]);
     }
@@ -226,6 +268,9 @@ class PagesController extends Controller
                 $updates[$column] = $request->input($key);
             }
         }
+        if ($request->has('isHome')) {
+            $updates['is_home'] = $request->boolean('isHome') ? 1 : 0;
+        }
         if ($request->has('metaTitle')) {
             $updates['meta_title'] = $request->input('metaTitle');
         }
@@ -238,9 +283,15 @@ class PagesController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            if (array_key_exists('is_home', $updates) && $updates['is_home']) {
+                DB::table('pages')->where('id', '!=', $pageId)->update(['is_home' => 0]);
+            }
             DB::table('pages')->where('id', $pageId)->update($updates);
+            DB::commit();
             return response()->json(['ok' => true]);
         } catch (QueryException $e) {
+            DB::rollBack();
             if ($e->getCode() === '23000') {
                 return response()->json(['error' => 'Slug already exists.'], 409);
             }

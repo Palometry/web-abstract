@@ -19,7 +19,8 @@ export class AdminContentComponent implements OnInit, AfterViewInit {
   newPage = {
     title: '',
     slug: '',
-    status: 'draft'
+    status: 'draft',
+    isHome: false
   };
   private loaded = false;
   private readonly isBrowser: boolean;
@@ -64,14 +65,15 @@ export class AdminContentComponent implements OnInit, AfterViewInit {
     const result = await this.data.createPage({
       title,
       slug,
-      status: this.newPage.status
+      status: this.newPage.status,
+      isHome: this.newPage.isHome
     });
     this.creating = false;
     if (!result.ok) {
       this.error = result.error ?? 'No se pudo crear la pagina.';
       return;
     }
-    this.newPage = { title: '', slug: '', status: 'draft' };
+    this.newPage = { title: '', slug: '', status: 'draft', isHome: false };
     await this.loadPages();
   }
 

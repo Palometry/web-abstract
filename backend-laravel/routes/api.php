@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\QuotesController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\ChatController;
 
 Route::get('/health', fn () => response()->json(['ok' => true]));
 
@@ -22,12 +23,14 @@ Route::get('/dashboard/public', [DashboardController::class, 'public']);
 Route::get('/dashboard', [DashboardController::class, 'admin'])
     ->middleware(['auth.jwt', 'role:admin,editor']);
 
+Route::get('/pages/public/home', [PagesController::class, 'publicHome']);
 Route::get('/pages/public/{slug}', [PagesController::class, 'publicBySlug']);
 Route::get('/portfolio/public', [PortfolioController::class, 'publicList']);
 Route::get('/portfolio/public/{id}', [PortfolioController::class, 'publicDetail']);
 Route::get('/services/public', [ServiceController::class, 'publicList']);
 Route::get('/projects/public', [ProjectsController::class, 'publicList']);
 Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
+Route::post('/chat', [ChatController::class, 'send']);
 
 Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::get('/pages', [PagesController::class, 'index']);
@@ -53,6 +56,7 @@ Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
 
     Route::get('/projects', [ProjectsController::class, 'index']);
+    Route::get('/projects/catalog', [ProjectsController::class, 'catalog']);
     Route::post('/projects', [ProjectsController::class, 'store']);
     Route::get('/projects/{id}', [ProjectsController::class, 'show']);
     Route::patch('/projects/{id}', [ProjectsController::class, 'update']);

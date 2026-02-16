@@ -1,3 +1,9 @@
+export type ProjectCatalog = {
+  scopes: string[];
+  edificaciones: Record<string, Record<string, string[]>>;
+  habilitaciones: Record<string, string[]>;
+};
+
 export const PUBLIC_SCOPE_OPTIONS = ['Edificaciones', 'Habilitaciones'] as const;
 
 export const EDIFICACIONES_DATA: Record<string, Record<string, string[]>> = {
@@ -15,7 +21,8 @@ export const EDIFICACIONES_DATA: Record<string, Record<string, string[]>> = {
   'A.030 HOSPEDAJE': {
     Hotel: ['Uno a cinco estrellas'],
     'Apart-hotel': ['Tres a cinco estrellas'],
-    Hostal: ['Una a tres estrellas']
+    Hostal: ['Una a tres estrellas'],
+    Albergue: []
   },
   'A.040 EDUCACIÓN': {
     'Educación Básica': [
@@ -127,4 +134,10 @@ export const HABILITACIONES_DATA: Record<string, string[]> = {
   'HABILITACIONES PARA USOS ESPECIALES': [
     'Locales educativos, religiosos, de salud, institucionales, deportivos, recreacionales y campos feriales.'
   ]
+};
+
+export const DEFAULT_PROJECT_CATALOG: ProjectCatalog = {
+  scopes: [...PUBLIC_SCOPE_OPTIONS],
+  edificaciones: EDIFICACIONES_DATA,
+  habilitaciones: HABILITACIONES_DATA
 };

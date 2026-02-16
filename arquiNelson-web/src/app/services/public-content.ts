@@ -38,6 +38,16 @@ export class PublicContentService {
 
   constructor(private http: HttpClient) {}
 
+  async getHomePage(): Promise<PublicPageDetail | null> {
+    try {
+      return await firstValueFrom(
+        this.http.get<PublicPageDetail>(`${this.apiBaseUrl}/pages/public/home`)
+      );
+    } catch {
+      return null;
+    }
+  }
+
   async getPageBySlug(slug: string): Promise<PublicPageDetail | null> {
     try {
       return await firstValueFrom(

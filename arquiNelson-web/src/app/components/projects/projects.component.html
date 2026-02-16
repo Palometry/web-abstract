@@ -25,7 +25,9 @@
     <ng-template #loadingState>
       <p class="projects-loading" *ngIf="loading">Cargando portafolio...</p>
       <p class="projects-loading" *ngIf="!loading && error">{{ error }}</p>
-      <p class="projects-loading" *ngIf="!loading && !error">No hay proyectos visibles.</p>
+      <p class="projects-loading" *ngIf="!loading && !error && hasLoaded">
+        No hay proyectos visibles.
+      </p>
     </ng-template>
   </div>
 </section>

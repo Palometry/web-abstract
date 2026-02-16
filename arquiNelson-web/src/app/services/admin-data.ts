@@ -10,6 +10,7 @@ export type AdminPage = {
   title: string;
   slug: string;
   status: 'draft' | 'published' | string;
+  isHome?: boolean;
   sections: number;
 };
 
@@ -18,6 +19,7 @@ export type AdminPageDetail = {
   title: string;
   slug: string;
   status: 'draft' | 'published' | string;
+  isHome?: boolean;
   metaTitle?: string | null;
   metaDescription?: string | null;
   sections: AdminPageSection[];
@@ -87,6 +89,12 @@ export type AdminProjectDetails = {
     image: string;
   }[];
   lots?: { id: string; area: string; status: 'Disponible' | 'Reservado' | 'Vendido' }[];
+};
+
+export type AdminProjectCatalog = {
+  scopes: string[];
+  edificaciones: Record<string, Record<string, string[]>>;
+  habilitaciones: Record<string, string[]>;
 };
 
 export type AdminProjectDetail = AdminProject & {
@@ -317,6 +325,7 @@ export class AdminDataService {
     title: string;
     slug: string;
     status: string;
+    isHome?: boolean;
     metaTitle?: string;
     metaDescription?: string;
   }): Promise<{ ok: boolean; id?: number; error?: string }> {
@@ -344,6 +353,7 @@ export class AdminDataService {
       title: string;
       slug: string;
       status: string;
+      isHome: boolean;
       metaTitle: string | null;
       metaDescription: string | null;
     }>
@@ -527,6 +537,13 @@ export class AdminDataService {
       return [];
     }
     return this.safeGet<AdminProject[]>(`${this.apiBaseUrl}/projects`, []);
+  }
+
+  async getProjectCatalog(): Promise<AdminProjectCatalog | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    return this.safeGet<AdminProjectCatalog | null>(`${this.apiBaseUrl}/projects/catalog`, null);
   }
 
   async getProjectDetail(projectId: number): Promise<AdminProjectDetail | null> {

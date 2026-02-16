@@ -15,6 +15,7 @@ export class ProjectsComponent implements OnInit, AfterViewInit {
   loading = false;
   error = '';
   private loaded = false;
+  hasLoaded = false;
   private readonly isBrowser: boolean;
 
   constructor(
@@ -47,6 +48,7 @@ export class ProjectsComponent implements OnInit, AfterViewInit {
       this.error = 'No se pudo cargar el portafolio.';
     } finally {
       this.loading = false;
+      this.hasLoaded = true;
       this.cdr.detectChanges();
     }
   }

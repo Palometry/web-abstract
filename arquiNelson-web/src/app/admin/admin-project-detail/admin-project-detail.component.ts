@@ -8,11 +8,7 @@ import {
   AdminProjectDetails,
   AdminProjectImage
 } from '../../services/admin-data';
-import {
-  EDIFICACIONES_DATA,
-  HABILITACIONES_DATA,
-  PUBLIC_SCOPE_OPTIONS
-} from '../project-classifications';
+import { DEFAULT_PROJECT_CATALOG, ProjectCatalog } from '../project-classifications';
 
 type ProjectImageView = AdminProjectImage & {
   draft: {
@@ -105,9 +101,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     isVisible: true
   };
 
-  publicScopeOptions = PUBLIC_SCOPE_OPTIONS;
-  private readonly edificacionesData = EDIFICACIONES_DATA;
-  private readonly habilitacionesData = HABILITACIONES_DATA;
+  private catalog: ProjectCatalog = DEFAULT_PROJECT_CATALOG;
 
   constructor(
     private route: ActivatedRoute,
@@ -118,13 +112,24 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
+  private async loadCatalog() {
+    const catalog = await this.data.getProjectCatalog();
+    if (catalog) {
+      this.catalog = catalog;
+    }
+  }
+
+  get publicScopeOptions(): string[] {
+    return this.catalog.scopes;
+  }
+
   get publicTypeOptions(): string[] {
     const scope = this.detailsDraft.publicScope;
     if (scope === 'Edificaciones') {
-      return Object.keys(this.edificacionesData);
+      return Object.keys(this.catalog.edificaciones);
     }
     if (scope === 'Habilitaciones') {
-      return Object.keys(this.habilitacionesData);
+      return Object.keys(this.catalog.habilitaciones);
     }
     return [];
   }
@@ -136,11 +141,11 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       return [];
     }
     if (scope === 'Edificaciones') {
-      const typeData = this.edificacionesData[type];
+      const typeData = this.catalog.edificaciones[type];
       return typeData ? Object.keys(typeData) : [];
     }
     if (scope === 'Habilitaciones') {
-      return this.habilitacionesData[type] ?? [];
+      return this.catalog.habilitaciones[type] ?? [];
     }
     return [];
   }
@@ -149,11 +154,36 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     if (this.detailsDraft.publicScope !== 'Edificaciones') {
       return [];
     }
-    const typeData = this.edificacionesData[this.detailsDraft.publicType];
+    if (this.detailsDraft.publicType === 'A.030 HOSPEDAJE') {
+      const starOptions = this.getHospedajeStars();
+      if (starOptions.length) {
+        return starOptions;
+      }
+    }
+    const typeData = this.catalog.edificaciones[this.detailsDraft.publicType];
     if (!typeData) {
       return [];
     }
     return typeData[this.detailsDraft.publicClassification] ?? [];
+  }
+
+  get publicCategoryLabel(): string {
+    if (this.detailsDraft.publicType === 'A.030 HOSPEDAJE') {
+      return 'Categoría (estrellas)';
+    }
+    return 'Categoría';
+  }
+
+  private getHospedajeStars(): string[] {
+    const classification = this.detailsDraft.publicClassification;
+    const map: Record<string, number[]> = {
+      Hotel: [1, 2, 3, 4, 5],
+      'Apart-hotel': [3, 4, 5],
+      Hostal: [1, 2, 3],
+      Albergue: [],
+    };
+    const stars = map[classification];
+    return stars ? stars.map((value) => `${value} ${value === 1 ? 'estrella' : 'estrellas'}`) : [];
   }
 
   onPublicScopeChange() {
@@ -184,6 +214,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       return;
     }
     this.loaded = true;
+    await this.loadCatalog();
     await this.loadProject();
     this.cdr.detectChanges();
   }
@@ -698,6 +729,26 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       }));
   }
 
+  private resolveYear(value: string, fallbackDate?: string | null): number | null {
+    const trimmed = value?.trim();
+    if (trimmed) {
+      const parsed = Number(trimmed);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+
+    if (fallbackDate) {
+      const match = fallbackDate.match(/^(\d{4})/);
+      if (match?.[1]) {
+        const year = Number(match[1]);
+        return Number.isFinite(year) ? year : null;
+      }
+    }
+
+    return null;
+  }
+
   private buildDetailsPayload(): AdminProjectDetails | null {
     const amenities = this.splitLines(this.detailsDraft.amenitiesText);
     const bannerImages = this.splitLines(this.detailsDraft.bannerImagesText);
@@ -716,6 +767,8 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       this.detailsDraft.publicScope === 'Edificaciones'
         ? this.nullIfEmpty(this.detailsDraft.publicCategory)
         : null;
+    const startYear = this.resolveYear(this.detailsDraft.startYear, this.draft.startDate);
+    const deliveryYear = this.resolveYear(this.detailsDraft.deliveryYear, this.draft.endDate);
 
     return {
       shortDesc: this.nullIfEmpty(this.detailsDraft.shortDesc),
@@ -729,8 +782,8 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       landArea: this.nullIfEmpty(this.detailsDraft.landArea),
       units: this.detailsDraft.units ? Number(this.detailsDraft.units) : null,
       amenities,
-      startYear: this.detailsDraft.startYear ? Number(this.detailsDraft.startYear) : null,
-      deliveryYear: this.detailsDraft.deliveryYear ? Number(this.detailsDraft.deliveryYear) : null,
+      startYear,
+      deliveryYear,
       mapUrl: this.nullIfEmpty(mapUrl),
       mapEmbedUrl: this.nullIfEmpty(mapEmbedUrl),
       masterplanImage: this.nullIfEmpty(this.detailsDraft.masterplanImage),

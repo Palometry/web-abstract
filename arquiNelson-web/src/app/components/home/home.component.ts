@@ -16,7 +16,7 @@ import { PublicServicesService, PublicService } from '../../services/public-serv
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  private readonly pageSlug = 'inmo';
+  private readonly fallbackSlug = 'inmo';
   extraSections: PublicPageSection[] = [];
   services: PublicService[] = [];
   private readonly isBrowser: boolean;
@@ -39,7 +39,9 @@ export class HomeComponent implements OnInit {
       ...service,
       icon: service.icon ?? ''
     }));
-    const page = await this.contentService.getPageBySlug(this.pageSlug);
+    const page =
+      (await this.contentService.getHomePage()) ??
+      (await this.contentService.getPageBySlug(this.fallbackSlug));
     if (!page) {
       return;
     }
