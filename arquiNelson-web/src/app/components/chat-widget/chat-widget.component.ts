@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PLATFORM_ID } from '@angular/core';
 import { ChatbotService } from '../../services/chatbot.service';
@@ -25,18 +25,17 @@ export class ChatWidgetComponent {
   error = '';
   messages: ChatMessage[] = [];
   private readonly isBrowser: boolean;
-  private readonly sessionKey = 'arqui_chat_session';
-  private readonly messagesKey = 'arqui_chat_messages';
   private sessionId = '';
 
   constructor(
     private chatbot: ChatbotService,
-    @Inject(PLATFORM_ID) platformId: object
+    @Inject(PLATFORM_ID) platformId: object,
+    private zone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
     if (this.isBrowser) {
-      this.sessionId = this.loadSessionId();
-      this.messages = this.loadMessages();
+      this.sessionId = this.generateId();
     }
   }
 
@@ -59,11 +58,17 @@ export class ChatWidgetComponent {
 
     try {
       const reply = await this.chatbot.sendMessage(this.sessionId, text);
-      this.addMessage('bot', reply);
+      this.runInZone(() => {
+        this.addMessage('bot', reply);
+      });
     } catch {
-      this.error = 'No se pudo enviar el mensaje. Intenta de nuevo.';
+      this.runInZone(() => {
+        this.error = 'No se pudo enviar el mensaje. Intenta de nuevo.';
+      });
     } finally {
-      this.isSending = false;
+      this.runInZone(() => {
+        this.isSending = false;
+      });
     }
   }
 
@@ -82,40 +87,17 @@ export class ChatWidgetComponent {
       timestamp: Date.now()
     };
     this.messages = [...this.messages, message].slice(-50);
-    this.persistMessages();
   }
 
-  private loadSessionId() {
-    const stored = localStorage.getItem(this.sessionKey);
-    if (stored) {
-      return stored;
-    }
-    const id = this.generateId();
-    localStorage.setItem(this.sessionKey, id);
-    return id;
-  }
-
-  private loadMessages() {
-    const stored = localStorage.getItem(this.messagesKey);
-    if (!stored) {
-      return [];
-    }
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        return parsed as ChatMessage[];
-      }
-    } catch {
-      return [];
-    }
-    return [];
-  }
-
-  private persistMessages() {
-    if (!this.isBrowser) {
+  private runInZone(action: () => void) {
+    if (this.isBrowser) {
+      this.zone.run(() => {
+        action();
+        this.cdr.detectChanges();
+      });
       return;
     }
-    localStorage.setItem(this.messagesKey, JSON.stringify(this.messages));
+    action();
   }
 
   private generateId() {

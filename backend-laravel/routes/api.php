@@ -31,6 +31,7 @@ Route::get('/services/public', [ServiceController::class, 'publicList']);
 Route::get('/projects/public', [ProjectsController::class, 'publicList']);
 Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
 Route::post('/chat', [ChatController::class, 'send']);
+Route::post('/quotes/lead', [QuotesController::class, 'storeLead']);
 
 Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::get('/pages', [PagesController::class, 'index']);

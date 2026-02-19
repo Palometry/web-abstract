@@ -363,6 +363,59 @@ class QuotesController extends Controller
             return response()->json(['error' => 'Failed to create quote.'], 500);
         }
     }
+
+    public function storeLead(Request $request)
+    {
+        $fullName = trim((string) $request->input('fullName', ''));
+        $phone = trim((string) $request->input('phone', ''));
+        $email = trim((string) $request->input('email', ''));
+        $projectName = trim((string) $request->input('projectName', ''));
+
+        if ($fullName === '' || $phone === '' || $email === '' || $projectName === '') {
+            return response()->json(['error' => 'Missing required fields.'], 400);
+        }
+
+        $areaM2 = $this->toNumber($request->input('areaM2'), 0);
+        $areaM2 = $areaM2 < 0 ? 0 : $areaM2;
+
+        $documentType = is_string($request->input('documentType')) ? trim((string) $request->input('documentType')) : null;
+        $documentNumber = is_string($request->input('documentNumber')) ? trim((string) $request->input('documentNumber')) : null;
+        $projectAddress = is_string($request->input('projectAddress')) ? trim((string) $request->input('projectAddress')) : null;
+        $notes = is_string($request->input('notes')) ? trim((string) $request->input('notes')) : null;
+        $notes = $notes ? "Lead chatbot: {$notes}" : 'Lead chatbot';
+
+        try {
+            $quoteId = DB::table('quotes')->insertGetId([
+                'pricing_rate_id' => null,
+                'full_name' => $fullName,
+                'phone' => $phone,
+                'email' => $email,
+                'document_type' => $documentType ?: null,
+                'document_number' => $documentNumber ?: null,
+                'project_name' => $projectName,
+                'project_address' => $projectAddress ?: null,
+                'area_m2' => $areaM2,
+                'area_covered_m2' => null,
+                'area_uncovered_percent' => null,
+                'floor_count' => null,
+                'base_rate_per_m2' => 0,
+                'base_cost' => 0,
+                'extras_cost' => 0,
+                'total_cost' => 0,
+                'currency' => strtoupper((string) $request->input('currency', 'PEN')),
+                'status' => 'new',
+                'notes' => $notes,
+                'expires_at' => null,
+                'plan_name' => null,
+                'plan_min_days' => null,
+                'plan_max_days' => null,
+            ]);
+
+            return response()->json(['id' => $quoteId], 201);
+        } catch (\Throwable) {
+            return response()->json(['error' => 'Failed to create quote lead.'], 500);
+        }
+    }
     public function update(Request $request, string $id)
     {
         $quoteId = (int) $id;
