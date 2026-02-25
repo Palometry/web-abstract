@@ -260,6 +260,9 @@
       <button type="button" (click)="saveQuote()" [disabled]="saving || loading">
         Guardar cambios
       </button>
+      <button type="button" class="primary" (click)="sendQuote()" [disabled]="sending || loading">
+        {{ sending ? 'Enviando...' : 'Enviar cotización (PDF)' }}
+      </button>
     </div>
   </ng-container>
 </section>

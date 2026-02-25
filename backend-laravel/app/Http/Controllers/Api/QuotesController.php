@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\QuotePdfMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuotesController extends Controller
 {
@@ -78,6 +81,95 @@ class QuotesController extends Controller
             $total = $price * $qty;
         }
         return $this->roundMoney($total);
+    }
+
+    private function currencySymbol(string $currency): string
+    {
+        $normalized = strtoupper($currency);
+        return match ($normalized) {
+            'USD' => '$',
+            'EUR' => '€',
+            default => 'S/'
+        };
+    }
+
+    private function loadQuoteData(int $quoteId): ?array
+    {
+        $rows = DB::select(
+            "SELECT q.id, q.full_name, q.phone, q.email, q.document_type, q.document_number,
+                    q.project_name, q.project_address, q.area_m2, q.area_covered_m2,
+                    q.area_uncovered_percent, q.floor_count, q.expires_at,
+                    q.base_rate_per_m2, q.base_cost, q.extras_cost, q.total_cost,
+                    q.currency, q.status, q.notes, q.created_at,
+                    q.plan_name, q.plan_min_days, q.plan_max_days
+             FROM quotes q
+             WHERE q.id = ?
+             LIMIT 1",
+            [$quoteId]
+        );
+        $quote = !empty($rows) ? $rows[0] : null;
+        if (!$quote) {
+            return null;
+        }
+
+        $serviceRows = DB::select(
+            "SELECT qs.id, qs.service_id, s.name, s.pricing_type, qs.quantity, qs.unit_price, qs.line_total
+             FROM quote_services qs
+             INNER JOIN services s ON s.id = qs.service_id
+             WHERE qs.quote_id = ?
+             ORDER BY qs.id ASC",
+            [$quoteId]
+        );
+        $services = array_map(static function ($row) {
+            return [
+                'id' => $row->id,
+                'serviceId' => $row->service_id,
+                'name' => $row->name,
+                'pricingType' => $row->pricing_type,
+                'quantity' => (float) $row->quantity,
+                'unitPrice' => (float) $row->unit_price,
+                'lineTotal' => (float) $row->line_total,
+            ];
+        }, $serviceRows);
+
+        $areaM2 = (float) $quote->area_m2;
+        $uncoveredPercent = $quote->area_uncovered_percent !== null ? (float) $quote->area_uncovered_percent : 30;
+        $coveredM2 = $quote->area_covered_m2 !== null
+            ? (float) $quote->area_covered_m2
+            : $this->roundMoney($areaM2 * (1 - $uncoveredPercent / 100));
+        $uncoveredM2 = $this->roundMoney($areaM2 * ($uncoveredPercent / 100));
+
+        return [
+            'quote' => [
+                'id' => $quote->id,
+                'fullName' => $quote->full_name,
+                'phone' => $quote->phone,
+                'email' => $quote->email,
+                'documentType' => $quote->document_type,
+                'documentNumber' => $quote->document_number,
+                'projectName' => $quote->project_name,
+                'projectAddress' => $quote->project_address,
+                'areaM2' => $areaM2,
+                'areaCoveredM2' => $coveredM2,
+                'areaUncoveredPercent' => $uncoveredPercent,
+                'areaUncoveredM2' => $uncoveredM2,
+                'floorCount' => $quote->floor_count !== null ? (int) $quote->floor_count : 1,
+                'baseRatePerM2' => (float) $quote->base_rate_per_m2,
+                'baseCost' => (float) $quote->base_cost,
+                'extrasCost' => (float) $quote->extras_cost,
+                'totalCost' => (float) $quote->total_cost,
+                'currency' => $quote->currency,
+                'currencySymbol' => $this->currencySymbol((string) $quote->currency),
+                'status' => $quote->status,
+                'notes' => $quote->notes,
+                'createdAt' => $quote->created_at ? date('d/m/Y', strtotime($quote->created_at)) : '',
+                'expiresAt' => $this->formatDate($quote->expires_at),
+                'planName' => $quote->plan_name,
+                'planMinDays' => $quote->plan_min_days !== null ? (int) $quote->plan_min_days : null,
+                'planMaxDays' => $quote->plan_max_days !== null ? (int) $quote->plan_max_days : null,
+            ],
+            'services' => $services,
+        ];
     }
 
     public function options()
@@ -926,6 +1018,43 @@ class QuotesController extends Controller
         } catch (\Throwable) {
             DB::rollBack();
             return response()->json(['error' => 'Failed to delete service.'], 500);
+        }
+    }
+
+    public function send(Request $request, string $id)
+    {
+        $quoteId = (int) $id;
+        if ($quoteId <= 0) {
+            return response()->json(['error' => 'Invalid quote id.'], 400);
+        }
+
+        $data = $this->loadQuoteData($quoteId);
+        if (!$data) {
+            return response()->json(['error' => 'Quote not found.'], 404);
+        }
+
+        $quote = $data['quote'];
+        if (empty($quote['email'])) {
+            return response()->json(['error' => 'El correo del cliente es obligatorio.'], 400);
+        }
+
+        $pdf = Pdf::loadView('quotes.pdf', [
+            'quote' => $quote,
+            'services' => $data['services'],
+        ]);
+        $pdfContent = $pdf->output();
+
+        try {
+            Mail::to($quote['email'])->send(new QuotePdfMail($quote, $pdfContent));
+
+            DB::table('quotes')->where('id', $quoteId)->update([
+                'status' => 'sent',
+                'updated_at' => now(),
+            ]);
+
+            return response()->json(['ok' => true]);
+        } catch (\Throwable) {
+            return response()->json(['error' => 'No se pudo enviar la cotizacion.'], 500);
         }
     }
 }

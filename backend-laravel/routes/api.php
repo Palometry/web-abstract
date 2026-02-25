@@ -96,6 +96,7 @@ Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::post('/quotes', [QuotesController::class, 'store']);
     Route::get('/quotes/{id}', [QuotesController::class, 'show']);
     Route::patch('/quotes/{id}', [QuotesController::class, 'update']);
+    Route::post('/quotes/{id}/send', [QuotesController::class, 'send']);
     Route::post('/quotes/{id}/services', [QuotesController::class, 'storeService']);
     Route::patch('/quotes/{id}/services/{serviceId}', [QuotesController::class, 'updateService']);
     Route::delete('/quotes/{id}/services/{serviceId}', [QuotesController::class, 'destroyService']);

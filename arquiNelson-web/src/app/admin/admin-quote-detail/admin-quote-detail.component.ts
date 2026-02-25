@@ -37,6 +37,7 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
   ];
   loading = false;
   saving = false;
+  sending = false;
   error = '';
   private loaded = false;
   private readonly isBrowser: boolean;
@@ -281,6 +282,25 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     this.saving = false;
     if (!result.ok) {
       this.error = result.error ?? 'No se pudo guardar la cotizacion.';
+      return;
+    }
+    await this.loadData();
+  }
+
+  async sendQuote() {
+    if (!this.quote) {
+      return;
+    }
+    const confirmed = confirm('Enviar esta cotización por correo al cliente?');
+    if (!confirmed) {
+      return;
+    }
+    this.sending = true;
+    this.error = '';
+    const result = await this.data.sendQuote(this.quote.id);
+    this.sending = false;
+    if (!result.ok) {
+      this.error = result.error ?? 'No se pudo enviar la cotizacion.';
       return;
     }
     await this.loadData();

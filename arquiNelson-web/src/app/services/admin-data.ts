@@ -1228,6 +1228,22 @@ export class AdminDataService {
     }
   }
 
+  async sendQuote(quoteId: number): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.post(`${this.apiBaseUrl}/quotes/${quoteId}/send`, {}, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'No se pudo enviar la cotizacion.' };
+    }
+  }
+
   async addQuoteService(
     quoteId: number,
     payload: {
