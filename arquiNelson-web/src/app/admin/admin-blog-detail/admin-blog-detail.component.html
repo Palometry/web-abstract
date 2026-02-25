@@ -1,0 +1,67 @@
+<section class="admin-blog-detail">
+  <a routerLink="/admin/blog" class="back-link"><- Volver al blog</a>
+
+  <div class="header">
+    <div>
+      <h2>Editar publicación</h2>
+      <p>Actualiza el contenido y la fecha de publicación.</p>
+    </div>
+    <button type="button" (click)="savePost()" [disabled]="saving || !post">
+      {{ saving ? 'Guardando...' : 'Guardar cambios' }}
+    </button>
+  </div>
+
+  <div class="toast" *ngIf="successMessage">{{ successMessage }}</div>
+  <p class="error" *ngIf="error">{{ error }}</p>
+  <p class="hint" *ngIf="loading">Cargando publicación...</p>
+
+  <div class="panel" *ngIf="post">
+    <div class="form-grid">
+      <label>
+        Titulo
+        <input type="text" [(ngModel)]="draft.title" />
+      </label>
+      <label>
+        Slug
+        <input type="text" [(ngModel)]="draft.slug" />
+      </label>
+      <label>
+        Estado
+        <select [(ngModel)]="draft.status">
+          <option value="draft">Borrador</option>
+          <option value="published">Publicado</option>
+        </select>
+      </label>
+      <label>
+        Fecha publicación
+        <input type="date" [(ngModel)]="draft.publishedAt" />
+      </label>
+      <label class="wide">
+        Extracto
+        <textarea rows="3" [(ngModel)]="draft.excerpt"></textarea>
+      </label>
+      <label class="wide">
+        Contenido
+        <textarea rows="10" [(ngModel)]="draft.content"></textarea>
+      </label>
+      <label class="wide">
+        Media de portada (URL)
+        <input type="text" [(ngModel)]="draft.coverImageUrl" />
+      </label>
+      <div class="image-preview" *ngIf="draft.coverImageUrl">
+        <video
+          *ngIf="isVideoUrl(draft.coverImageUrl); else coverImage"
+          [src]="draft.coverImageUrl"
+          controls
+        ></video>
+        <ng-template #coverImage>
+          <img [src]="draft.coverImageUrl" alt="Portada" />
+        </ng-template>
+      </div>
+      <label class="wide">
+        Subir portada (imagen o video)
+        <input type="file" accept="image/*,video/*" (change)="uploadCover($event)" />
+      </label>
+    </div>
+  </div>
+</section>

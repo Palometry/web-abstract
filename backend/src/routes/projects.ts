@@ -120,6 +120,27 @@ projectsRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) =>
       }))
     : [];
 
+  const [videoRows] = await db.query(
+    `SELECT pv.id, pv.media_id, pv.title, pv.description, pv.sort_order,
+            m.file_url, m.mime_type
+     FROM project_videos pv
+     INNER JOIN media_assets m ON m.id = pv.media_id
+     WHERE pv.project_id = ?
+     ORDER BY pv.sort_order ASC, pv.id ASC`,
+    [projectId]
+  );
+  const videos = Array.isArray(videoRows)
+    ? videoRows.map((row: any) => ({
+        id: row.id,
+        mediaId: row.media_id,
+        fileUrl: row.file_url,
+        title: row.title ?? null,
+        description: row.description ?? null,
+        mimeType: row.mime_type ?? null,
+        sortOrder: row.sort_order
+      }))
+    : [];
+
   let details = null;
   if (project.details_json) {
     try {
@@ -149,7 +170,8 @@ projectsRouter.get('/:id', requireRole(['admin', 'editor']), async (req, res) =>
           isVisible: !!portfolio.is_visible
         }
       : null,
-    images
+    images,
+    videos
   });
 });
 
@@ -232,6 +254,7 @@ projectsRouter.delete('/:id', requireRole(['admin', 'editor']), async (req, res)
   try {
     await connection.beginTransaction();
     await connection.query('DELETE FROM project_images WHERE project_id = ?', [projectId]);
+    await connection.query('DELETE FROM project_videos WHERE project_id = ?', [projectId]);
     await connection.query('DELETE FROM portfolio_entries WHERE project_id = ?', [projectId]);
     const [result] = await connection.query('DELETE FROM projects WHERE id = ?', [projectId]);
     await connection.commit();
@@ -547,6 +570,186 @@ projectsRouter.delete('/:id/images/:imageId', requireRole(['admin', 'editor']), 
   } catch {
     await connection.rollback();
     return res.status(500).json({ error: 'Failed to delete image.' });
+  } finally {
+    connection.release();
+  }
+});
+
+projectsRouter.get('/:id/videos', requireRole(['admin', 'editor']), async (req, res) => {
+  const projectId = Number(req.params['id']);
+  if (!Number.isFinite(projectId)) {
+    return res.status(400).json({ error: 'Invalid project id.' });
+  }
+
+  const [rows] = await db.query(
+    `SELECT pv.id, pv.media_id, pv.title, pv.description, pv.sort_order,
+            m.file_url, m.mime_type
+     FROM project_videos pv
+     INNER JOIN media_assets m ON m.id = pv.media_id
+     WHERE pv.project_id = ?
+     ORDER BY pv.sort_order ASC, pv.id ASC`,
+    [projectId]
+  );
+
+  const videos = Array.isArray(rows)
+    ? rows.map((row: any) => ({
+        id: row.id,
+        mediaId: row.media_id,
+        fileUrl: row.file_url,
+        title: row.title ?? null,
+        description: row.description ?? null,
+        mimeType: row.mime_type ?? null,
+        sortOrder: row.sort_order
+      }))
+    : [];
+
+  return res.json(videos);
+});
+
+projectsRouter.post('/:id/videos', requireRole(['admin', 'editor']), async (req, res) => {
+  const projectId = Number(req.params['id']);
+  if (!Number.isFinite(projectId)) {
+    return res.status(400).json({ error: 'Invalid project id.' });
+  }
+
+  const { fileUrl, title, description, sortOrder } = req.body as {
+    fileUrl?: string;
+    title?: string | null;
+    description?: string | null;
+    sortOrder?: number;
+  };
+
+  if (!fileUrl) {
+    return res.status(400).json({ error: 'fileUrl is required.' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [mediaResult] = await connection.query(
+      `INSERT INTO media_assets (file_url, title, alt_text)
+       VALUES (?, ?, ?)`,
+      [fileUrl, title ?? null, description ?? null]
+    );
+    const mediaId = (mediaResult as any).insertId as number;
+    const [videoResult] = await connection.query(
+      `INSERT INTO project_videos (project_id, media_id, title, description, sort_order)
+       VALUES (?, ?, ?, ?, ?)`,
+      [projectId, mediaId, title ?? null, description ?? null, sortOrder ?? 0]
+    );
+    await connection.commit();
+    return res.status(201).json({ id: (videoResult as any).insertId });
+  } catch {
+    await connection.rollback();
+    return res.status(500).json({ error: 'Failed to add video.' });
+  } finally {
+    connection.release();
+  }
+});
+
+projectsRouter.patch('/:id/videos/:videoId', requireRole(['admin', 'editor']), async (req, res) => {
+  const projectId = Number(req.params['id']);
+  const videoId = Number(req.params['videoId']);
+  if (!Number.isFinite(projectId) || !Number.isFinite(videoId)) {
+    return res.status(400).json({ error: 'Invalid ids.' });
+  }
+
+  const { fileUrl, title, description, sortOrder } = req.body as {
+    fileUrl?: string | null;
+    title?: string | null;
+    description?: string | null;
+    sortOrder?: number;
+  };
+
+  const [rows] = await db.query(
+    `SELECT media_id FROM project_videos WHERE id = ? AND project_id = ? LIMIT 1`,
+    [videoId, projectId]
+  );
+  const record = Array.isArray(rows) ? rows[0] : undefined;
+  if (!record) {
+    return res.status(404).json({ error: 'Video not found.' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const videoUpdates: string[] = [];
+    const videoParams: any[] = [];
+    if (title !== undefined) {
+      videoUpdates.push('title = ?');
+      videoParams.push(title);
+    }
+    if (description !== undefined) {
+      videoUpdates.push('description = ?');
+      videoParams.push(description);
+    }
+    if (sortOrder !== undefined) {
+      videoUpdates.push('sort_order = ?');
+      videoParams.push(sortOrder);
+    }
+    if (videoUpdates.length) {
+      await connection.query(
+        `UPDATE project_videos SET ${videoUpdates.join(', ')} WHERE id = ? AND project_id = ?`,
+        [...videoParams, videoId, projectId]
+      );
+    }
+
+    if (fileUrl !== undefined) {
+      await connection.query(`UPDATE media_assets SET file_url = ? WHERE id = ?`, [
+        fileUrl,
+        record.media_id
+      ]);
+    }
+
+    await connection.commit();
+    return res.json({ ok: true });
+  } catch {
+    await connection.rollback();
+    return res.status(500).json({ error: 'Failed to update video.' });
+  } finally {
+    connection.release();
+  }
+});
+
+projectsRouter.delete('/:id/videos/:videoId', requireRole(['admin', 'editor']), async (req, res) => {
+  const projectId = Number(req.params['id']);
+  const videoId = Number(req.params['videoId']);
+  if (!Number.isFinite(projectId) || !Number.isFinite(videoId)) {
+    return res.status(400).json({ error: 'Invalid ids.' });
+  }
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [rows] = await connection.query(
+      `SELECT media_id FROM project_videos WHERE id = ? AND project_id = ? LIMIT 1`,
+      [videoId, projectId]
+    );
+    const record = Array.isArray(rows) ? rows[0] : undefined;
+    if (!record) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Video not found.' });
+    }
+
+    await connection.query('DELETE FROM project_videos WHERE id = ? AND project_id = ?', [
+      videoId,
+      projectId
+    ]);
+
+    const [countRows] = await connection.query(
+      'SELECT COUNT(*) AS total FROM project_videos WHERE media_id = ?',
+      [record.media_id]
+    );
+    const total = Array.isArray(countRows) ? Number(countRows[0]?.total) : 0;
+    if (total === 0) {
+      await connection.query('DELETE FROM media_assets WHERE id = ?', [record.media_id]);
+    }
+
+    await connection.commit();
+    return res.status(204).send();
+  } catch {
+    await connection.rollback();
+    return res.status(500).json({ error: 'Failed to delete video.' });
   } finally {
     connection.release();
   }

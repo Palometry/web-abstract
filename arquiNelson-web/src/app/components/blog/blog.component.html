@@ -1,0 +1,42 @@
+<section class="blog">
+  <div class="container">
+    <header class="blog-header">
+      <h1>Blog</h1>
+      <p>Novedades, avances y notas sobre nuestros proyectos.</p>
+    </header>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <p class="hint" *ngIf="loading">Cargando publicaciones...</p>
+
+    <div class="blog-grid" *ngIf="!loading">
+      <article class="blog-card" *ngFor="let post of posts">
+        <a class="card-image" [routerLink]="['/blog', post.slug || post.id]">
+          <video
+            *ngIf="post.coverImageUrl && isVideoUrl(post.coverImageUrl); else coverImage"
+            [src]="post.coverImageUrl"
+            muted
+            playsinline
+            preload="metadata"
+          ></video>
+          <ng-template #coverImage>
+            <img
+              *ngIf="post.coverImageUrl"
+              [src]="post.coverImageUrl"
+              [alt]="post.title"
+              loading="lazy"
+            />
+          </ng-template>
+          <div class="placeholder" *ngIf="!post.coverImageUrl"></div>
+        </a>
+        <div class="card-body">
+          <span class="date">{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+          <h2>
+            <a [routerLink]="['/blog', post.slug || post.id]">{{ post.title }}</a>
+          </h2>
+          <p class="excerpt" *ngIf="post.excerpt">{{ post.excerpt }}</p>
+          <a class="read-more" [routerLink]="['/blog', post.slug || post.id]">Leer más</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

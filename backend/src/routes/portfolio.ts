@@ -288,7 +288,7 @@ portfolioRouter.put('/:id', requireRole(['admin', 'editor']), async (req, res) =
     specs?: { label: string; value: string }[];
     tags?: string[];
     blocks?: {
-      blockType: 'text' | 'image';
+      blockType: 'text' | 'image' | 'video';
       textContent?: string | null;
       mediaId?: number | null;
       caption?: string | null;
@@ -411,7 +411,7 @@ portfolioRouter.put('/:id', requireRole(['admin', 'editor']), async (req, res) =
             portfolioId,
             block.blockType,
             block.blockType === 'text' ? block.textContent ?? null : null,
-            block.blockType === 'image' ? block.mediaId ?? null : null,
+            block.blockType === 'image' || block.blockType === 'video' ? block.mediaId ?? null : null,
             block.caption ?? null,
             block.layout ?? 'inline',
             index,

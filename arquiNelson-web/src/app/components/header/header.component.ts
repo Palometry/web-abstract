@@ -50,6 +50,7 @@ export class HeaderComponent {
     { name: 'Sobre Nosotros', link: '/', fragment: 'about' },
     { name: 'Servicios', link: '/', fragment: 'services' },
     { name: 'Portafolio', link: '/', fragment: 'portfolio' },
+    { name: 'Blog', link: '/blog' },
     { name: 'Proyecto', link: '/projects', dropdown: true },
     { name: 'Contacto', link: '/', fragment: 'contact' }
   ];

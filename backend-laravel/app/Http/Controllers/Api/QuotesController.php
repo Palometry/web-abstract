@@ -53,6 +53,18 @@ class QuotesController extends Controller
         return in_array($status, $allowed, true) ? $status : null;
     }
 
+    private function getIdempotencyKey(Request $request): ?string
+    {
+        $headerKey = $request->header('X-Idempotency-Key');
+        $bodyKey = $request->input('idempotencyKey');
+        $key = is_string($headerKey) && trim($headerKey) !== '' ? $headerKey : $bodyKey;
+        if (!is_string($key)) {
+            return null;
+        }
+        $key = trim($key);
+        return $key !== '' ? $key : null;
+    }
+
     private function computeLineTotal(string $pricingType, float $unitPrice, float $quantity, float $areaM2, float $baseCost): float
     {
         $qty = $quantity > 0 ? $quantity : 1;
@@ -320,6 +332,7 @@ class QuotesController extends Controller
             $extrasCost = $this->roundMoney($extrasCost);
             $totalCost = $this->roundMoney($baseCost + $extrasCost);
 
+            $now = now();
             $quoteId = DB::table('quotes')->insertGetId([
                 'pricing_rate_id' => $selectedRateId,
                 'full_name' => $fullName,
@@ -344,6 +357,8 @@ class QuotesController extends Controller
                 'plan_name' => $planName ?: null,
                 'plan_min_days' => $planMinDays,
                 'plan_max_days' => $planMaxDays,
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
 
             foreach ($lineItems as $line) {
@@ -366,6 +381,7 @@ class QuotesController extends Controller
 
     public function storeLead(Request $request)
     {
+        $idempotencyKey = $this->getIdempotencyKey($request);
         $fullName = trim((string) $request->input('fullName', ''));
         $phone = trim((string) $request->input('phone', ''));
         $email = trim((string) $request->input('email', ''));
@@ -383,10 +399,57 @@ class QuotesController extends Controller
         $projectAddress = is_string($request->input('projectAddress')) ? trim((string) $request->input('projectAddress')) : null;
         $notes = is_string($request->input('notes')) ? trim((string) $request->input('notes')) : null;
         $notes = $notes ? "Lead chatbot: {$notes}" : 'Lead chatbot';
+        $currency = strtoupper((string) $request->input('currency', 'PEN'));
+
+        $pricingRateId = $request->input('pricingRateId');
+        $selectedRateId = is_numeric($pricingRateId) ? (int) $pricingRateId : null;
+        $rate = null;
+
+        if ($selectedRateId) {
+            $rate = DB::select(
+                "SELECT id, name, base_price_per_m2, currency, min_days, max_days
+                 FROM pricing_rates
+                 WHERE id = ? AND is_active = 1
+                 LIMIT 1",
+                [$selectedRateId]
+            );
+            $rate = !empty($rate) ? $rate[0] : null;
+        }
+
+        if (!$rate) {
+            $rate = DB::select(
+                "SELECT id, name, base_price_per_m2, currency, min_days, max_days
+                 FROM pricing_rates
+                 WHERE is_active = 1
+                 ORDER BY effective_from DESC, id DESC
+                 LIMIT 1"
+            );
+            $rate = !empty($rate) ? $rate[0] : null;
+        }
+
+        $pricingRateId = $rate ? (int) $rate->id : null;
+        $baseRatePerM2 = $rate ? (float) $rate->base_price_per_m2 : 0.0;
+        $planName = $rate ? $rate->name : null;
+        $planMinDays = $rate && $rate->min_days !== null ? (int) $rate->min_days : null;
+        $planMaxDays = $rate && $rate->max_days !== null ? (int) $rate->max_days : null;
+        if ($rate && $rate->currency) {
+            $currency = $rate->currency;
+        }
 
         try {
+            if ($idempotencyKey) {
+                $existing = DB::table('quotes')
+                    ->select('id')
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->first();
+                if ($existing) {
+                    return response()->json(['id' => $existing->id], 200);
+                }
+            }
+
+            $now = now();
             $quoteId = DB::table('quotes')->insertGetId([
-                'pricing_rate_id' => null,
+                'pricing_rate_id' => $pricingRateId,
                 'full_name' => $fullName,
                 'phone' => $phone,
                 'email' => $email,
@@ -398,17 +461,20 @@ class QuotesController extends Controller
                 'area_covered_m2' => null,
                 'area_uncovered_percent' => null,
                 'floor_count' => null,
-                'base_rate_per_m2' => 0,
+                'base_rate_per_m2' => $baseRatePerM2,
                 'base_cost' => 0,
                 'extras_cost' => 0,
                 'total_cost' => 0,
-                'currency' => strtoupper((string) $request->input('currency', 'PEN')),
+                'currency' => $currency,
                 'status' => 'new',
+                'idempotency_key' => $idempotencyKey,
                 'notes' => $notes,
                 'expires_at' => null,
-                'plan_name' => null,
-                'plan_min_days' => null,
-                'plan_max_days' => null,
+                'plan_name' => $planName,
+                'plan_min_days' => $planMinDays,
+                'plan_max_days' => $planMaxDays,
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
 
             return response()->json(['id' => $quoteId], 201);

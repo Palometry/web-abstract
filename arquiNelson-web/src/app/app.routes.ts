@@ -13,12 +13,16 @@ import { AdminProjectDetailComponent } from './admin/admin-project-detail/admin-
 import { AdminProjectCreateComponent } from './admin/admin-project-create/admin-project-create.component';
 import { AdminPortfolioComponent } from './admin/admin-portfolio/admin-portfolio.component';
 import { AdminPortfolioDetailComponent } from './admin/admin-portfolio-detail/admin-portfolio-detail.component';
+import { AdminBlogComponent } from './admin/admin-blog/admin-blog.component';
+import { AdminBlogDetailComponent } from './admin/admin-blog-detail/admin-blog-detail.component';
 import { AdminQuotesComponent } from './admin/admin-quotes/admin-quotes.component';
 import { AdminQuoteCreateComponent } from './admin/admin-quote-create/admin-quote-create.component';
 import { AdminQuoteDetailComponent } from './admin/admin-quote-detail/admin-quote-detail.component';
 import { AdminServicesComponent } from './admin/admin-services/admin-services.component';
 import { AdminUsersComponent } from './admin/admin-users/admin-users.component';
 import { adminAuthGuard } from './services/admin-guard';
+import { BlogComponent } from './components/blog/blog.component';
+import { BlogDetailComponent } from './components/blog-detail/blog-detail.component';
 
 export const routes: Routes = [
   { path: 'admin/login', component: AdminLoginComponent },
@@ -37,6 +41,8 @@ export const routes: Routes = [
       { path: 'portfolio', component: AdminPortfolioComponent },
       { path: 'portfolio/new', component: AdminPortfolioDetailComponent },
       { path: 'portfolio/:id', component: AdminPortfolioDetailComponent },
+      { path: 'blog', component: AdminBlogComponent },
+      { path: 'blog/:id', component: AdminBlogDetailComponent },
       { path: 'quotes', component: AdminQuotesComponent },
       { path: 'quotes/new', component: AdminQuoteCreateComponent },
       { path: 'quotes/:id', component: AdminQuoteDetailComponent },
@@ -47,6 +53,8 @@ export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
   { path: 'projects', component: ProjectListComponent },
   { path: 'project/:id', component: ProjectDetailComponent },
+  { path: 'blog', component: BlogComponent },
+  { path: 'blog/:slug', component: BlogDetailComponent },
   { path: 'portfolio/:id', component: PortfolioDetailComponent },
   { path: '**', redirectTo: '' }
 ];

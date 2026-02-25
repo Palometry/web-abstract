@@ -56,6 +56,14 @@
           <img [src]="block.src" [alt]="block.caption || item.title" loading="lazy" />
           <figcaption *ngIf="block.caption">{{ block.caption }}</figcaption>
         </figure>
+        <figure
+          *ngIf="block.type === 'video' && block.src"
+          class="article-figure"
+          [class.block-wide]="block.layout === 'wide'"
+        >
+          <video [src]="block.src" controls></video>
+          <figcaption *ngIf="block.caption">{{ block.caption }}</figcaption>
+        </figure>
       </div>
     </section>
 

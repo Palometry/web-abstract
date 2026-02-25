@@ -1,0 +1,63 @@
+<section class="admin-blog">
+  <header class="page-header">
+    <div>
+      <h2>Blog</h2>
+      <p>Gestiona publicaciones, borradores y contenido del blog.</p>
+    </div>
+  </header>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="panel">
+    <h3>Nueva publicación</h3>
+    <div class="form-grid">
+      <label>
+        Titulo
+        <input [(ngModel)]="newPost.title" placeholder="Titulo" />
+      </label>
+      <label>
+        Slug
+        <input [(ngModel)]="newPost.slug" placeholder="mi-publicacion" />
+      </label>
+      <label>
+        Estado
+        <select [(ngModel)]="newPost.status">
+          <option value="draft">Borrador</option>
+          <option value="published">Publicado</option>
+        </select>
+      </label>
+      <label>
+        Fecha publicacion
+        <input type="date" [(ngModel)]="newPost.publishedAt" />
+      </label>
+      <button type="button" (click)="createPost()" [disabled]="creating">
+        {{ creating ? 'Creando...' : 'Crear publicación' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Publicaciones</h3>
+    <p class="hint" *ngIf="loading">Cargando publicaciones...</p>
+    <div class="table" *ngIf="!loading">
+      <div class="table-header">
+        <span>Titulo</span>
+        <span>Slug</span>
+        <span>Estado</span>
+        <span>Fecha</span>
+        <span>Acciones</span>
+      </div>
+      <div class="table-row" *ngFor="let post of posts">
+        <span>{{ post.title }}</span>
+        <span>{{ post.slug }}</span>
+        <span>{{ formatStatus(post.status) }}</span>
+        <span>{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+        <span class="actions">
+          <a [routerLink]="['/admin/blog', post.id]">Editar</a>
+          <button type="button" class="danger" (click)="deletePost(post)">Eliminar</button>
+        </span>
+      </div>
+      <p class="hint" *ngIf="!posts.length">No hay publicaciones aún.</p>
+    </div>
+  </div>
+</section>

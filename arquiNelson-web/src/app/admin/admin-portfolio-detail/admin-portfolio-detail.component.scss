@@ -272,6 +272,18 @@
   border-radius: 10px;
 }
 
+.block-video {
+  display: grid;
+  gap: 10px;
+
+  video {
+    width: 100%;
+    max-height: 320px;
+    border-radius: 10px;
+    background: #000;
+  }
+}
+
 .toggle {
   display: inline-flex;
   align-items: center;

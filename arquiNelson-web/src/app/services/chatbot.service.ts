@@ -28,6 +28,11 @@ export class ChatbotService {
       return response;
     }
 
-    return response.output || response.reply || response.message || 'Gracias por tu mensaje. ¿En qué más puedo ayudarte?';
+    const reply = response.output || response.reply || response.message;
+    if (!reply) {
+      throw new Error('Chat response is empty');
+    }
+
+    return reply;
   }
 }

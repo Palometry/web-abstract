@@ -104,6 +104,7 @@ export type AdminProjectDetail = AdminProject & {
   slug?: string | null;
   details?: AdminProjectDetails | null;
   images: AdminProjectImage[];
+  videos: AdminProjectVideo[];
   portfolioEntry: AdminPortfolioEntryDetail | null;
 };
 
@@ -113,6 +114,15 @@ export type AdminProjectImage = {
   title: string | null;
   altText: string | null;
   isCover: boolean;
+  sortOrder: number;
+};
+
+export type AdminProjectVideo = {
+  id: number;
+  fileUrl: string;
+  title: string | null;
+  description: string | null;
+  mimeType?: string | null;
   sortOrder: number;
 };
 
@@ -151,7 +161,7 @@ export type AdminPortfolioSpec = {
 
 export type AdminPortfolioBlock = {
   id: number;
-  blockType: 'text' | 'image';
+  blockType: 'text' | 'image' | 'video';
   textContent?: string | null;
   mediaId?: number | null;
   fileUrl?: string | null;
@@ -179,6 +189,26 @@ export type AdminPortfolioDetail = {
   specs: AdminPortfolioSpec[];
   tags: { id: number; tag: string; sortOrder: number }[];
   blocks: AdminPortfolioBlock[];
+};
+
+export type AdminBlogPost = {
+  id: number;
+  title: string;
+  slug: string;
+  status: 'draft' | 'published' | string;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+};
+
+export type AdminBlogDetail = {
+  id: number;
+  title: string;
+  slug: string;
+  status: 'draft' | 'published' | string;
+  publishedAt?: string | null;
+  excerpt?: string | null;
+  content?: string | null;
+  coverImageUrl?: string | null;
 };
 
 export type AdminQuote = {
@@ -710,6 +740,73 @@ export class AdminDataService {
     }
   }
 
+  async createProjectVideo(
+    projectId: number,
+    payload: {
+      fileUrl: string;
+      title?: string | null;
+      description?: string | null;
+      sortOrder?: number;
+    }
+  ): Promise<{ ok: boolean; id?: number; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ id: number }>(`${this.apiBaseUrl}/projects/${projectId}/videos`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true, id: response.id };
+    } catch {
+      return { ok: false, error: 'No se pudo agregar el video.' };
+    }
+  }
+
+  async updateProjectVideo(
+    projectId: number,
+    videoId: number,
+    payload: Partial<{
+      fileUrl: string | null;
+      title: string | null;
+      description: string | null;
+      sortOrder: number;
+    }>
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.apiBaseUrl}/projects/${projectId}/videos/${videoId}`,
+          payload,
+          { headers: this.authHeaders() }
+        )
+      );
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'No se pudo actualizar el video.' };
+    }
+  }
+
+  async deleteProjectVideo(projectId: number, videoId: number): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiBaseUrl}/projects/${projectId}/videos/${videoId}`, {
+          headers: this.authHeaders()
+        })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async updateProjectPortfolio(
     projectId: number,
     payload: {
@@ -772,6 +869,100 @@ export class AdminDataService {
     );
   }
 
+  async getBlogPosts(): Promise<AdminBlogPost[]> {
+    if (!this.isBrowser) {
+      return [];
+    }
+    return this.safeGet<AdminBlogPost[]>(`${this.apiBaseUrl}/blog`, []);
+  }
+
+  async getBlogDetail(postId: number): Promise<AdminBlogDetail | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    return this.safeGet<AdminBlogDetail | null>(`${this.apiBaseUrl}/blog/${postId}`, null);
+  }
+
+  async createBlogPost(payload: {
+    title: string;
+    slug: string;
+    status?: string;
+    publishedAt?: string | null;
+    excerpt?: string | null;
+    content?: string | null;
+    coverImageUrl?: string | null;
+  }): Promise<{ ok: boolean; id?: number; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http
+          .post<{ id: number }>(`${this.apiBaseUrl}/blog`, payload, {
+            headers: this.authHeaders()
+          })
+          .pipe(
+            timeout(8000),
+            catchError((error) => {
+              throw error;
+            })
+          )
+      );
+      return { ok: true, id: response.id };
+    } catch (error: any) {
+      if (error?.status === 409) {
+        return { ok: false, error: 'El slug ya existe.' };
+      }
+      return { ok: false, error: 'No se pudo crear la publicacion.' };
+    }
+  }
+
+  async updateBlogPost(
+    postId: number,
+    payload: Partial<{
+      title: string;
+      slug: string;
+      status: string;
+      publishedAt: string | null;
+      excerpt: string | null;
+      content: string | null;
+      coverImageUrl: string | null;
+    }>
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.apiBaseUrl}/blog/${postId}`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true };
+    } catch (error: any) {
+      if (error?.status === 409) {
+        return { ok: false, error: 'El slug ya existe.' };
+      }
+      return { ok: false, error: 'No se pudo actualizar la publicacion.' };
+    }
+  }
+
+  async deleteBlogPost(postId: number): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiBaseUrl}/blog/${postId}`, {
+          headers: this.authHeaders()
+        })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async createPortfolioEntry(payload: {
     projectId?: number | null;
     titleOverride: string;
@@ -816,7 +1007,7 @@ export class AdminDataService {
       specs?: { label: string; value: string }[];
       tags?: string[];
       blocks?: {
-        blockType: 'text' | 'image';
+        blockType: 'text' | 'image' | 'video';
         textContent?: string | null;
         mediaId?: number | null;
         caption?: string | null;
@@ -886,7 +1077,7 @@ export class AdminDataService {
       );
       return { ok: true, id: response.id, fileUrl: response.fileUrl };
     } catch {
-      return { ok: false, error: 'No se pudo subir la imagen.' };
+      return { ok: false, error: 'No se pudo subir el archivo.' };
     }
   }
 

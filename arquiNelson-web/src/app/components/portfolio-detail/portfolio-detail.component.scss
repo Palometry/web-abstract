@@ -177,12 +177,24 @@
     display: block;
   }
 
+  video {
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+    background: #000;
+  }
+
   figcaption {
     color: #666;
     font-size: 0.9rem;
   }
 
   &.block-wide img {
+    max-height: 520px;
+    object-fit: cover;
+  }
+
+  &.block-wide video {
     max-height: 520px;
     object-fit: cover;
   }

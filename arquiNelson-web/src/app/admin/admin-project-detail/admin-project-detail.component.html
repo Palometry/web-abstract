@@ -138,6 +138,9 @@
         Imagen masterplan / lotización
         <input type="text" [(ngModel)]="detailsDraft.masterplanImage" />
       </label>
+      <div class="image-preview-inline" *ngIf="detailsDraft.masterplanImage">
+        <img [src]="detailsDraft.masterplanImage" alt="Masterplan" />
+      </div>
       <label class="wide">
         Subir imagen masterplan
         <input type="file" accept="image/*" (change)="uploadDetailImage($event, 'masterplanImage')" />
@@ -150,6 +153,9 @@
         Banner de imágenes (una URL por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.bannerImagesText"></textarea>
       </label>
+      <div class="preview-grid" *ngIf="previewImages(detailsDraft.bannerImagesText).length">
+        <img *ngFor="let img of previewImages(detailsDraft.bannerImagesText)" [src]="img" alt="Banner" />
+      </div>
       <label class="wide">
         Subir imagen al banner
         <input type="file" accept="image/*" (change)="appendDetailImage($event, 'bannerImagesText')" />
@@ -158,6 +164,9 @@
         Galería final (una URL por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.galleryText"></textarea>
       </label>
+      <div class="preview-grid" *ngIf="previewImages(detailsDraft.galleryText).length">
+        <img *ngFor="let img of previewImages(detailsDraft.galleryText)" [src]="img" alt="Galería" />
+      </div>
       <label class="wide">
         Subir imagen a galería final
         <input type="file" accept="image/*" (change)="appendDetailImage($event, 'galleryText')" />
@@ -306,14 +315,17 @@
   <div class="panel" *ngIf="project">
     <h3>Imagenes</h3>
       <div class="form-grid">
-        <label class="wide">
-          URL de imagen
-          <input type="text" [(ngModel)]="imageDraft.fileUrl" />
-        </label>
-        <label class="wide">
-          Subir imagen (archivo)
-          <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
-        </label>
+      <label class="wide">
+        URL de imagen
+        <input type="text" [(ngModel)]="imageDraft.fileUrl" />
+      </label>
+      <div class="image-preview-inline" *ngIf="imageDraft.fileUrl">
+        <img [src]="imageDraft.fileUrl" alt="Vista previa" />
+      </div>
+      <label class="wide">
+        Subir imagen (archivo)
+        <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
+      </label>
         <label>
           Titulo
           <input type="text" [(ngModel)]="imageDraft.title" />
@@ -335,7 +347,7 @@
 
       <div class="image-grid" *ngIf="images.length">
         <div class="image-card" *ngFor="let image of images">
-          <img [src]="image.fileUrl" [alt]="image.altText || ''" />
+          <img [src]="image.draft.fileUrl || image.fileUrl" [alt]="image.altText || ''" />
           <div class="form-grid compact">
             <label class="wide">
               URL
@@ -365,6 +377,65 @@
         <div class="actions">
           <button type="button" (click)="saveImage(image)">Guardar</button>
           <button type="button" class="danger" (click)="deleteImage(image)">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" *ngIf="project">
+    <h3>Videos</h3>
+    <div class="form-grid">
+      <label class="wide">
+        URL del video
+        <input type="text" [(ngModel)]="videoDraft.fileUrl" />
+      </label>
+      <label class="wide">
+        Subir video (archivo)
+        <input type="file" accept="video/*" (change)="uploadVideoDraft($event)" />
+      </label>
+      <label>
+        Titulo
+        <input type="text" [(ngModel)]="videoDraft.title" />
+      </label>
+      <label class="wide">
+        Descripcion
+        <textarea rows="3" [(ngModel)]="videoDraft.description"></textarea>
+      </label>
+      <label>
+        Orden
+        <input type="number" [(ngModel)]="videoDraft.sortOrder" />
+      </label>
+      <button type="button" (click)="addVideo()">Agregar video</button>
+    </div>
+
+    <div class="image-grid" *ngIf="videos.length">
+      <div class="image-card" *ngFor="let video of videos">
+        <video *ngIf="video.fileUrl" [src]="video.fileUrl" controls></video>
+        <div class="form-grid compact">
+          <label class="wide">
+            URL
+            <input type="text" [(ngModel)]="video.draft.fileUrl" />
+          </label>
+          <label class="wide">
+            Subir video (archivo)
+            <input type="file" accept="video/*" (change)="uploadVideoForExisting(video, $event)" />
+          </label>
+          <label>
+            Titulo
+            <input type="text" [(ngModel)]="video.draft.title" />
+          </label>
+          <label class="wide">
+            Descripcion
+            <textarea rows="2" [(ngModel)]="video.draft.description"></textarea>
+          </label>
+          <label>
+            Orden
+            <input type="number" [(ngModel)]="video.draft.sortOrder" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="button" (click)="saveVideo(video)">Guardar</button>
+          <button type="button" class="danger" (click)="deleteVideo(video)">Eliminar</button>
         </div>
       </div>
     </div>

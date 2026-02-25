@@ -6,7 +6,8 @@ import {
   AdminDataService,
   AdminProjectDetail,
   AdminProjectDetails,
-  AdminProjectImage
+  AdminProjectImage,
+  AdminProjectVideo
 } from '../../services/admin-data';
 import { DEFAULT_PROJECT_CATALOG, ProjectCatalog } from '../project-classifications';
 
@@ -16,6 +17,15 @@ type ProjectImageView = AdminProjectImage & {
     title: string;
     altText: string;
     isCover: boolean;
+    sortOrder: number;
+  };
+};
+
+type ProjectVideoView = AdminProjectVideo & {
+  draft: {
+    fileUrl: string;
+    title: string;
+    description: string;
     sortOrder: number;
   };
 };
@@ -45,6 +55,7 @@ export class AdminProjectCreateComponent implements OnInit {
   projectId: number | null = null;
   project: AdminProjectDetail | null = null;
   images: ProjectImageView[] = [];
+  videos: ProjectVideoView[] = [];
   successMessage = '';
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -86,6 +97,13 @@ export class AdminProjectCreateComponent implements OnInit {
     title: '',
     altText: '',
     isCover: false,
+    sortOrder: 0
+  };
+
+  videoDraft = {
+    fileUrl: '',
+    title: '',
+    description: '',
     sortOrder: 0
   };
 
@@ -299,6 +317,16 @@ export class AdminProjectCreateComponent implements OnInit {
         sortOrder: image.sortOrder
       }
     }));
+    const videos = Array.isArray(project.videos) ? project.videos : [];
+    this.videos = videos.map((video) => ({
+      ...video,
+      draft: {
+        fileUrl: video.fileUrl,
+        title: video.title ?? '',
+        description: video.description ?? '',
+        sortOrder: video.sortOrder
+      }
+    }));
     this.portfolioDraft = {
       enabled: !!project.portfolioEntry,
       titleOverride: project.portfolioEntry?.titleOverride ?? '',
@@ -332,6 +360,29 @@ export class AdminProjectCreateComponent implements OnInit {
     await this.loadProject(this.projectId);
   }
 
+  async addVideo() {
+    if (!this.projectId) {
+      return;
+    }
+    const fileUrl = this.videoDraft.fileUrl.trim();
+    if (!fileUrl) {
+      this.error = 'La URL del video es obligatoria.';
+      return;
+    }
+    const result = await this.data.createProjectVideo(this.projectId, {
+      fileUrl,
+      title: this.videoDraft.title || null,
+      description: this.videoDraft.description || null,
+      sortOrder: this.videoDraft.sortOrder
+    });
+    if (!result.ok) {
+      this.error = result.error ?? 'No se pudo agregar el video.';
+      return;
+    }
+    this.videoDraft = { fileUrl: '', title: '', description: '', sortOrder: 0 };
+    await this.loadProject(this.projectId);
+  }
+
   async uploadImageDraft(event: Event) {
     if (!this.projectId) {
       return;
@@ -354,6 +405,28 @@ export class AdminProjectCreateComponent implements OnInit {
     }
   }
 
+  async uploadVideoDraft(event: Event) {
+    if (!this.projectId) {
+      return;
+    }
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.uploading = true;
+    const result = await this.data.uploadMedia(file, { title: this.videoDraft.title || undefined });
+    this.uploading = false;
+    if (!result.ok || !result.fileUrl) {
+      this.error = result.error ?? 'No se pudo subir el video.';
+      return;
+    }
+    this.videoDraft.fileUrl = result.fileUrl;
+    if (input) {
+      input.value = '';
+    }
+  }
+
   async saveImage(image: ProjectImageView) {
     if (!this.projectId) {
       return;
@@ -367,6 +440,23 @@ export class AdminProjectCreateComponent implements OnInit {
     });
     if (!result.ok) {
       this.error = result.error ?? 'No se pudo guardar la imagen.';
+      return;
+    }
+    await this.loadProject(this.projectId);
+  }
+
+  async saveVideo(video: ProjectVideoView) {
+    if (!this.projectId) {
+      return;
+    }
+    const result = await this.data.updateProjectVideo(this.projectId, video.id, {
+      fileUrl: video.draft.fileUrl.trim(),
+      title: video.draft.title || null,
+      description: video.draft.description || null,
+      sortOrder: video.draft.sortOrder
+    });
+    if (!result.ok) {
+      this.error = result.error ?? 'No se pudo guardar el video.';
       return;
     }
     await this.loadProject(this.projectId);
@@ -394,6 +484,28 @@ export class AdminProjectCreateComponent implements OnInit {
     }
   }
 
+  async uploadVideoForExisting(video: ProjectVideoView, event: Event) {
+    if (!this.projectId) {
+      return;
+    }
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.imageUploadStates[video.id] = true;
+    const result = await this.data.uploadMedia(file, { title: video.draft.title || undefined });
+    this.imageUploadStates[video.id] = false;
+    if (!result.ok || !result.fileUrl) {
+      this.error = result.error ?? 'No se pudo subir el video.';
+      return;
+    }
+    video.draft.fileUrl = result.fileUrl;
+    if (input) {
+      input.value = '';
+    }
+  }
+
   async deleteImage(image: ProjectImageView) {
     if (!this.projectId) {
       return;
@@ -405,6 +517,22 @@ export class AdminProjectCreateComponent implements OnInit {
     const ok = await this.data.deleteProjectImage(this.projectId, image.id);
     if (!ok) {
       this.error = 'No se pudo eliminar la imagen.';
+      return;
+    }
+    await this.loadProject(this.projectId);
+  }
+
+  async deleteVideo(video: ProjectVideoView) {
+    if (!this.projectId) {
+      return;
+    }
+    const confirmed = confirm('Eliminar este video?');
+    if (!confirmed) {
+      return;
+    }
+    const ok = await this.data.deleteProjectVideo(this.projectId, video.id);
+    if (!ok) {
+      this.error = 'No se pudo eliminar el video.';
       return;
     }
     await this.loadProject(this.projectId);
@@ -686,6 +814,10 @@ export class AdminProjectCreateComponent implements OnInit {
       .split('\n')
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
+  }
+
+  previewImages(value: string): string[] {
+    return this.splitLines(value).slice(0, 12);
   }
 
   private joinLines(values?: string[] | null): string {

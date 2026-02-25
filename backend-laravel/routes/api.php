@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\BlogController;
 
 Route::get('/health', fn () => response()->json(['ok' => true]));
 
@@ -27,6 +28,8 @@ Route::get('/pages/public/home', [PagesController::class, 'publicHome']);
 Route::get('/pages/public/{slug}', [PagesController::class, 'publicBySlug']);
 Route::get('/portfolio/public', [PortfolioController::class, 'publicList']);
 Route::get('/portfolio/public/{id}', [PortfolioController::class, 'publicDetail']);
+Route::get('/blog/public', [BlogController::class, 'publicList']);
+Route::get('/blog/public/{slug}', [BlogController::class, 'publicDetail']);
 Route::get('/services/public', [ServiceController::class, 'publicList']);
 Route::get('/projects/public', [ProjectsController::class, 'publicList']);
 Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
@@ -76,6 +79,12 @@ Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::get('/portfolio/{id}', [PortfolioController::class, 'adminDetail']);
     Route::put('/portfolio/{id}', [PortfolioController::class, 'update']);
     Route::delete('/portfolio/{id}', [PortfolioController::class, 'destroy']);
+
+    Route::get('/blog', [BlogController::class, 'index']);
+    Route::post('/blog', [BlogController::class, 'store']);
+    Route::get('/blog/{id}', [BlogController::class, 'show']);
+    Route::patch('/blog/{id}', [BlogController::class, 'update']);
+    Route::delete('/blog/{id}', [BlogController::class, 'destroy']);
 
     Route::get('/quotes/options', [QuotesController::class, 'options']);
     Route::get('/quotes', [QuotesController::class, 'index']);

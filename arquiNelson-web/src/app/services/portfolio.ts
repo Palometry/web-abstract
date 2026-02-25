@@ -11,7 +11,7 @@ export type PortfolioSpec = {
 };
 
 export type PortfolioBlock = {
-  type: 'text' | 'image';
+  type: 'text' | 'image' | 'video';
   text?: string | null;
   src?: string | null;
   caption?: string | null;

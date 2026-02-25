@@ -423,11 +423,12 @@ class PortfolioController extends Controller
                     if (!isset($block['blockType']) || !$block['blockType']) {
                         continue;
                     }
+                    $blockType = $block['blockType'];
                     DB::table('portfolio_blocks')->insert([
                         'portfolio_id' => $portfolioId,
-                        'block_type' => $block['blockType'],
-                        'text_content' => $block['blockType'] === 'text' ? ($block['textContent'] ?? null) : null,
-                        'media_id' => $block['blockType'] === 'image' ? ($block['mediaId'] ?? null) : null,
+                        'block_type' => $blockType,
+                        'text_content' => $blockType === 'text' ? ($block['textContent'] ?? null) : null,
+                        'media_id' => in_array($blockType, ['image', 'video'], true) ? ($block['mediaId'] ?? null) : null,
                         'caption' => $block['caption'] ?? null,
                         'layout' => $block['layout'] ?? 'inline',
                         'sort_order' => $index,

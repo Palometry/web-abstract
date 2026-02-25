@@ -114,7 +114,15 @@
       <div class="blocks">
         <div class="block-card" *ngFor="let block of form.blocks; let i = index">
           <div class="block-header">
-            <strong>{{ block.blockType === 'text' ? 'Texto' : 'Imagen' }}</strong>
+            <strong>
+              {{
+                block.blockType === 'text'
+                  ? 'Texto'
+                  : block.blockType === 'image'
+                    ? 'Imagen'
+                    : 'Video'
+              }}
+            </strong>
             <div class="block-actions">
               <button type="button" (click)="moveBlock(i, -1)">Arriba</button>
               <button type="button" (click)="moveBlock(i, 1)">Abajo</button>
@@ -128,9 +136,25 @@
             <img *ngIf="block.fileUrl" [src]="block.fileUrl" alt="Bloque" />
             <label class="upload">
               Subir imagen
-              <input type="file" accept="image/*" (change)="uploadBlockImage(block, $event)" />
+              <input type="file" accept="image/*" (change)="uploadBlockMedia(block, $event)" />
             </label>
             <input [(ngModel)]="block.caption" placeholder="Caption" />
+            <select [(ngModel)]="block.layout">
+              <option [ngValue]="'inline'">Inline</option>
+              <option [ngValue]="'wide'">Wide</option>
+            </select>
+            <label class="toggle">
+              Visible
+              <input type="checkbox" [(ngModel)]="block.isVisible" />
+            </label>
+          </div>
+          <div *ngIf="block.blockType === 'video'" class="block-video">
+            <video *ngIf="block.fileUrl" [src]="block.fileUrl" controls></video>
+            <label class="upload">
+              Subir video
+              <input type="file" accept="video/*" (change)="uploadBlockMedia(block, $event)" />
+            </label>
+            <input [(ngModel)]="block.caption" placeholder="Descripcion o caption" />
             <select [(ngModel)]="block.layout">
               <option [ngValue]="'inline'">Inline</option>
               <option [ngValue]="'wide'">Wide</option>
@@ -145,6 +169,7 @@
       <div class="block-actions">
         <button type="button" class="ghost" (click)="addTextBlock()">Agregar texto</button>
         <button type="button" class="ghost" (click)="addImageBlock()">Agregar imagen</button>
+        <button type="button" class="ghost" (click)="addVideoBlock()">Agregar video</button>
       </div>
     </div>
 
