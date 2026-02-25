@@ -74,6 +74,11 @@ Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::patch('/projects/{id}/images/{imageId}', [ProjectsController::class, 'updateImage']);
     Route::delete('/projects/{id}/images/{imageId}', [ProjectsController::class, 'destroyImage']);
 
+    Route::get('/projects/{id}/videos', [ProjectsController::class, 'listVideos']);
+    Route::post('/projects/{id}/videos', [ProjectsController::class, 'storeVideo']);
+    Route::patch('/projects/{id}/videos/{videoId}', [ProjectsController::class, 'updateVideo']);
+    Route::delete('/projects/{id}/videos/{videoId}', [ProjectsController::class, 'destroyVideo']);
+
     Route::get('/portfolio', [PortfolioController::class, 'adminList']);
     Route::post('/portfolio', [PortfolioController::class, 'store']);
     Route::get('/portfolio/{id}', [PortfolioController::class, 'adminDetail']);
@@ -96,6 +101,7 @@ Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::delete('/quotes/{id}/services/{serviceId}', [QuotesController::class, 'destroyService']);
 
     Route::post('/media', [MediaController::class, 'store']);
+    Route::post('/media/file', [MediaController::class, 'storeFile']);
 });
 
 Route::middleware(['auth.jwt', 'role:admin,editor_user_manager'])->group(function () {

@@ -78,6 +78,27 @@ class ProjectsController extends Controller
             $details = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
         }
 
+        $videoRows = DB::select(
+            "SELECT pv.id, pv.media_id, pv.title, pv.description, pv.sort_order,
+                    m.file_url, m.mime_type
+             FROM project_videos pv
+             INNER JOIN media_assets m ON m.id = pv.media_id
+             WHERE pv.project_id = ?
+             ORDER BY pv.sort_order ASC, pv.id ASC",
+            [$projectId]
+        );
+        $videos = array_map(static function ($row) {
+            return [
+                'id' => $row->id,
+                'mediaId' => $row->media_id,
+                'fileUrl' => $row->file_url,
+                'title' => $row->title,
+                'description' => $row->description,
+                'mimeType' => $row->mime_type,
+                'sortOrder' => (int) $row->sort_order,
+            ];
+        }, $videoRows);
+
         $bannerImages = $details['bannerImages'] ?? [];
         $gallery = $details['gallery'] ?? [];
         $fallbackImage = $project->cover_url
@@ -108,6 +129,7 @@ class ProjectsController extends Controller
             'description' => $project->description ?? '',
             'gallery' => !empty($gallery) ? $gallery : $bannerImages,
             'lots' => $details['lots'] ?? [],
+            'videos' => $videos,
         ]);
     }
 
@@ -259,6 +281,27 @@ class ProjectsController extends Controller
             ];
         }, $imageRows);
 
+        $videoRows = DB::select(
+            "SELECT pv.id, pv.media_id, pv.title, pv.description, pv.sort_order,
+                    m.file_url, m.mime_type
+             FROM project_videos pv
+             INNER JOIN media_assets m ON m.id = pv.media_id
+             WHERE pv.project_id = ?
+             ORDER BY pv.sort_order ASC, pv.id ASC",
+            [$projectId]
+        );
+        $videos = array_map(static function ($row) {
+            return [
+                'id' => $row->id,
+                'mediaId' => $row->media_id,
+                'fileUrl' => $row->file_url,
+                'title' => $row->title,
+                'description' => $row->description,
+                'mimeType' => $row->mime_type,
+                'sortOrder' => (int) $row->sort_order,
+            ];
+        }, $videoRows);
+
         $details = null;
         if (!empty($project->details_json)) {
             $decoded = json_decode($project->details_json, true);
@@ -286,6 +329,7 @@ class ProjectsController extends Controller
                 ]
                 : null,
             'images' => $images,
+            'videos' => $videos,
         ]);
     }
 
@@ -582,6 +626,169 @@ class ProjectsController extends Controller
         } catch (\Throwable) {
             DB::rollBack();
             return response()->json(['error' => 'Failed to delete image.'], 500);
+        }
+    }
+
+    public function listVideos(string $id)
+    {
+        $projectId = (int) $id;
+        if ($projectId <= 0) {
+            return response()->json(['error' => 'Invalid project id.'], 400);
+        }
+
+        $rows = DB::select(
+            "SELECT pv.id, pv.media_id, pv.title, pv.description, pv.sort_order,
+                    m.file_url, m.mime_type
+             FROM project_videos pv
+             INNER JOIN media_assets m ON m.id = pv.media_id
+             WHERE pv.project_id = ?
+             ORDER BY pv.sort_order ASC, pv.id ASC",
+            [$projectId]
+        );
+
+        $videos = array_map(static function ($row) {
+            return [
+                'id' => $row->id,
+                'mediaId' => $row->media_id,
+                'fileUrl' => $row->file_url,
+                'title' => $row->title,
+                'description' => $row->description,
+                'mimeType' => $row->mime_type,
+                'sortOrder' => (int) $row->sort_order,
+            ];
+        }, $rows);
+
+        return response()->json($videos);
+    }
+
+    public function storeVideo(Request $request, string $id)
+    {
+        $projectId = (int) $id;
+        if ($projectId <= 0) {
+            return response()->json(['error' => 'Invalid project id.'], 400);
+        }
+
+        $fileUrl = $request->input('fileUrl');
+        if (!$fileUrl) {
+            return response()->json(['error' => 'fileUrl is required.'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $mediaId = DB::table('media_assets')->insertGetId([
+                'file_url' => $fileUrl,
+                'title' => $request->input('title'),
+                'alt_text' => null,
+                'mime_type' => $request->input('mimeType'),
+            ]);
+
+            $videoId = DB::table('project_videos')->insertGetId([
+                'project_id' => $projectId,
+                'media_id' => $mediaId,
+                'title' => $request->input('title'),
+                'description' => $request->input('description'),
+                'sort_order' => (int) $request->input('sortOrder', 0),
+            ]);
+
+            DB::commit();
+            return response()->json(['id' => $videoId], 201);
+        } catch (\Throwable) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to add video.'], 500);
+        }
+    }
+
+    public function updateVideo(Request $request, string $id, string $videoId)
+    {
+        $projectId = (int) $id;
+        $videoId = (int) $videoId;
+        if ($projectId <= 0 || $videoId <= 0) {
+            return response()->json(['error' => 'Invalid ids.'], 400);
+        }
+
+        $row = DB::table('project_videos')
+            ->select('media_id')
+            ->where('id', $videoId)
+            ->where('project_id', $projectId)
+            ->first();
+        if (!$row) {
+            return response()->json(['error' => 'Video not found.'], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            $videoUpdates = [];
+            if ($request->has('title')) {
+                $videoUpdates['title'] = $request->input('title');
+            }
+            if ($request->has('description')) {
+                $videoUpdates['description'] = $request->input('description');
+            }
+            if ($request->has('sortOrder')) {
+                $videoUpdates['sort_order'] = (int) $request->input('sortOrder');
+            }
+            if (!empty($videoUpdates)) {
+                DB::table('project_videos')
+                    ->where('id', $videoId)
+                    ->where('project_id', $projectId)
+                    ->update($videoUpdates);
+            }
+
+            $mediaUpdates = [];
+            if ($request->has('fileUrl')) {
+                $mediaUpdates['file_url'] = $request->input('fileUrl');
+            }
+            if ($request->has('mimeType')) {
+                $mediaUpdates['mime_type'] = $request->input('mimeType');
+            }
+            if (!empty($mediaUpdates)) {
+                DB::table('media_assets')->where('id', $row->media_id)->update($mediaUpdates);
+            }
+
+            DB::commit();
+            return response()->json(['ok' => true]);
+        } catch (\Throwable) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update video.'], 500);
+        }
+    }
+
+    public function destroyVideo(string $id, string $videoId)
+    {
+        $projectId = (int) $id;
+        $videoId = (int) $videoId;
+        if ($projectId <= 0 || $videoId <= 0) {
+            return response()->json(['error' => 'Invalid ids.'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $row = DB::table('project_videos')
+                ->select('media_id')
+                ->where('id', $videoId)
+                ->where('project_id', $projectId)
+                ->first();
+            if (!$row) {
+                DB::rollBack();
+                return response()->json(['error' => 'Video not found.'], 404);
+            }
+
+            DB::table('project_videos')->where('id', $videoId)->where('project_id', $projectId)->delete();
+
+            $countRow = DB::select(
+                'SELECT COUNT(*) AS total FROM project_videos WHERE media_id = ?',
+                [$row->media_id]
+            );
+            $total = !empty($countRow) ? (int) $countRow[0]->total : 0;
+            if ($total === 0) {
+                DB::table('media_assets')->where('id', $row->media_id)->delete();
+            }
+
+            DB::commit();
+            return response()->noContent();
+        } catch (\Throwable) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to delete video.'], 500);
         }
     }
 }

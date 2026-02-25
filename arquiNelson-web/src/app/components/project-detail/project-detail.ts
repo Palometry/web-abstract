@@ -321,6 +321,26 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     this.mapEmbedSafeUrl = null;
   }
 
+  getVideoEmbedUrl(url?: string | null): SafeResourceUrl | null {
+    const embed = this.toVideoEmbedUrl(url);
+    return embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null;
+  }
+
+  isDirectVideoUrl(url?: string | null): boolean {
+    if (!url) {
+      return false;
+    }
+    const clean = url.split('?')[0].toLowerCase();
+    return clean.startsWith('data:video/')
+      || clean.endsWith('.mp4')
+      || clean.endsWith('.webm')
+      || clean.endsWith('.ogg')
+      || clean.endsWith('.ogv')
+      || clean.endsWith('.mov')
+      || clean.endsWith('.m4v')
+      || clean.endsWith('.avi');
+  }
+
   private extractIframeSrc(value?: string | null): string | null {
     if (!value) {
       return null;
@@ -378,6 +398,52 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
         return `https://www.google.com/maps?q=${encodeURIComponent(
           mapUrl
         )}&output=embed`;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
+  private toVideoEmbedUrl(url?: string | null): string | null {
+    if (!url) {
+      return null;
+    }
+    const trimmed = url.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (trimmed.includes('<iframe')) {
+      const match = trimmed.match(/src=["']([^"']+)["']/i);
+      return match?.[1]?.trim() ?? null;
+    }
+
+    try {
+      const parsed = new URL(trimmed);
+      const host = parsed.hostname.replace(/^www\./, '');
+
+      if (host === 'youtu.be') {
+        const id = parsed.pathname.replace('/', '');
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      if (host === 'youtube.com' || host === 'm.youtube.com') {
+        const id = parsed.searchParams.get('v')
+          || parsed.pathname.split('/').find((part) => part && part !== 'watch' && part !== 'embed' && part !== 'shorts')
+          || '';
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      if (host === 'vimeo.com') {
+        const id = parsed.pathname.split('/').filter(Boolean)[0];
+        return id ? `https://player.vimeo.com/video/${id}` : null;
+      }
+
+      if (host === 'player.vimeo.com') {
+        const id = parsed.pathname.split('/').filter(Boolean).pop();
+        return id ? `https://player.vimeo.com/video/${id}` : null;
       }
     } catch {
       return null;

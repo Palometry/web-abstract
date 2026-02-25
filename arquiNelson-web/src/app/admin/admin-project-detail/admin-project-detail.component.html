@@ -389,10 +389,6 @@
         URL del video
         <input type="text" [(ngModel)]="videoDraft.fileUrl" />
       </label>
-      <label class="wide">
-        Subir video (archivo)
-        <input type="file" accept="video/*" (change)="uploadVideoDraft($event)" />
-      </label>
       <label>
         Titulo
         <input type="text" [(ngModel)]="videoDraft.title" />
@@ -408,18 +404,31 @@
       <button type="button" (click)="addVideo()">Agregar video</button>
     </div>
 
-    <div class="image-grid" *ngIf="videos.length">
-      <div class="image-card" *ngFor="let video of videos">
-        <video *ngIf="video.fileUrl" [src]="video.fileUrl" controls></video>
-        <div class="form-grid compact">
-          <label class="wide">
-            URL
-            <input type="text" [(ngModel)]="video.draft.fileUrl" />
-          </label>
-          <label class="wide">
-            Subir video (archivo)
-            <input type="file" accept="video/*" (change)="uploadVideoForExisting(video, $event)" />
-          </label>
+      <div class="image-grid" *ngIf="videos.length">
+        <div class="image-card" *ngFor="let video of videos">
+          <ng-container *ngIf="video.fileUrl as rawUrl">
+            <ng-container *ngIf="getVideoEmbedUrl(rawUrl) as embedUrl; else directVideo">
+              <iframe
+                class="video-frame"
+                [src]="embedUrl"
+                title="Video"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </ng-container>
+            <ng-template #directVideo>
+              <video *ngIf="isDirectVideoUrl(rawUrl); else videoLink" [src]="rawUrl" controls></video>
+            </ng-template>
+            <ng-template #videoLink>
+              <a class="video-link" [href]="rawUrl" target="_blank" rel="noopener">Abrir video</a>
+            </ng-template>
+          </ng-container>
+          <div class="form-grid compact">
+            <label class="wide">
+              URL
+              <input type="text" [(ngModel)]="video.draft.fileUrl" />
+            </label>
           <label>
             Titulo
             <input type="text" [(ngModel)]="video.draft.title" />

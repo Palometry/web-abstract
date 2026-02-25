@@ -37,6 +37,14 @@ export type PublicProject = {
   description: string;
   gallery: string[];
   lots?: { id: string; area: string; status: 'Disponible' | 'Reservado' | 'Vendido' }[];
+  videos?: {
+    id: number;
+    fileUrl: string;
+    title?: string | null;
+    description?: string | null;
+    mimeType?: string | null;
+    sortOrder?: number;
+  }[];
 };
 
 @Injectable({ providedIn: 'root' })

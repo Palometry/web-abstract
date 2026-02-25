@@ -2,6 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_I
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   AdminDataService,
   AdminProjectDetail,
@@ -54,7 +55,6 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
   saving = false;
   uploading = false;
   imageUploadStates: Record<number, boolean> = {};
-  videoUploadStates: Record<number, boolean> = {};
   error = '';
   successMessage = '';
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -125,6 +125,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
   constructor(
     private route: ActivatedRoute,
     private data: AdminDataService,
+    private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) platformId: object
   ) {
@@ -136,6 +137,26 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     if (catalog) {
       this.catalog = catalog;
     }
+  }
+
+  getVideoEmbedUrl(url?: string | null): SafeResourceUrl | null {
+    const embed = this.toVideoEmbedUrl(url);
+    return embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null;
+  }
+
+  isDirectVideoUrl(url?: string | null): boolean {
+    if (!url) {
+      return false;
+    }
+    const clean = url.split('?')[0].toLowerCase();
+    return clean.startsWith('data:video/')
+      || clean.endsWith('.mp4')
+      || clean.endsWith('.webm')
+      || clean.endsWith('.ogg')
+      || clean.endsWith('.ogv')
+      || clean.endsWith('.mov')
+      || clean.endsWith('.m4v')
+      || clean.endsWith('.avi');
   }
 
   get publicScopeOptions(): string[] {
@@ -362,7 +383,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     }
     const fileUrl = this.videoDraft.fileUrl.trim();
     if (!fileUrl) {
-      this.error = 'La URL del video es obligatoria.';
+      this.error = 'Ingresa una URL del video.';
       return;
     }
     const result = await this.data.createProjectVideo(this.project.id, {
@@ -401,27 +422,6 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
-  async uploadVideoDraft(event: Event) {
-    if (!this.project) {
-      return;
-    }
-    const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) {
-      return;
-    }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: this.videoDraft.title || undefined });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir el video.';
-      return;
-    }
-    this.videoDraft.fileUrl = result.fileUrl;
-    if (input) {
-      input.value = '';
-    }
-  }
 
   async saveImage(image: ProjectImageView) {
     if (!this.project) {
@@ -480,27 +480,6 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
-  async uploadVideoForExisting(video: ProjectVideoView, event: Event) {
-    if (!this.project) {
-      return;
-    }
-    const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) {
-      return;
-    }
-    this.videoUploadStates[video.id] = true;
-    const result = await this.data.uploadMedia(file, { title: video.draft.title || undefined });
-    this.videoUploadStates[video.id] = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir el video.';
-      return;
-    }
-    video.draft.fileUrl = result.fileUrl;
-    if (input) {
-      input.value = '';
-    }
-  }
 
   async deleteImage(image: ProjectImageView) {
     if (!this.project) {
@@ -835,6 +814,52 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     }
     const match = trimmed.match(/src=["']([^"']+)["']/i);
     return match?.[1]?.trim() ?? '';
+  }
+
+  private toVideoEmbedUrl(url?: string | null): string | null {
+    if (!url) {
+      return null;
+    }
+    const trimmed = url.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (trimmed.includes('<iframe')) {
+      const match = trimmed.match(/src=["']([^"']+)["']/i);
+      return match?.[1]?.trim() ?? null;
+    }
+
+    try {
+      const parsed = new URL(trimmed);
+      const host = parsed.hostname.replace(/^www\./, '');
+
+      if (host === 'youtu.be') {
+        const id = parsed.pathname.replace('/', '');
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      if (host === 'youtube.com' || host === 'm.youtube.com') {
+        const id = parsed.searchParams.get('v')
+          || parsed.pathname.split('/').find((part) => part && part !== 'watch' && part !== 'embed' && part !== 'shorts')
+          || '';
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      if (host === 'vimeo.com') {
+        const id = parsed.pathname.split('/').filter(Boolean)[0];
+        return id ? `https://player.vimeo.com/video/${id}` : null;
+      }
+
+      if (host === 'player.vimeo.com') {
+        const id = parsed.pathname.split('/').filter(Boolean).pop();
+        return id ? `https://player.vimeo.com/video/${id}` : null;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
   }
 
   private parseHousePlans(text: string) {

@@ -1054,6 +1054,15 @@ export class AdminDataService {
     if (!this.isBrowser) {
       return { ok: false, error: 'Storage no disponible.' };
     }
+    const prefersMultipart = file.type.startsWith('video/') || file.size > 5 * 1024 * 1024;
+
+    if (prefersMultipart) {
+      const multipart = await this.tryMultipartUpload(file, options);
+      if (multipart.ok || multipart.error?.includes('NO_FALLBACK') === false) {
+        return multipart;
+      }
+    }
+
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -1077,6 +1086,40 @@ export class AdminDataService {
       );
       return { ok: true, id: response.id, fileUrl: response.fileUrl };
     } catch {
+      return { ok: false, error: 'No se pudo subir el archivo.' };
+    }
+  }
+
+  private async tryMultipartUpload(
+    file: File,
+    options?: { title?: string; altText?: string }
+  ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
+    try {
+      const form = new FormData();
+      form.append('file', file, file.name);
+      if (options?.title) {
+        form.append('title', options.title);
+      }
+      if (options?.altText) {
+        form.append('altText', options.altText);
+      }
+
+      const response = await firstValueFrom(
+        this.http.post<{ id: number; fileUrl: string }>(
+          `${this.apiBaseUrl}/media/file`,
+          form,
+          { headers: this.authHeaders() }
+        )
+      );
+      return { ok: true, id: response.id, fileUrl: response.fileUrl };
+    } catch (error: any) {
+      const status = error?.status;
+      if (status === 404 || status === 405) {
+        return { ok: false, error: 'NO_FALLBACK' };
+      }
+      if (status === 413) {
+        return { ok: false, error: 'El archivo supera el tamaño permitido en el servidor.' };
+      }
       return { ok: false, error: 'No se pudo subir el archivo.' };
     }
   }

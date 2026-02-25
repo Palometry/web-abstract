@@ -265,6 +265,37 @@
       </section>
     }
 
+    @if (project.videos && project.videos.length > 0) {
+      <section class="project-videos">
+        <h3>Videos</h3>
+        <div class="video-grid">
+          @for (video of project.videos; track video.id) {
+            <div class="video-card">
+              @if (getVideoEmbedUrl(video.fileUrl)) {
+                <iframe
+                  [src]="getVideoEmbedUrl(video.fileUrl)"
+                  title="{{ video.title || project.title }}"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                ></iframe>
+              } @else if (isDirectVideoUrl(video.fileUrl)) {
+                <video [src]="video.fileUrl" controls></video>
+              } @else {
+                <a class="video-link" [href]="video.fileUrl" target="_blank" rel="noopener">
+                  Ver video
+                </a>
+              }
+              <div class="video-meta">
+                <h4>{{ video.title || 'Video' }}</h4>
+                <p *ngIf="video.description">{{ video.description }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
     <aside class="project-contact">
       <h4>Contacto</h4>
       <p>Para mas informacion sobre este proyecto: info@funbellata.example</p>
