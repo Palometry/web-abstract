@@ -1,9 +1,9 @@
 .projects {
-  padding: 80px 20px;
+  padding: 80px clamp(28px, 7vw, 96px);
   background: white;
 
   .container {
-    max-width: 1200px;
+    max-width: 920px;
     margin: 0 auto;
   }
 

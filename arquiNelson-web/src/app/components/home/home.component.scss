@@ -1,12 +1,12 @@
  :host {
   display: block;
 }
- .dynamic-content {
-  padding: 60px 20px;
+.dynamic-content {
+  padding: 60px clamp(28px, 7vw, 96px);
   background: #fff;
 
   .container {
-    max-width: 1200px;
+    max-width: 920px;
     margin: 0 auto;
   }
 
