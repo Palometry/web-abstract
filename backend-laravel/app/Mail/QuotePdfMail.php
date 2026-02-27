@@ -22,7 +22,10 @@ class QuotePdfMail extends Mailable
 
     public function build()
     {
-        $subject = 'Cotización #' . $this->quote['id'] . ' - ' . ($this->quote['projectName'] ?? '');
+        $clientName = trim((string) ($this->quote['fullName'] ?? ''));
+        $documentId = trim((string) ($this->quote['documentNumber'] ?? ''));
+        $suffix = $documentId !== '' ? $documentId : ('ID ' . $this->quote['id']);
+        $subject = 'Cotizacion de Abstract Arquitectura para ' . ($clientName ?: 'cliente') . ' ' . $suffix;
 
         return $this->from('dazanelson8@gmail.com', 'ArquiNelson')
             ->subject($subject)
