@@ -87,6 +87,10 @@
   resize: vertical;
 }
 
+.form-grid.compact {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
 .wide {
   grid-column: 1 / -1;
 }
@@ -111,6 +115,82 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.service-list {
+  display: grid;
+  gap: 12px;
+}
+
+.service-row {
+  border: 1px solid #ece7dc;
+  border-radius: 14px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  background: #f8f8f8;
+}
+
+.service-row h4 {
+  margin: 0 0 4px;
+}
+
+.service-row p {
+  margin: 0;
+  color: #6b726c;
+}
+
+.service-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.line-total {
+  font-weight: 600;
+  color: var(--color-red);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  border: 1px solid #d8d2c6;
+  background: transparent;
+  color: var(--color-red);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.actions .danger {
+  border-color: #f1c4b1;
+  color: #b35a3a;
+}
+
+.add-service {
+  margin-top: 8px;
+  border-top: 1px solid #ede9df;
+  padding-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.add-service h4 {
+  margin: 0;
+}
+
+.add-service button {
+  border: none;
+  background: var(--color-red);
+  color: var(--color-white);
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  align-self: end;
 }
 
 .hint {

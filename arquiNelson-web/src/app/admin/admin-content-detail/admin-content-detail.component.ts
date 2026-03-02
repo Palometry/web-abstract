@@ -439,6 +439,10 @@ export class AdminContentDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
+  clearSectionDraftImage() {
+    this.sectionDraft.imageUrl = '';
+  }
+
   async uploadSectionImage(section: SectionView, event: Event) {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
@@ -459,6 +463,10 @@ export class AdminContentDetailComponent implements OnInit, AfterViewInit {
     if (input) {
       input.value = '';
     }
+  }
+
+  clearSectionImage(section: SectionView) {
+    section.imageUrl = '';
   }
 
   private parseContent(value: string): unknown {

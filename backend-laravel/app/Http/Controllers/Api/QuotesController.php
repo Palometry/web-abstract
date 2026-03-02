@@ -372,7 +372,7 @@ class QuotesController extends Controller
         $documentType = is_string($request->input('documentType')) ? trim((string) $request->input('documentType')) : null;
         $documentNumber = is_string($request->input('documentNumber')) ? trim((string) $request->input('documentNumber')) : null;
         $projectAddress = is_string($request->input('projectAddress')) ? trim((string) $request->input('projectAddress')) : null;
-        $expiresAt = $this->parseDate($request->input('expiresAt'));
+        $expiresAt = now()->addMonth()->format('Y-m-d');
 
         $serviceInputs = is_array($request->input('services')) ? $request->input('services') : [];
         $serviceIds = [];
@@ -630,9 +630,6 @@ class QuotesController extends Controller
         if ($request->has('notes')) {
             $notes = is_string($request->input('notes')) ? trim((string) $request->input('notes')) : null;
             $updates['notes'] = $notes ?: null;
-        }
-        if ($request->has('expiresAt')) {
-            $updates['expires_at'] = $this->parseDate($request->input('expiresAt'));
         }
 
         $parsedUncovered = $request->has('areaUncoveredPercent')

@@ -1,7 +1,7 @@
 .portfolio-detail {
   padding: 40px 20px 80px;
-  background: #ffffff;
-  color: #0b0c0d;
+  background: var(--color-bg);
+  color: var(--color-text);
 
   .container {
     max-width: 1200px;
@@ -13,14 +13,14 @@
 
 .back-link {
   font-weight: 600;
-  color: #1f3d7a;
+  color: var(--color-red);
   text-decoration: none;
   display: inline-flex;
   gap: 8px;
   align-items: center;
 
   &:hover {
-    color: #5b1616;
+    color: var(--color-red-dark);
   }
 }
 
@@ -33,24 +33,24 @@
     align-items: center;
     padding: 6px 14px;
     border-radius: 999px;
-    background: #f2f2f2;
+    background: var(--color-surface-alt);
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #1f1f1f;
+    color: var(--color-text);
   }
 
   h1 {
     font-size: 2.4rem;
     margin: 0;
-    color: #070809;
+    color: var(--color-text);
   }
 
   .intro {
     margin: 0;
     max-width: 720px;
-    color: #4a4a4a;
+    color: var(--color-text-muted);
     line-height: 1.7;
   }
 }
@@ -108,7 +108,7 @@
   h2 {
     margin: 0;
     font-size: 1.6rem;
-    color: #222;
+    color: var(--color-text);
   }
 }
 
@@ -122,18 +122,18 @@
 .spec-item {
   padding: 16px;
   border-radius: 12px;
-  background: #f7f7f7;
-  border: 1px solid #ececec;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
 
   dt {
     font-weight: 700;
-    color: #222;
+    color: var(--color-text);
     margin-bottom: 6px;
   }
 
   dd {
     margin: 0;
-    color: #555;
+    color: var(--color-text-muted);
   }
 }
 
@@ -146,8 +146,8 @@
 .tag {
   padding: 6px 14px;
   border-radius: 20px;
-  background: #070809;
-  color: #fff;
+  background: var(--color-red);
+  color: var(--color-white);
   font-size: 12px;
   font-weight: 600;
 }
@@ -159,7 +159,7 @@
   }
 
   p {
-    color: #444;
+    color: var(--color-text-muted);
     line-height: 1.8;
     font-size: 1.02rem;
     margin: 0;
@@ -185,7 +185,7 @@
   }
 
   figcaption {
-    color: #666;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
   }
 
@@ -223,12 +223,12 @@
     flex-wrap: wrap;
 
     a {
-      color: #1f3d7a;
+      color: var(--color-red);
       font-weight: 600;
       text-decoration: none;
 
       &:hover {
-        color: #5b1616;
+        color: var(--color-red-dark);
       }
     }
   }
@@ -236,8 +236,8 @@
   .viewer-frame {
     border-radius: 14px;
     overflow: hidden;
-    border: 1px solid #e6e6e6;
-    background: #f4f4f4;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
 
     iframe {
       width: 100%;

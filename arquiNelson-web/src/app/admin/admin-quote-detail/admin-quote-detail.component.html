@@ -34,10 +34,10 @@
             Fecha creacion
             <input name="createdAt" [value]="quote.createdAt | date: 'dd/MM/yyyy'" readonly />
           </label>
-          <label>
-            Vigente hasta
-            <input name="expiresAt" type="date" [(ngModel)]="draft.expiresAt" />
-          </label>
+        <label>
+          Vigente hasta
+          <input name="expiresAt" type="date" [(ngModel)]="draft.expiresAt" readonly />
+        </label>
         </div>
       </div>
 
@@ -116,7 +116,7 @@
           </label>
           <label>
             Area techada (m2)
-            <input name="areaCoveredM2" type="number" [value]="draft.areaCoveredM2" readonly />
+            <input name="areaCoveredM2" type="number" [value]="getAreaCoveredTotal()" readonly />
           </label>
           <label>
             N° pisos

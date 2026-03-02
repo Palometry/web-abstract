@@ -4,6 +4,23 @@
 	--color-red-dark: #8b2a2a;
 	--color-black: #0b0b0b;
 	--color-muted: #6b6b6b;
+	--color-bg: #ffffff;
+	--color-surface: #ffffff;
+	--color-surface-alt: #f2f3f6;
+	--color-text: #0b0b0b;
+	--color-text-muted: #6b6b6b;
+	--color-border: rgba(0, 0, 0, 0.1);
+	--color-shadow: rgba(0, 0, 0, 0.12);
+}
+
+body.theme-dark {
+	--color-bg: #0f1115;
+	--color-surface: #151a23;
+	--color-surface-alt: #1d2432;
+	--color-text: #f3f5f8;
+	--color-text-muted: #aeb6c6;
+	--color-border: rgba(255, 255, 255, 0.12);
+	--color-shadow: rgba(0, 0, 0, 0.6);
 }
 
 /* Global base styles */
@@ -13,8 +30,8 @@ html, body {
 body {
 	margin: 0;
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-	background: var(--color-white);
-	color: var(--color-black);
+	background: var(--color-bg);
+	color: var(--color-text);
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
@@ -28,9 +45,9 @@ body {
 	color: var(--color-white);
 }
 .btn--secondary {
-	background: var(--color-white);
-	color: var(--color-black);
-	border: 2px solid var(--color-black);
+	background: var(--color-surface);
+	color: var(--color-text);
+	border: 2px solid var(--color-border);
 }
 
 /* You can add global styles to this file, and also import other style files */

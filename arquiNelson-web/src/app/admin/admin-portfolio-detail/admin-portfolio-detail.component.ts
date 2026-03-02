@@ -219,6 +219,11 @@ export class AdminPortfolioDetailComponent implements OnInit {
     this.clearFileInput(event);
   }
 
+  clearBlockMedia(block: BlockDraft) {
+    block.mediaId = null;
+    block.fileUrl = null;
+  }
+
   removeCover() {
     this.form.coverImage = null;
   }

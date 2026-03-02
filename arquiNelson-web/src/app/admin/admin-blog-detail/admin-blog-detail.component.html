@@ -57,6 +57,7 @@
         <ng-template #coverImage>
           <img [src]="draft.coverImageUrl" alt="Portada" />
         </ng-template>
+        <button type="button" class="ghost" (click)="clearCover()">Quitar</button>
       </div>
       <label class="wide">
         Subir portada (imagen o video)

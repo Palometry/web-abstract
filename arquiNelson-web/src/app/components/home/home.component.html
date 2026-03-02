@@ -1,5 +1,27 @@
 <app-hero></app-hero>
 <app-about></app-about>
+<section class="project-marquee" *ngIf="marqueeProjects.length">
+  <div class="marquee-header">
+    <h2>Proyectos destacados</h2>
+    <span>Desliza para ver todos</span>
+  </div>
+  <div class="marquee-viewport">
+    <div class="marquee-track">
+      <a
+        class="marquee-card"
+        *ngFor="let project of marqueeProjects; let i = index"
+        [routerLink]="['/project', project.id]"
+        [attr.aria-hidden]="i >= marqueeProjects.length / 2 ? 'true' : null"
+      >
+        <img [src]="project.image" [alt]="project.title" />
+        <div class="marquee-info">
+          <h3>{{ project.title }}</h3>
+          <p>{{ project.shortDesc }}</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
 <app-services [items]="services"></app-services>
 <app-projects></app-projects>
 

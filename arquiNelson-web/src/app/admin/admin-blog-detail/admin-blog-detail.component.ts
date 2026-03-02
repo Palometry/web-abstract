@@ -138,6 +138,10 @@ export class AdminBlogDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
+  clearCover() {
+    this.draft.coverImageUrl = '';
+  }
+
   private toDateInput(value?: string | null): string {
     if (!value) {
       return '';

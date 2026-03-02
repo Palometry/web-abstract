@@ -157,6 +157,9 @@
       </label>
       <div class="image-preview-inline" *ngIf="detailsDraft.masterplanImage">
         <img [src]="detailsDraft.masterplanImage" alt="Masterplan" />
+        <button type="button" class="danger" (click)="clearDetailImage('masterplanImage')">
+          Quitar imagen
+        </button>
       </div>
       <label class="wide">
         Subir imagen masterplan
@@ -171,7 +174,12 @@
         <textarea rows="4" [(ngModel)]="detailsDraft.bannerImagesText"></textarea>
       </label>
       <div class="preview-grid" *ngIf="previewImages(detailsDraft.bannerImagesText).length">
-        <img *ngFor="let img of previewImages(detailsDraft.bannerImagesText)" [src]="img" alt="Banner" />
+        <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.bannerImagesText); let i = index">
+          <img [src]="img" alt="Banner" />
+          <button type="button" class="danger" (click)="removeDetailListImage('bannerImagesText', i)">
+            Quitar
+          </button>
+        </div>
       </div>
       <label class="wide">
         Subir imagen al banner
@@ -182,7 +190,12 @@
         <textarea rows="4" [(ngModel)]="detailsDraft.galleryText"></textarea>
       </label>
       <div class="preview-grid" *ngIf="previewImages(detailsDraft.galleryText).length">
-        <img *ngFor="let img of previewImages(detailsDraft.galleryText)" [src]="img" alt="Galería" />
+        <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.galleryText); let i = index">
+          <img [src]="img" alt="Galería" />
+          <button type="button" class="danger" (click)="removeDetailListImage('galleryText', i)">
+            Quitar
+          </button>
+        </div>
       </div>
       <label class="wide">
         Subir imagen a galería final

@@ -1,5 +1,7 @@
 .projects-page {
   padding: 80px 20px;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .projects-hero {
@@ -9,11 +11,12 @@
   h2 {
     font-size: 32px;
     margin: 0 0 8px 0;
+    color: var(--color-text);
   }
 
   p {
     margin: 0;
-    color: #666;
+    color: var(--color-text-muted);
   }
 }
 
@@ -42,11 +45,11 @@
 }
 
 .project-card {
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+  box-shadow: 0 5px 15px var(--color-shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
   a {
@@ -67,17 +70,17 @@
   h3 {
     margin: 0 0 8px 0;
     font-size: 18px;
-    color: #0b0b0b;
+    color: var(--color-text);
   }
 
   p {
     margin: 0;
-    color: #555;
+    color: var(--color-text-muted);
     font-size: 14px;
   }
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+    box-shadow: 0 10px 24px var(--color-shadow);
   }
 }

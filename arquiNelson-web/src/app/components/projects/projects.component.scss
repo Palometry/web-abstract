@@ -1,6 +1,6 @@
 .projects {
   padding: 80px clamp(28px, 7vw, 96px);
-  background: white;
+  background: var(--color-bg);
 
   .container {
     max-width: 920px;
@@ -14,13 +14,13 @@
     h2 {
       font-size: 42px;
       font-weight: 700;
-      color: #070809;
+      color: var(--color-text);
       margin: 0 0 20px 0;
     }
 
     p {
       font-size: 18px;
-      color: #666;
+      color: var(--color-text-muted);
       margin: 0;
     }
   }
@@ -35,7 +35,7 @@
       overflow: hidden;
       height: 400px;
       position: relative;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 5px 15px var(--color-shadow);
       transition: transform 0.3s ease;
       text-decoration: none;
       color: inherit;
@@ -104,7 +104,7 @@
 
   .projects-loading {
     text-align: center;
-    color: #666;
+    color: var(--color-text-muted);
     font-size: 1rem;
     margin: 0;
   }

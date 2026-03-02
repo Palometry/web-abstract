@@ -1172,6 +1172,11 @@ export class AdminDataService {
     status?: string;
     expiresAt?: string | null;
     notes?: string | null;
+    services?: {
+      serviceId: number;
+      quantity?: number;
+      unitPrice?: number;
+    }[];
   }): Promise<{ ok: boolean; id?: number; error?: string }> {
     if (!this.isBrowser) {
       return { ok: false, error: 'Storage no disponible.' };

@@ -1,7 +1,7 @@
 .blog-detail {
   padding: 40px 20px 80px;
-  background: #ffffff;
-  color: #0b0c0d;
+  background: var(--color-bg);
+  color: var(--color-text);
 
   .container {
     max-width: 920px;
@@ -13,7 +13,7 @@
 
 .back-link {
   font-weight: 600;
-  color: #1f3d7a;
+  color: var(--color-red);
   text-decoration: none;
   display: inline-flex;
   gap: 8px;
@@ -31,18 +31,18 @@
 
   .excerpt {
     margin: 0;
-    color: #4a4f57;
+    color: var(--color-text-muted);
     line-height: 1.7;
   }
 }
 
 .date {
   font-size: 0.9rem;
-  color: #7a8088;
+  color: var(--color-text-muted);
 }
 
 .cover {
-  background: #f6f4f1;
+  background: var(--color-surface-alt);
   border-radius: 18px;
   padding: 12px;
 }
@@ -54,7 +54,7 @@
   object-fit: contain;
   border-radius: 12px;
   display: block;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .cover video {
@@ -73,7 +73,7 @@
 
   p {
     margin: 0;
-    color: #343a40;
+    color: var(--color-text-muted);
     line-height: 1.8;
     font-size: 1.05rem;
   }
@@ -86,5 +86,5 @@
 
 .hint {
   margin: 0;
-  color: #7a857c;
+  color: var(--color-text-muted);
 }

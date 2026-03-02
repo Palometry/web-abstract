@@ -136,7 +136,7 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
         planMinDays: quote.planMinDays ?? null,
         planMaxDays: quote.planMaxDays ?? null,
         status: quote.status,
-        expiresAt: quote.expiresAt ?? '',
+        expiresAt: '',
         notes: quote.notes ?? ''
       };
       this.services = quote.services.map((service) => ({
@@ -148,11 +148,41 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
       }));
       this.rates = options.pricingRates.filter((rate) => rate.isActive);
       this.serviceOptions = options.services.filter((service) => service.isActive);
+      this.draft.expiresAt = this.buildExpiresAt(quote.createdAt ?? null);
       this.updateAreaCovered();
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  private parseDateInput(value?: string | null) {
+    if (!value) {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const datePart = trimmed.includes('T') ? trimmed.split('T')[0] : trimmed.split(' ')[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+      return null;
+    }
+    return new Date(`${datePart}T00:00:00`);
+  }
+
+  private buildExpiresAt(baseDate?: string | null) {
+    const base = this.parseDateInput(baseDate) ?? new Date();
+    const year = base.getFullYear();
+    const month = base.getMonth();
+    const day = base.getDate();
+    const lastDay = new Date(year, month + 2, 0).getDate();
+    const targetDay = Math.min(day, lastDay);
+    const nextMonth = new Date(year, month + 1, targetDay);
+    const yyyy = nextMonth.getFullYear();
+    const mm = String(nextMonth.getMonth() + 1).padStart(2, '0');
+    const dd = String(nextMonth.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   formatCurrency(value: number, currency: string) {
@@ -218,6 +248,16 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     const freePercent = Number(this.draft.areaUncoveredPercent);
     const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 30;
     return Number((areaTotal * (safePercent / 100)).toFixed(2));
+  }
+
+  getAreaCoveredTotal() {
+    const covered = Number(this.draft.areaCoveredM2);
+    if (!Number.isFinite(covered) || covered <= 0) {
+      return 0;
+    }
+    const floors = Number(this.draft.floorCount);
+    const safeFloors = Number.isFinite(floors) && floors > 0 ? floors : 1;
+    return Number((covered * safeFloors).toFixed(2));
   }
 
   async saveQuote() {

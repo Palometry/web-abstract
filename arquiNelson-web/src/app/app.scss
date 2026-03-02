@@ -10,8 +10,8 @@ html, body {
 }
 
 body {
-  background-color: #fff;
-  color: #333;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   scroll-behavior: smooth;
 }
 
@@ -30,7 +30,7 @@ button {
 
 .app-content.admin-content {
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--color-bg);
 }
 
 /* Scrollbar styles */
@@ -39,7 +39,7 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-surface-alt);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -63,7 +63,7 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 20px var(--color-shadow);
   text-decoration: none;
   z-index: 1500;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;

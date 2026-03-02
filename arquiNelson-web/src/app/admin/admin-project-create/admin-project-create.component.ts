@@ -566,6 +566,10 @@ export class AdminProjectCreateComponent implements OnInit {
     }
   }
 
+  clearDetailImage(field: keyof typeof this.detailsDraft) {
+    this.detailsDraft[field] = '' as any;
+  }
+
   async appendDetailImage(event: Event, field: keyof typeof this.detailsDraft) {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
@@ -585,6 +589,16 @@ export class AdminProjectCreateComponent implements OnInit {
     if (input) {
       input.value = '';
     }
+  }
+
+  removeDetailListImage(field: keyof typeof this.detailsDraft, index: number) {
+    const current = (this.detailsDraft[field] as unknown as string) || '';
+    const lines = this.splitLines(current);
+    if (index < 0 || index >= lines.length) {
+      return;
+    }
+    lines.splice(index, 1);
+    this.detailsDraft[field] = lines.join('\n') as any;
   }
 
   async appendHouseModelImage(event: Event) {

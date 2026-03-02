@@ -138,6 +138,14 @@
               Subir imagen
               <input type="file" accept="image/*" (change)="uploadBlockMedia(block, $event)" />
             </label>
+            <button
+              type="button"
+              class="ghost"
+              *ngIf="block.fileUrl"
+              (click)="clearBlockMedia(block)"
+            >
+              Quitar imagen
+            </button>
             <input [(ngModel)]="block.caption" placeholder="Caption" />
             <select [(ngModel)]="block.layout">
               <option [ngValue]="'inline'">Inline</option>
@@ -154,6 +162,14 @@
               Subir video
               <input type="file" accept="video/*" (change)="uploadBlockMedia(block, $event)" />
             </label>
+            <button
+              type="button"
+              class="ghost"
+              *ngIf="block.fileUrl"
+              (click)="clearBlockMedia(block)"
+            >
+              Quitar video
+            </button>
             <input [(ngModel)]="block.caption" placeholder="Descripcion o caption" />
             <select [(ngModel)]="block.layout">
               <option [ngValue]="'inline'">Inline</option>

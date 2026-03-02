@@ -1,6 +1,6 @@
 .services {
   padding: 80px clamp(28px, 7vw, 96px);
-  background: #f8f9fa;
+  background: var(--color-bg);
 
   .container {
     max-width: 920px;
@@ -14,13 +14,13 @@
     h2 {
       font-size: 42px;
       font-weight: 700;
-      color: #8f2e27;
+      color: var(--color-text);
       margin: 0 0 20px 0;
     }
 
     p {
       font-size: 18px;
-      color: #666;
+      color: var(--color-text-muted);
       margin: 0;
     }
   }
@@ -37,16 +37,16 @@
     }
 
     .service-card {
-      background: white;
+      background: var(--color-surface);
       padding: 40px 30px;
       border-radius: 10px;
       text-align: center;
       transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 5px 15px var(--color-shadow);
 
       &:hover {
         transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 15px 40px var(--color-shadow);
       }
 
       .service-icon {
@@ -58,12 +58,12 @@
       h3 {
         font-size: 20px;
         font-weight: 600;
-        color: #721e1e;
+        color: var(--color-red);
         margin: 0 0 15px 0;
       }
 
       p {
-        color: #666;
+        color: var(--color-text-muted);
         line-height: 1.6;
         margin: 0;
       }

@@ -118,6 +118,7 @@
 .image-preview-inline {
   display: grid;
   justify-content: start;
+  gap: 8px;
 }
 
 .image-preview-inline img {
@@ -128,10 +129,27 @@
   border: 1px solid #ece7dc;
 }
 
+.image-preview-inline button,
+.preview-item button {
+  justify-self: start;
+  border: 1px solid #d5b1a7;
+  background: transparent;
+  color: #b35a3a;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 .preview-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
+}
+
+.preview-item {
+  display: grid;
+  gap: 6px;
+  align-items: start;
 }
 
 .preview-grid img {

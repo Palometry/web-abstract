@@ -4,7 +4,7 @@
   <header class="header">
     <div>
       <h2>Nueva cotizacion</h2>
-      <p>Completa los datos del cliente, proyecto y plan antes de agregar servicios extra.</p>
+      <p>Completa los datos del cliente, proyecto y plan y luego agrega servicios extra si aplica.</p>
     </div>
     <button type="button" (click)="createQuote()" [disabled]="saving || loading">
       Crear cotizacion
@@ -37,7 +37,7 @@
         </label>
         <label>
           Vigente hasta
-          <input name="expiresAt" type="date" [(ngModel)]="draft.expiresAt" />
+          <input name="expiresAt" type="date" [(ngModel)]="draft.expiresAt" readonly />
         </label>
       </div>
     </div>
@@ -117,7 +117,7 @@
         </label>
         <label>
           Area techada (m2)
-          <input name="areaCoveredM2" type="number" [value]="draft.areaCoveredM2" readonly />
+          <input name="areaCoveredM2" type="number" [value]="getAreaCoveredTotal()" readonly />
         </label>
         <label>
           N° pisos
@@ -195,18 +195,74 @@
       </div>
       <div>
         <span>Extras</span>
-        <strong>{{ formatCurrency(0, draft.currency) }}</strong>
+        <strong>{{ formatCurrency(extrasCost, draft.currency) }}</strong>
       </div>
       <div>
         <span>Total</span>
-        <strong>{{ formatCurrency(baseCost, draft.currency) }}</strong>
+        <strong>{{ formatCurrency(totalCost, draft.currency) }}</strong>
       </div>
     </div>
     <label class="wide">
       Notas
       <textarea name="notes" rows="3" [(ngModel)]="draft.notes"></textarea>
     </label>
-    <p class="hint">Los servicios extra se agregan luego en el detalle.</p>
     <p class="error" *ngIf="error">{{ error }}</p>
+  </div>
+
+  <div class="panel">
+    <h3>Servicios extra</h3>
+    <div class="service-list" *ngIf="services.length; else emptyServices">
+      <article class="service-row" *ngFor="let service of services">
+        <div>
+          <h4>{{ service.name }}</h4>
+          <p>Tipo: {{ service.pricingType }}</p>
+        </div>
+        <div class="service-controls">
+          <label>
+            Cantidad
+            <input type="number" min="1" step="0.01" [(ngModel)]="service.quantity" />
+          </label>
+          <label>
+            Precio
+            <input type="number" min="0" step="0.01" [(ngModel)]="service.unitPrice" />
+          </label>
+          <div class="line-total">
+            {{ formatCurrency(computeServiceLineTotal(service), draft.currency) }}
+          </div>
+          <div class="actions">
+            <button type="button" class="danger" (click)="removeService(service.serviceId)">
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+    <ng-template #emptyServices>
+      <p class="hint">No hay servicios extra aun.</p>
+    </ng-template>
+
+    <div class="add-service">
+      <h4>Agregar servicio</h4>
+      <div class="form-grid compact">
+        <label>
+          Servicio
+          <select [(ngModel)]="serviceDraft.serviceId" (change)="onServiceChange()">
+            <option [ngValue]="0">Selecciona un servicio</option>
+            <option *ngFor="let service of serviceOptions" [ngValue]="service.id">
+              {{ service.name }} ({{ service.price }} {{ service.currency }})
+            </option>
+          </select>
+        </label>
+        <label>
+          Cantidad
+          <input type="number" min="1" step="0.01" [(ngModel)]="serviceDraft.quantity" />
+        </label>
+        <label>
+          Precio
+          <input type="number" min="0" step="0.01" [(ngModel)]="serviceDraft.unitPrice" />
+        </label>
+        <button type="button" (click)="addService()">Agregar</button>
+      </div>
+    </div>
   </div>
 </section>
