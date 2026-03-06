@@ -99,11 +99,23 @@
   gap: 12px;
 }
 
+.image-preview {
+  display: grid;
+  gap: 8px;
+  align-items: start;
+}
+
 .image-preview img {
-  width: 100%;
-  max-width: 360px;
+  width: min(420px, 100%);
+  max-height: 220px;
+  object-fit: cover;
   border-radius: 12px;
+  border: 1px solid #ece7dc;
   display: block;
+}
+
+.image-preview .ghost {
+  justify-self: start;
 }
 
 .image-list {

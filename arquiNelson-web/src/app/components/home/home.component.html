@@ -1,4 +1,21 @@
 <app-hero></app-hero>
+<section class="portfolio-collage" aria-label="Collage de portafolio">
+  <div class="collage-shell">
+    <div class="collage-heading">
+      <span class="collage-eyebrow">Portafolio</span>
+      <h2>Una mirada a nuestros proyectos recientes</h2>
+    </div>
+    <div class="collage-grid">
+      <figure
+        class="collage-tile"
+        *ngFor="let item of collageItems; let i = index"
+        [ngClass]="'tile-' + (i + 1)"
+      >
+        <img [src]="item.src" [alt]="item.alt" loading="lazy" (error)="onCollageError(i)" />
+      </figure>
+    </div>
+  </div>
+</section>
 <app-about></app-about>
 <section class="project-marquee" *ngIf="marqueeProjects.length">
   <div class="marquee-header">

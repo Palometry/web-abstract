@@ -8,6 +8,50 @@ use Illuminate\Support\Facades\DB;
 
 class ProjectsController extends Controller
 {
+    private function resolveFileUrl(?string $url): ?string
+    {
+        $url = is_string($url) ? trim($url) : '';
+        if ($url === '') {
+            return null;
+        }
+
+        $host = request()->getSchemeAndHttpHost();
+
+        if (preg_match('#^https?://#i', $url)) {
+            $parts = parse_url($url);
+            $path = $parts['path'] ?? '';
+            if ($path !== '' && str_starts_with($path, '/uploads/')) {
+                return $host . $path;
+            }
+
+            $currentHost = parse_url($host, PHP_URL_HOST);
+            $urlHost = $parts['host'] ?? null;
+            if ($urlHost && $currentHost && strcasecmp($urlHost, $currentHost) === 0) {
+                return $url;
+            }
+
+            return $url;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return $host . $url;
+        }
+
+        return $host . '/' . $url;
+    }
+
+    private function resolveUrlList(array $urls): array
+    {
+        $normalized = [];
+        foreach ($urls as $url) {
+            $resolved = $this->resolveFileUrl(is_string($url) ? $url : null);
+            if ($resolved) {
+                $normalized[] = $resolved;
+            }
+        }
+        return $normalized;
+    }
+
     public function publicList()
     {
         $rows = DB::select(
@@ -23,17 +67,19 @@ class ProjectsController extends Controller
              ORDER BY p.id DESC"
         );
 
-        $projects = array_map(static function ($row) {
+        $projects = array_map(function ($row) {
             $details = null;
             if (!empty($row->details_json)) {
                 $decoded = json_decode($row->details_json, true);
                 $details = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
             }
 
-            $bannerImages = $details['bannerImages'] ?? [];
-            $gallery = $details['gallery'] ?? [];
-            $fallbackImage = $row->cover_url
-                ?? ($bannerImages[0] ?? ($gallery[0] ?? ($details['masterplanImage'] ?? null)));
+            $bannerImages = $this->resolveUrlList($details['bannerImages'] ?? []);
+            $gallery = $this->resolveUrlList($details['gallery'] ?? []);
+            $masterplanImage = $this->resolveFileUrl($details['masterplanImage'] ?? null);
+            $coverUrl = $this->resolveFileUrl($row->cover_url ?? null);
+            $fallbackImage = $coverUrl
+                ?? ($bannerImages[0] ?? ($gallery[0] ?? $masterplanImage));
 
             return [
                 'id' => $row->id,
@@ -87,11 +133,11 @@ class ProjectsController extends Controller
              ORDER BY pv.sort_order ASC, pv.id ASC",
             [$projectId]
         );
-        $videos = array_map(static function ($row) {
+        $videos = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'mediaId' => $row->media_id,
-                'fileUrl' => $row->file_url,
+                'fileUrl' => $this->resolveFileUrl($row->file_url),
                 'title' => $row->title,
                 'description' => $row->description,
                 'mimeType' => $row->mime_type,
@@ -99,10 +145,12 @@ class ProjectsController extends Controller
             ];
         }, $videoRows);
 
-        $bannerImages = $details['bannerImages'] ?? [];
-        $gallery = $details['gallery'] ?? [];
-        $fallbackImage = $project->cover_url
-            ?? ($bannerImages[0] ?? ($gallery[0] ?? ($details['masterplanImage'] ?? null)));
+        $bannerImages = $this->resolveUrlList($details['bannerImages'] ?? []);
+        $gallery = $this->resolveUrlList($details['gallery'] ?? []);
+        $masterplanImage = $this->resolveFileUrl($details['masterplanImage'] ?? null);
+        $coverUrl = $this->resolveFileUrl($project->cover_url ?? null);
+        $fallbackImage = $coverUrl
+            ?? ($bannerImages[0] ?? ($gallery[0] ?? $masterplanImage));
 
         return response()->json([
             'id' => $project->id,
@@ -110,7 +158,7 @@ class ProjectsController extends Controller
             'shortDesc' => $details['shortDesc'] ?? '',
             'image' => $fallbackImage ?? '',
             'thumbImage' => $fallbackImage ?? '',
-            'masterplanImage' => $details['masterplanImage'] ?? null,
+            'masterplanImage' => $masterplanImage,
             'houseModels' => $details['houseModels'] ?? [],
             'housePlans' => $details['housePlans'] ?? [],
             'autocad360Url' => $details['autocadUrl'] ?? null,
@@ -269,11 +317,11 @@ class ProjectsController extends Controller
              ORDER BY pi.is_cover DESC, pi.sort_order ASC, pi.id ASC",
             [$projectId]
         );
-        $images = array_map(static function ($row) {
+        $images = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'mediaId' => $row->media_id,
-                'fileUrl' => $row->file_url,
+                'fileUrl' => $this->resolveFileUrl($row->file_url),
                 'title' => $row->title,
                 'altText' => $row->alt_text,
                 'isCover' => (bool) $row->is_cover,
@@ -290,11 +338,11 @@ class ProjectsController extends Controller
              ORDER BY pv.sort_order ASC, pv.id ASC",
             [$projectId]
         );
-        $videos = array_map(static function ($row) {
+        $videos = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'mediaId' => $row->media_id,
-                'fileUrl' => $row->file_url,
+                'fileUrl' => $this->resolveFileUrl($row->file_url),
                 'title' => $row->title,
                 'description' => $row->description,
                 'mimeType' => $row->mime_type,
@@ -474,11 +522,11 @@ class ProjectsController extends Controller
             [$projectId]
         );
 
-        $images = array_map(static function ($row) {
+        $images = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'mediaId' => $row->media_id,
-                'fileUrl' => $row->file_url,
+                'fileUrl' => $this->resolveFileUrl($row->file_url),
                 'title' => $row->title,
                 'altText' => $row->alt_text,
                 'isCover' => (bool) $row->is_cover,
@@ -646,11 +694,11 @@ class ProjectsController extends Controller
             [$projectId]
         );
 
-        $videos = array_map(static function ($row) {
+        $videos = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'mediaId' => $row->media_id,
-                'fileUrl' => $row->file_url,
+                'fileUrl' => $this->resolveFileUrl($row->file_url),
                 'title' => $row->title,
                 'description' => $row->description,
                 'mimeType' => $row->mime_type,

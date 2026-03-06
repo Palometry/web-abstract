@@ -74,12 +74,12 @@ export class HeaderComponent {
   }
 
   menuItems = [
-    { name: 'Inicio', link: '/', fragment: 'home' },
-    { name: 'Sobre Nosotros', link: '/', fragment: 'about' },
-    { name: 'Servicios', link: '/', fragment: 'services' },
-    { name: 'Portafolio', link: '/', fragment: 'portfolio' },
-    { name: 'Blog', link: '/blog' },
-    { name: 'Proyecto', link: '/projects', dropdown: true },
-    { name: 'Contacto', link: '/', fragment: 'contact' }
+    { name: 'INICIO', link: '/', fragment: 'home' },
+    { name: 'SOBRE NOSOTROS', link: '/', fragment: 'about' },
+    { name: 'SERVICIOS', link: '/', fragment: 'services' },
+    { name: 'PORTAFOLIO', link: '/', fragment: 'portfolio' },
+    { name: 'BLOG', link: '/blog' },
+    { name: 'PROYECTOS', link: '/projects', dropdown: true },
+    { name: 'CONTACTO', link: '/', fragment: 'contact' }
   ];
 }

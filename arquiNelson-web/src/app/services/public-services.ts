@@ -31,7 +31,7 @@ export class PublicServicesService {
     try {
       return await firstValueFrom(
         this.http.get<T>(url).pipe(
-          timeout(8000),
+          timeout(20000),
           catchError(() => of(fallback))
         )
       );

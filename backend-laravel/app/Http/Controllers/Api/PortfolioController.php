@@ -8,6 +8,38 @@ use Illuminate\Support\Facades\DB;
 
 class PortfolioController extends Controller
 {
+    private function resolveFileUrl(?string $url): ?string
+    {
+        $url = is_string($url) ? trim($url) : '';
+        if ($url === '') {
+            return null;
+        }
+
+        $host = request()->getSchemeAndHttpHost();
+
+        if (preg_match('#^https?://#i', $url)) {
+            $parts = parse_url($url);
+            $path = $parts['path'] ?? '';
+            if ($path !== '' && str_starts_with($path, '/uploads/')) {
+                return $host . $path;
+            }
+
+            $currentHost = parse_url($host, PHP_URL_HOST);
+            $urlHost = $parts['host'] ?? null;
+            if ($urlHost && $currentHost && strcasecmp($urlHost, $currentHost) === 0) {
+                return $url;
+            }
+
+            return $url;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return $host . $url;
+        }
+
+        return $host . '/' . $url;
+    }
+
     private function fetchDetail(int $portfolioId)
     {
         $rows = DB::select(
@@ -41,7 +73,7 @@ class PortfolioController extends Controller
             $image = [
                 'id' => $row->id,
                 'mediaId' => $row->media_id,
-                'fileUrl' => $row->file_url,
+                'fileUrl' => $this->resolveFileUrl($row->file_url),
                 'title' => $row->title ?? null,
                 'altText' => $row->alt_text ?? null,
                 'imageType' => $row->image_type,
@@ -98,13 +130,13 @@ class PortfolioController extends Controller
              ORDER BY pb.sort_order ASC, pb.id ASC",
             [$portfolioId]
         );
-        $blocks = array_map(static function ($row) {
+        $blocks = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'blockType' => $row->block_type,
                 'textContent' => $row->text_content,
                 'mediaId' => $row->media_id,
-                'fileUrl' => $row->file_url ?? null,
+                'fileUrl' => $this->resolveFileUrl($row->file_url ?? null),
                 'caption' => $row->caption,
                 'layout' => $row->layout,
                 'sortOrder' => (int) $row->sort_order,
@@ -155,13 +187,13 @@ class PortfolioController extends Controller
              ORDER BY pe.sort_order ASC, pe.id DESC"
         );
 
-        $entries = array_map(static function ($row) {
+        $entries = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'title' => $row->title_override ?: ($row->project_name ?: 'Proyecto'),
                 'category' => $row->category ?? null,
                 'description' => $row->summary ?? null,
-                'coverImage' => $row->cover_url ?? null,
+                'coverImage' => $this->resolveFileUrl($row->cover_url ?? null),
             ];
         }, $rows);
 
@@ -190,15 +222,18 @@ class PortfolioController extends Controller
             'category' => $detail['category'],
             'description' => $detail['summary'],
             'autocadUrl' => $detail['autocadUrl'],
-            'heroImages' => array_values(array_filter($heroImages)),
-            'coverImage' => $detail['images']['cover']['fileUrl'] ?? null,
-            'gallery' => array_values(array_filter(array_map(fn ($img) => $img['fileUrl'], $detail['images']['gallery']))),
+            'heroImages' => array_values(array_filter(array_map(fn ($url) => $this->resolveFileUrl($url), $heroImages))),
+            'coverImage' => $this->resolveFileUrl($detail['images']['cover']['fileUrl'] ?? null),
+            'gallery' => array_values(array_filter(array_map(
+                fn ($img) => $this->resolveFileUrl($img['fileUrl'] ?? null),
+                $detail['images']['gallery']
+            ))),
             'specs' => array_map(fn ($spec) => ['label' => $spec['label'], 'value' => $spec['value']], $detail['specs']),
             'tags' => array_map(fn ($tag) => $tag['tag'], $detail['tags']),
             'blocks' => array_map(fn ($block) => [
                 'type' => $block['blockType'],
                 'text' => $block['textContent'] ?? null,
-                'src' => $block['fileUrl'] ?? null,
+                'src' => $this->resolveFileUrl($block['fileUrl'] ?? null),
                 'caption' => $block['caption'] ?? null,
                 'layout' => $block['layout'] ?? 'inline',
             ], $detail['blocks']),

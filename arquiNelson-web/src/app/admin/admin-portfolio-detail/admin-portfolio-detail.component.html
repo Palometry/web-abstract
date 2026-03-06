@@ -55,7 +55,7 @@
       <h3>Imagen de portada</h3>
       <div class="image-uploader">
         <div class="image-preview" *ngIf="form.coverImage">
-          <img [src]="form.coverImage.fileUrl" alt="Portada" />
+          <img [src]="form.coverImage.previewUrl || form.coverImage.fileUrl" alt="Portada" />
           <button type="button" class="ghost" (click)="removeCover()">Quitar</button>
         </div>
         <label class="upload">
@@ -69,7 +69,7 @@
       <h3>Imagenes principales</h3>
       <div class="image-list">
         <div class="image-card" *ngFor="let img of form.heroImages; let i = index">
-          <img [src]="img.fileUrl" alt="Hero" />
+          <img [src]="img.previewUrl || img.fileUrl" alt="Hero" />
           <div class="image-actions">
             <button type="button" (click)="moveHero(i, -1)">Arriba</button>
             <button type="button" (click)="moveHero(i, 1)">Abajo</button>
@@ -133,7 +133,7 @@
             <textarea rows="4" [(ngModel)]="block.textContent" placeholder="Texto del articulo"></textarea>
           </div>
           <div *ngIf="block.blockType === 'image'" class="block-image">
-            <img *ngIf="block.fileUrl" [src]="block.fileUrl" alt="Bloque" />
+            <img *ngIf="block.fileUrl || block.previewUrl" [src]="block.previewUrl || block.fileUrl" alt="Bloque" />
             <label class="upload">
               Subir imagen
               <input type="file" accept="image/*" (change)="uploadBlockMedia(block, $event)" />
@@ -157,7 +157,7 @@
             </label>
           </div>
           <div *ngIf="block.blockType === 'video'" class="block-video">
-            <video *ngIf="block.fileUrl" [src]="block.fileUrl" controls></video>
+            <video *ngIf="block.fileUrl || block.previewUrl" [src]="block.previewUrl || block.fileUrl" controls></video>
             <label class="upload">
               Subir video
               <input type="file" accept="video/*" (change)="uploadBlockMedia(block, $event)" />
@@ -193,7 +193,7 @@
       <h3>Galeria</h3>
       <div class="image-list">
         <div class="image-card" *ngFor="let img of form.galleryImages; let i = index">
-          <img [src]="img.fileUrl" alt="Galeria" />
+          <img [src]="img.previewUrl || img.fileUrl" alt="Galeria" />
           <div class="image-actions">
             <button type="button" (click)="moveGallery(i, -1)">Arriba</button>
             <button type="button" (click)="moveGallery(i, 1)">Abajo</button>

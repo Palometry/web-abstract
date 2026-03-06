@@ -90,7 +90,7 @@ class MediaController extends Controller
         }
         file_put_contents($fullPath, $finalBuffer);
 
-        $fileUrl = $request->getSchemeAndHttpHost() . '/' . $relativePath;
+        $fileUrl = '/' . $relativePath;
 
         $id = DB::table('media_assets')->insertGetId([
             'file_url' => $fileUrl,
@@ -101,7 +101,10 @@ class MediaController extends Controller
             'alt_text' => $request->input('altText'),
         ]);
 
-        return response()->json(['id' => $id, 'fileUrl' => $fileUrl], 201);
+        return response()->json([
+            'id' => $id,
+            'fileUrl' => $request->getSchemeAndHttpHost() . $fileUrl,
+        ], 201);
     }
 
     public function storeFile(Request $request)
@@ -124,7 +127,7 @@ class MediaController extends Controller
         }
         $file->move(dirname($fullPath), basename($fullPath));
 
-        $fileUrl = $request->getSchemeAndHttpHost() . '/' . $relativePath;
+        $fileUrl = '/' . $relativePath;
         $mime = $file->getClientMimeType();
         $size = $file->getSize();
 
@@ -137,6 +140,9 @@ class MediaController extends Controller
             'alt_text' => $request->input('altText'),
         ]);
 
-        return response()->json(['id' => $id, 'fileUrl' => $fileUrl], 201);
+        return response()->json([
+            'id' => $id,
+            'fileUrl' => $request->getSchemeAndHttpHost() . $fileUrl,
+        ], 201);
     }
 }

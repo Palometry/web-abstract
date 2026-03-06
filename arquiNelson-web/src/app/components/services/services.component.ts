@@ -23,7 +23,7 @@ export class ServicesComponent {
   @Input() summary?: string;
   @Input() items?: Service[];
 
-  defaultTitle = 'Nuestros Servicios';
+  defaultTitle = 'Servicios';
   defaultSummary = 'Ofrecemos soluciones inmobiliarias integrales y profesionales';
 
   services: Service[] = [

@@ -16,7 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.jwt' => \App\Http\Middleware\JwtAuth::class,
             'role' => \App\Http\Middleware\RequireRole::class,
         ]);
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
+
+
+
+
+
+

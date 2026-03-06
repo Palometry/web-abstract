@@ -74,6 +74,13 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "host": "0.0.0.0",
+            "port": 4200,
+            "allowedHosts": [
+              "ethnic-place-throughout-hotels.trycloudflare.com"
+            ]
+          },
           "configurations": {
             "production": {
               "buildTarget": "arquiNelson-web:build:production"

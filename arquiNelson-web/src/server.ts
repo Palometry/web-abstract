@@ -1,4 +1,4 @@
-import {
+﻿import {
   AngularNodeAppEngine,
   createNodeRequestHandler,
   isMainModule,
@@ -16,7 +16,7 @@ const angularApp = new AngularNodeAppEngine();
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; connect-src 'self' http://localhost:4200 ws://localhost:4200 http://localhost:8000 http://127.0.0.1:8000; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:8000 http://127.0.0.1:8000 https://images.unsplash.com; media-src 'self' data: http://localhost:8000 http://127.0.0.1:8000 http://localhost:4001 http://127.0.0.1:4001; frame-src 'self' https://a360.co https://*.autodesk.com https://*.a360.autodesk.com https://*.autodesk360.com https://myhub.autodesk360.com https://www.google.com https://maps.google.com https://www.youtube.com https://youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://vimeo.com;"
+    "default-src 'self'; connect-src 'self' http://localhost:4200 ws://localhost:4200 http://localhost:8000 http://127.0.0.1:8000 https://*.brs.devtunnels.ms https://7qnw35h7-8000.brs.devtunnels.ms https://*.trycloudflare.com https://cordless-judy-domains-administration.trycloudflare.com https://sussex-climb-murphy-seasons.trycloudflare.com https://superior-hudson-busy-even.trycloudflare.com https://atlanta-particular-documentation-groove.trycloudflare.com https://visits-ethical-bottom-components.trycloudflare.com https://diamonds-clinic-essay-checkout.trycloudflare.com https://dispatched-bernard-debug-sorted.trycloudflare.com https://ethnic-place-throughout-hotels.trycloudflare.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://localhost:8000 http://127.0.0.1:8000 https://images.unsplash.com https://*.brs.devtunnels.ms https://7qnw35h7-8000.brs.devtunnels.ms https://*.trycloudflare.com https://cordless-judy-domains-administration.trycloudflare.com https://sussex-climb-murphy-seasons.trycloudflare.com https://superior-hudson-busy-even.trycloudflare.com https://atlanta-particular-documentation-groove.trycloudflare.com https://visits-ethical-bottom-components.trycloudflare.com https://diamonds-clinic-essay-checkout.trycloudflare.com https://dispatched-bernard-debug-sorted.trycloudflare.com https://ethnic-place-throughout-hotels.trycloudflare.com; media-src 'self' data: http://localhost:8000 http://127.0.0.1:8000 http://localhost:4001 http://127.0.0.1:4001 https://*.brs.devtunnels.ms https://7qnw35h7-8000.brs.devtunnels.ms https://*.trycloudflare.com https://cordless-judy-domains-administration.trycloudflare.com https://sussex-climb-murphy-seasons.trycloudflare.com https://superior-hudson-busy-even.trycloudflare.com https://atlanta-particular-documentation-groove.trycloudflare.com https://visits-ethical-bottom-components.trycloudflare.com https://diamonds-clinic-essay-checkout.trycloudflare.com https://dispatched-bernard-debug-sorted.trycloudflare.com https://ethnic-place-throughout-hotels.trycloudflare.com; frame-src 'self' https://a360.co https://*.autodesk.com https://*.a360.autodesk.com https://*.autodesk360.com https://myhub.autodesk360.com https://www.google.com https://maps.google.com https://www.youtube.com https://youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://vimeo.com;"
   );
   next();
 });
@@ -75,3 +75,5 @@ if (isMainModule(import.meta.url) || process.env['pm_id']) {
  * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
  */
 export const reqHandler = createNodeRequestHandler(app);
+
+

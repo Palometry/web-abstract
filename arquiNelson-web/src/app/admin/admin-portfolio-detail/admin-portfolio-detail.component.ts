@@ -7,6 +7,7 @@ import { AdminDataService, AdminPortfolioDetail } from '../../services/admin-dat
 type ImageDraft = {
   mediaId: number;
   fileUrl: string;
+  previewUrl?: string;
 };
 
 type SpecDraft = {
@@ -19,6 +20,7 @@ type BlockDraft = {
   textContent: string;
   mediaId: number | null;
   fileUrl: string | null;
+  previewUrl?: string | null;
   caption: string;
   layout: 'wide' | 'inline';
   isVisible: boolean;
@@ -167,11 +169,13 @@ export class AdminPortfolioDetailComponent implements OnInit {
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
-      this.form.coverImage = { mediaId: result.id, fileUrl: result.fileUrl };
+      this.form.coverImage = { mediaId: result.id, fileUrl: result.fileUrl, previewUrl };
     } else {
       this.error = result.error ?? 'No se pudo subir la imagen.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
@@ -181,11 +185,13 @@ export class AdminPortfolioDetailComponent implements OnInit {
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
-      this.form.heroImages.push({ mediaId: result.id, fileUrl: result.fileUrl });
+      this.form.heroImages.push({ mediaId: result.id, fileUrl: result.fileUrl, previewUrl });
     } else {
       this.error = result.error ?? 'No se pudo subir la imagen.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
@@ -195,11 +201,13 @@ export class AdminPortfolioDetailComponent implements OnInit {
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
-      this.form.galleryImages.push({ mediaId: result.id, fileUrl: result.fileUrl });
+      this.form.galleryImages.push({ mediaId: result.id, fileUrl: result.fileUrl, previewUrl });
     } else {
       this.error = result.error ?? 'No se pudo subir la imagen.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
@@ -209,26 +217,40 @@ export class AdminPortfolioDetailComponent implements OnInit {
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
       block.mediaId = result.id;
       block.fileUrl = result.fileUrl;
+      block.previewUrl = previewUrl;
     } else {
       this.error = result.error ?? 'No se pudo subir el archivo.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
 
   clearBlockMedia(block: BlockDraft) {
+    if (block.previewUrl) {
+      URL.revokeObjectURL(block.previewUrl);
+      block.previewUrl = null;
+    }
     block.mediaId = null;
     block.fileUrl = null;
   }
 
   removeCover() {
+    if (this.form.coverImage?.previewUrl) {
+      URL.revokeObjectURL(this.form.coverImage.previewUrl);
+    }
     this.form.coverImage = null;
   }
 
   removeHero(index: number) {
+    const img = this.form.heroImages[index];
+    if (img?.previewUrl) {
+      URL.revokeObjectURL(img.previewUrl);
+    }
     this.form.heroImages.splice(index, 1);
   }
 
@@ -242,6 +264,10 @@ export class AdminPortfolioDetailComponent implements OnInit {
   }
 
   removeGallery(index: number) {
+    const img = this.form.galleryImages[index];
+    if (img?.previewUrl) {
+      URL.revokeObjectURL(img.previewUrl);
+    }
     this.form.galleryImages.splice(index, 1);
   }
 
