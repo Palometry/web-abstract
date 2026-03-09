@@ -11,11 +11,70 @@
         *ngFor="let item of collageItems; let i = index"
         [ngClass]="'tile-' + (i + 1)"
       >
-        <img [src]="item.src" [alt]="item.alt" loading="lazy" (error)="onCollageError(i)" />
+        <button
+          class="tile-trigger"
+          type="button"
+          [attr.aria-label]="'Abrir detalle de ' + item.title"
+          (click)="openCollageDetail(item, $event)"
+        >
+          <img [src]="item.src" [alt]="item.alt" loading="lazy" (error)="onCollageError(i)" />
+          <div class="tile-caption">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.category }}</span>
+          </div>
+        </button>
       </figure>
     </div>
   </div>
 </section>
+
+<section
+  class="collage-detail-backdrop"
+  *ngIf="isCollageDetailOpen"
+  (click)="onDetailBackdropClick($event)"
+>
+  <article
+    class="collage-detail-panel"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="activeCollageTile?.title"
+    [ngStyle]="detailAnimationStyle"
+  >
+    <header class="detail-topbar">
+      <div class="detail-heading">
+        <span>{{ activePortfolioItem?.category || activeCollageTile?.category }}</span>
+        <h3>{{ activePortfolioItem?.title || activeCollageTile?.title }}</h3>
+      </div>
+      <button class="detail-close" type="button" (click)="closeCollageDetail()" aria-label="Cerrar detalle">
+        Cerrar
+      </button>
+    </header>
+
+    <div class="detail-loading" *ngIf="collageDetailLoading">Cargando informacion del proyecto...</div>
+
+    <div class="detail-tools" *ngIf="!collageDetailLoading">
+      <p>Desliza horizontalmente para ver imagenes y articulo del proyecto.</p>
+      <div>
+        <button type="button" (click)="scrollStory(-1)" aria-label="Desplazar a la izquierda">&larr;</button>
+        <button type="button" (click)="scrollStory(1)" aria-label="Desplazar a la derecha">&rarr;</button>
+      </div>
+    </div>
+
+    <div class="story-rail" #storyRail *ngIf="!collageDetailLoading && collageStorySlides.length">
+      <article class="story-slide" *ngFor="let slide of collageStorySlides; trackBy: trackBySlide">
+        <div class="story-media">
+          <img [src]="slide.image" [alt]="slide.title" loading="lazy" />
+        </div>
+        <div class="story-copy">
+          <h4>{{ slide.title }}</h4>
+          <p class="story-caption">{{ slide.caption }}</p>
+          <p>{{ slide.text }}</p>
+        </div>
+      </article>
+    </div>
+  </article>
+</section>
+
 <app-about></app-about>
 <section class="project-marquee" *ngIf="marqueeProjects.length">
   <div class="marquee-header">
@@ -107,3 +166,4 @@
     </div>
   </div>
 </section>
+

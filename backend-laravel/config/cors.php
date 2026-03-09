@@ -6,7 +6,7 @@ return [
     'allowed_origins' => [
         'http://localhost:4200',
         'http://127.0.0.1:4200',
-        'https://ethnic-place-throughout-hotels.trycloudflare.com',
+        'https://soundtrack-investor-transmitted-declaration.trycloudflare.com',
     ],
     'allowed_origins_patterns' => [
         'https://.*\\.brs\\.devtunnels\\.ms',
@@ -17,3 +17,4 @@ return [
     'max_age' => 0,
     'supports_credentials' => false,
 ];
+

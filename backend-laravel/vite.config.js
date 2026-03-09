@@ -11,6 +11,12 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        allowedHosts: [
+            '.trycloudflare.com',
+            '.brs.devtunnels.ms',
+            'localhost',
+            '127.0.0.1',
+        ],
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },
