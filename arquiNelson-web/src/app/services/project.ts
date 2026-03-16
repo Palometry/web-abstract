@@ -6,6 +6,8 @@ export interface ProjectData {
   shortDesc: string;
   image: string;
   thumbImage: string;
+  brochurePdfUrl?: string;
+  brochureCoverUrl?: string;
   masterplanImage?: string;
   houseModels?: {
     name: string;
@@ -53,6 +55,8 @@ export class ProjectService {
       shortDesc: 'Lotes urbanizados con áreas verdes y accesos amplios',
       image: 'img/1_4 - Photo.jpg',
       thumbImage: 'img/1_4 - Photo.jpg',
+      brochurePdfUrl: '/flipbook/Popeye.pdf',
+      brochureCoverUrl: '/flipbook/popeye.jpg',
       masterplanImage: 'img/1_4 - Photo.jpg',
       location: 'Bellaca, Moyobamba, Perú',
       promoter: 'Fun Bellata S.A.',

@@ -6,102 +6,6 @@
   color: var(--color-text);
 }
 
-.project-hero {
-  position: relative;
-  margin-bottom: 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-
-  .hero-slider {
-    position: relative;
-  }
-
-  .hero-img {
-    width: 100%;
-    max-height: 520px;
-    object-fit: cover;
-    border-radius: 14px;
-    display: block;
-    box-shadow: 0 18px 36px var(--color-shadow);
-  }
-
-  .hero-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
-    font-size: 28px;
-    line-height: 1;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease, transform 0.2s ease;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.65);
-      transform: translateY(-50%) scale(1.05);
-    }
-
-    &.prev {
-      left: 12px;
-    }
-
-    &.next {
-      right: 12px;
-    }
-  }
-
-  .hero-dots {
-    position: absolute;
-    left: 50%;
-    bottom: 12px;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 8px;
-
-    button {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255, 255, 255, 0.65);
-      cursor: pointer;
-      padding: 0;
-      transition: background 0.2s ease, transform 0.2s ease;
-
-      &.active {
-        background: var(--color-white);
-        transform: scale(1.2);
-      }
-    }
-  }
-
-  .hero-text {
-    position: static;
-    color: var(--color-text);
-    text-shadow: none;
-
-    h2 {
-      margin: 0 0 6px;
-      font-size: 2.35rem;
-      letter-spacing: -0.02em;
-    }
-
-    p {
-      margin: 0;
-      font-size: 1.05rem;
-      color: var(--color-text-muted);
-    }
-  }
-}
-
 .project-ficha {
   margin: 36px 0 40px;
 
@@ -745,16 +649,6 @@
 }
 
 @media (max-width: 768px) {
-  .project-hero .hero-text {
-    h2 {
-      font-size: 1.5rem;
-    }
-
-    p {
-      font-size: 0.95rem;
-    }
-  }
-
   .ficha-table {
     th {
       width: 150px;
@@ -796,6 +690,10 @@
 
   .model-gallery img {
     max-height: 300px;
+  }
+
+  .project-brochure .brochure-header {
+    align-items: flex-start;
   }
 
 }

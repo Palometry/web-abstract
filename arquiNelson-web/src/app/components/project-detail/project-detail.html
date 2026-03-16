@@ -2,7 +2,23 @@
   <div class="container project-page">
     <section class="project-hero">
       <div class="hero-slider" *ngIf="currentBannerImage">
-        <img class="hero-img" [src]="currentBannerImage" [alt]="project.title" />
+        <div
+          class="hero-stage"
+          [class.is-animating]="bannerAnimating"
+          [class.turn-next]="bannerDirection === 'next'"
+          [class.turn-prev]="bannerDirection === 'prev'"
+          [class.turn-variant]="bannerAnimationVariant"
+        >
+          <div class="hero-page hero-page-base">
+            <img class="hero-img" [src]="currentBannerImage" [alt]="project.title" />
+          </div>
+          <div class="hero-page hero-page-underlay" *ngIf="bannerAnimating && pendingBannerImage">
+            <img class="hero-img" [src]="pendingBannerImage" [alt]="project.title" />
+          </div>
+          <div class="hero-page hero-page-turn" *ngIf="bannerAnimating && currentBannerImage">
+            <img class="hero-img" [src]="currentBannerImage" [alt]="project.title" />
+          </div>
+        </div>
         <button
           class="hero-nav prev"
           type="button"
@@ -38,6 +54,57 @@
       </div>
     </section>
 
+    @if (hasFlipbook) {
+      <section class="project-brochure">
+        <div class="brochure-header">
+          <div>
+            <h3>Brochure del proyecto</h3>
+            <p>Brochure interactivo integrado en la misma pagina.</p>
+          </div>
+          <div class="brochure-actions">
+            <button type="button" class="brochure-launch" (click)="reloadFlipbook()">
+              Recargar flipbook
+            </button>
+            @if (brochurePdfUrl) {
+              <a class="brochure-open" [href]="brochurePdfUrl" target="_blank" rel="noopener">
+                Abrir PDF
+              </a>
+            }
+          </div>
+        </div>
+
+        <div class="brochure-inline">
+          <div class="brochure-inline-shell">
+            <div class="brochure-inline-loading" *ngIf="flipbookLoading">
+              <p>Cargando brochure interactivo...</p>
+            </div>
+
+            <div class="brochure-inline-error" *ngIf="flipbookError">
+              <p>{{ flipbookError }}</p>
+              <button type="button" class="brochure-inline-retry" (click)="reloadFlipbook()">
+                Reintentar
+              </button>
+            </div>
+
+            @if (flipbookMounted) {
+              <div class="dflip-books brochure-dearflip-stage">
+                <div
+                  class="_df_book brochure-dearflip-book"
+                  [attr.id]="dearFlipBookId"
+                  [attr.source]="brochurePdfUrl"
+                  [attr.data-title]="project.title"
+                ></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="brochure-inline-footer">
+          <p class="brochure-inline-hint">Pasa las paginas como revista desde el visor integrado.</p>
+        </div>
+      </section>
+    }
+
     <section class="project-ficha">
       <div class="ficha-header">
         <h3>Ficha de datos</h3>
@@ -46,15 +113,17 @@
         </button>
       </div>
       <table class="ficha-table" [class.expanded]="fichaExpanded">
-        <tr><th>Promotor</th><td>{{ project.promoter || 'Por definir' }}</td></tr>
-        <tr><th>Estado</th><td>{{ project.status || 'Por definir' }}</td></tr>
-        <tr><th>Tipo</th><td>{{ project.type || 'Por definir' }}</td></tr>
-        <tr><th>Ubicacion</th><td>{{ project.location || 'Por definir' }}</td></tr>
-        <tr><th>Area del terreno</th><td>{{ project.landArea || '-' }}</td></tr>
-        <tr><th>Unidades</th><td>{{ project.units || '-' }}</td></tr>
-        <tr><th>Areas comunes</th><td>{{ project.amenities.length ? project.amenities.join(', ') : 'Por definir' }}</td></tr>
-        <tr><th>Inicio de obra</th><td>{{ project.startYear || '-' }}</td></tr>
-        <tr><th>Entrega estimada</th><td>{{ project.deliveryYear || '-' }}</td></tr>
+        <tbody>
+          <tr><th>Promotor</th><td>{{ project.promoter || 'Por definir' }}</td></tr>
+          <tr><th>Estado</th><td>{{ project.status || 'Por definir' }}</td></tr>
+          <tr><th>Tipo</th><td>{{ project.type || 'Por definir' }}</td></tr>
+          <tr><th>Ubicacion</th><td>{{ project.location || 'Por definir' }}</td></tr>
+          <tr><th>Area del terreno</th><td>{{ project.landArea || '-' }}</td></tr>
+          <tr><th>Unidades</th><td>{{ project.units || '-' }}</td></tr>
+          <tr><th>Areas comunes</th><td>{{ project.amenities.length ? project.amenities.join(', ') : 'Por definir' }}</td></tr>
+          <tr><th>Inicio de obra</th><td>{{ project.startYear || '-' }}</td></tr>
+          <tr><th>Entrega estimada</th><td>{{ project.deliveryYear || '-' }}</td></tr>
+        </tbody>
       </table>
     </section>
 
