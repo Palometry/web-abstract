@@ -68,6 +68,7 @@ export type AdminProjectDetails = {
   amenities?: string[];
   startYear?: number | null;
   deliveryYear?: number | null;
+  autocadUrl?: string | null;
   mapUrl?: string | null;
   mapEmbedUrl?: string | null;
   masterplanImage?: string | null;

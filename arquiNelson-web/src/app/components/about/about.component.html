@@ -1,20 +1,24 @@
-<section id="about" class="about">
+<section id="about" class="about" [class.about-page]="standalonePage" [class.about-preview]="previewMode">
   <div class="container">
     <div class="about-intro">
       <h2>{{ title || defaultTitle }}</h2>
       <p class="about-summary">{{ summary || defaultSummary }}</p>
     </div>
 
-    <div class="about-grid" *ngIf="cards?.length; else defaultCards">
+    <div class="about-cta" *ngIf="previewMode">
+      <a [routerLink]="ctaLink">{{ ctaLabel }}</a>
+    </div>
+
+    <div class="about-grid" *ngIf="!previewMode && cards?.length; else defaultCards">
       <div class="about-card" *ngFor="let card of cards">
         <h3>{{ card.title }}</h3>
         <p>{{ card.body }}</p>
       </div>
     </div>
     <ng-template #defaultCards>
-      <div class="about-grid">
+      <div class="about-grid" *ngIf="!previewMode">
         <div class="about-card">
-          <h3>Misión</h3>
+          <h3>Mision</h3>
           <p>
             Brindar proyectos inmobiliarios innovadores y sostenibles que mejoren la calidad de vida
             de nuestras comunidades y generen valor a nuestros clientes.
@@ -22,17 +26,17 @@
         </div>
 
         <div class="about-card">
-          <h3>Visión</h3>
+          <h3>Vision</h3>
           <p>
-            Ser reconocidos como referentes en desarrollo inmobiliario en la región, impulsando
-            prácticas responsables y diseños de excelencia.
+            Ser reconocidos como referentes en desarrollo inmobiliario en la region, impulsando
+            practicas responsables y disenos de excelencia.
           </p>
         </div>
 
         <div class="about-card">
           <h3>Objetivos</h3>
           <ul>
-            <li>Entregar proyectos a tiempo y con altos estándares de calidad.</li>
+            <li>Entregar proyectos a tiempo y con altos estandares de calidad.</li>
             <li>Integrar criterios de sostenibilidad en todos los desarrollos.</li>
             <li>Fomentar el bienestar y la seguridad de nuestros clientes y colaboradores.</li>
           </ul>

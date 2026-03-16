@@ -23,6 +23,7 @@ import { AdminUsersComponent } from './admin/admin-users/admin-users.component';
 import { adminAuthGuard } from './services/admin-guard';
 import { BlogComponent } from './components/blog/blog.component';
 import { BlogDetailComponent } from './components/blog-detail/blog-detail.component';
+import { ServicesComponent } from './components/services/services.component';
 
 export const routes: Routes = [
   { path: 'admin/login', component: AdminLoginComponent },
@@ -51,6 +52,8 @@ export const routes: Routes = [
     ]
   },
   { path: '', component: HomeComponent, pathMatch: 'full' },
+  { path: 'about', redirectTo: 'blog', pathMatch: 'full' },
+  { path: 'services', component: ServicesComponent, data: { standalonePage: true } },
   { path: 'projects', component: ProjectListComponent },
   { path: 'project/:id', component: ProjectDetailComponent },
   { path: 'blog', component: BlogComponent },

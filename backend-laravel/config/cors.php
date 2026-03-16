@@ -6,7 +6,7 @@ return [
     'allowed_origins' => [
         'http://localhost:4200',
         'http://127.0.0.1:4200',
-        'https://soundtrack-investor-transmitted-declaration.trycloudflare.com',
+        'https://representatives-him-fire-veterinary.trycloudflare.com',
     ],
     'allowed_origins_patterns' => [
         'https://.*\\.brs\\.devtunnels\\.ms',

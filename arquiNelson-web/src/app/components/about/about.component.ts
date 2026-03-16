@@ -1,17 +1,22 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './about.component.html',
   styleUrls: ['./about.component.scss']
 })
-export class AboutComponent {
+export class AboutComponent implements OnInit {
   @Input() title?: string;
   @Input() summary?: string;
   @Input() cards?: { title: string; body: string }[];
+  @Input() previewMode = false;
+  @Input() standalonePage = false;
+  @Input() ctaLabel = 'Conocer mas';
+  @Input() ctaLink: string | any[] = '/blog';
 
   defaultTitle = 'Sobre Nosotros';
   defaultSummary =
@@ -34,6 +39,12 @@ export class AboutComponent {
         'Entregar proyectos a tiempo y con altos estándares de calidad. Integrar criterios de sostenibilidad en todos los desarrollos. Fomentar el bienestar y la seguridad de nuestros clientes y colaboradores.'
     }
   ];
+
+  constructor(private route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    this.standalonePage = this.standalonePage || !!this.route.snapshot.data['standalonePage'];
+  }
 
   get displayCards() {
     return this.cards?.length ? this.cards : this.defaultCards;

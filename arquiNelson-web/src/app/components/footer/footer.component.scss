@@ -1,52 +1,62 @@
 .footer {
-  background: linear-gradient(180deg, var(--color-red) 0%, var(--color-black) 100%);
-  color: var(--color-white);
+  background-color: #921019;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(236, 236, 236, 0.82) 0%,
+      rgba(220, 220, 220, 0.62) 16%,
+      rgba(194, 194, 194, 0.34) 36%,
+      rgba(164, 164, 164, 0.16) 58%,
+      rgba(140, 140, 140, 0.06) 74%,
+      rgba(128, 128, 128, 0) 86%
+    );
+  color: #231b1b;
   margin-top: 80px;
 
   .footer-content {
-    padding: 60px 20px;
+    padding: 36px 20px 28px;
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      color: var(--color-white); /* ensure high contrast against red background */
+      color: #231b1b;
     }
 
     .footer-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 40px;
-      margin-bottom: 40px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      margin-bottom: 18px;
 
       .footer-section {
         h3 {
-          font-size: 24px;
+          font-size: 20px;
           font-weight: 700;
-          margin: 0 0 20px 0;
-          color: var(--color-white);
+          margin: 0 0 14px 0;
+          color: #231b1b;
         }
 
         .footer-logo {
-          height: 36px;
+          height: 30px;
           width: auto;
           vertical-align: middle;
-          margin-right: 10px;
+          margin-right: 8px;
           border-radius: 6px;
         }
 
         h4 {
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 600;
-          margin: 0 0 20px 0;
-          color: white;
+          margin: 0 0 14px 0;
+          color: #231b1b;
         }
 
         p {
-          font-size: 14px;
-          line-height: 1.6;
+          font-size: 13px;
+          line-height: 1.5;
           opacity: 0.95;
-          margin: 0 0 20px 0;
-          color: rgba(255,255,255,0.95);
+          margin: 0 0 14px 0;
+          color: rgba(35, 27, 27, 0.88);
         }
 
         ul {
@@ -55,35 +65,36 @@
           margin: 0;
 
           li {
-            margin-bottom: 12px;
-            font-size: 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
 
             a {
-              color: var(--color-white);
+              color: #231b1b;
               text-decoration: none;
               transition: color 0.2s ease;
 
               &:hover {
-                color: var(--color-black);
+                color: #7c1720;
               }
             }
 
             &.contact-info {
               opacity: 0.9;
+              color: rgba(35, 27, 27, 0.9);
             }
           }
         }
 
         .social-links {
           display: flex;
-          gap: 15px;
+          gap: 12px;
 
           .social-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 34px;
+            height: 34px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             overflow: hidden;
@@ -91,8 +102,8 @@
             transition: all 0.3s ease;
 
             img {
-              width: 20px;
-              height: 20px;
+              width: 18px;
+              height: 18px;
               object-fit: contain;
             }
 
@@ -147,9 +158,9 @@
   }
 
   .footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 30px 20px;
-    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(213, 7, 7, 0.542);
+    padding: 18px 20px;
+    background: rgba(149, 3, 15, 0.88);
 
     .container {
       max-width: 1200px;
@@ -162,8 +173,9 @@
 
       p {
         margin: 0;
-        font-size: 14px;
-        opacity: 0.8;
+        font-size: 13px;
+        opacity: 0.84;
+        color: rgba(255, 255, 255, 0.92);
       }
 
       .footer-links {
@@ -171,24 +183,27 @@
         gap: 20px;
 
         a {
-          color: #fff;
+          color: rgba(255, 255, 255, 0.92);
           text-decoration: none;
           font-size: 14px;
-          opacity: 0.8;
+          opacity: 0.9;
           transition: opacity 0.3s ease;
 
           &:hover {
             opacity: 1;
-            color: #d0413d;
+            color: #ffd8db;
           }
         }
       }
     }
 
     @media (max-width: 768px) {
+      padding: 16px 20px;
+
       .container {
         flex-direction: column;
         text-align: center;
+        gap: 10px;
       }
     }
   }

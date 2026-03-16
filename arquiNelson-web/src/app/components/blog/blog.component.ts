@@ -2,11 +2,12 @@ import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_I
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PublicBlogPost, PublicBlogService } from '../../services/public-blog';
+import { AboutComponent } from '../about/about.component';
 
 @Component({
   selector: 'app-blog',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, AboutComponent],
   templateUrl: './blog.component.html',
   styleUrls: ['./blog.component.scss']
 })

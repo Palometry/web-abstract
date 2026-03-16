@@ -2,6 +2,11 @@
   padding: 80px clamp(28px, 7vw, 96px);
   background: var(--color-bg);
 
+  &.services-page {
+    padding-top: 96px;
+    min-height: calc(100vh - 76px);
+  }
+
   .container {
     max-width: 920px;
     margin: 0 auto;

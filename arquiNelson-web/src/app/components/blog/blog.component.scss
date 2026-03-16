@@ -14,6 +14,14 @@
 .blog-header {
   display: grid;
   gap: 8px;
+  padding-top: 4px;
+
+  .blog-eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
 
   h1 {
     margin: 0;

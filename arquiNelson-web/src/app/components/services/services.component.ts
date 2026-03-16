@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { PublicService, PublicServicesService } from '../../services/public-services';
 
 interface Service {
   id: number;
@@ -18,13 +19,15 @@ interface Service {
   templateUrl: './services.component.html',
   styleUrls: ['./services.component.scss']
 })
-export class ServicesComponent {
+export class ServicesComponent implements OnInit {
   @Input() title?: string;
   @Input() summary?: string;
   @Input() items?: Service[];
+  @Input() standalonePage = false;
 
   defaultTitle = 'Servicios';
   defaultSummary = 'Ofrecemos soluciones inmobiliarias integrales y profesionales';
+  loadedServices: Service[] = [];
 
   services: Service[] = [
     {
@@ -77,8 +80,37 @@ export class ServicesComponent {
     }
   ];
 
+  constructor(
+    private publicServicesService: PublicServicesService,
+    private route: ActivatedRoute
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    this.standalonePage = this.standalonePage || !!this.route.snapshot.data['standalonePage'];
+
+    if (this.items?.length) {
+      return;
+    }
+
+    const publicServices = await this.publicServicesService.getServices();
+    if (publicServices.length) {
+      this.loadedServices = publicServices.map((service: PublicService) => ({
+        id: service.id,
+        icon: service.icon ?? '',
+        title: service.title,
+        description: service.description,
+      }));
+    }
+  }
+
   get displayServices() {
-    return this.items?.length ? this.items : this.services;
+    if (this.items?.length) {
+      return this.items;
+    }
+    if (this.loadedServices.length) {
+      return this.loadedServices;
+    }
+    return this.services;
   }
 
   isInternal(url: string | undefined) {

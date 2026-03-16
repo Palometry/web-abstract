@@ -1,7 +1,7 @@
-<header class="header" [class.expanded]="isExpanded">
-  <div class="header-container" [class.expanded]="isExpanded">
+<header class="header" [class.overlay]="isOverlayHeader">
+  <div class="header-container">
     <div class="logo">
-      <a routerLink="/" fragment="home" class="logo-link" (click)="closeMenu()">
+      <a routerLink="/" class="logo-link" (click)="closeMenu()">
         <img src="img/LOGO.jpg" alt="ArquiNelson logo" class="logo-img" />
       </a>
     </div>
@@ -40,9 +40,13 @@
         [attr.aria-pressed]="isDarkMode"
         [attr.aria-label]="isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo nocturno'"
       >
-        <span class="toggle-label">{{ isDarkMode ? 'Noche' : 'Día' }}</span>
-        <span class="toggle-track" [class.on]="isDarkMode">
-          <span class="toggle-thumb"></span>
+                <span class="theme-icon" aria-hidden="true">
+          <svg *ngIf="!isDarkMode" viewBox="0 0 24 24" focusable="false">
+            <path d="M12 4a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm0 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 3a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1Zm8-9a1 1 0 0 1 1 1 1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1ZM6 12a1 1 0 0 1-1 1H4a1 1 0 1 1 0-2h1a1 1 0 0 1 1 1Zm10.95 5.536a1 1 0 0 1 1.414 1.414l-.707.707a1 1 0 1 1-1.414-1.414l.707-.707ZM7.05 6.464A1 1 0 1 1 8.464 7.88l-.707.707A1 1 0 0 1 6.343 7.17l.707-.707Zm11.314.707a1 1 0 1 1-1.414 1.414l-.707-.707a1 1 0 1 1 1.414-1.414l.707.707ZM8.464 16.12a1 1 0 0 1 0 1.414l-.707.707A1 1 0 1 1 6.343 17l.707-.707a1 1 0 0 1 1.414 0Z" />
+          </svg>
+          <svg *ngIf="isDarkMode" viewBox="0 0 24 24" focusable="false">
+            <path d="M14.768 3.96a1 1 0 0 1 .336 1.354 8 8 0 1 0 3.592 10.347 1 1 0 0 1 1.68-.266 1 1 0 0 1 .145 1.055A10 10 0 1 1 13.414 3.8a1 1 0 0 1 1.354.16Z" />
+          </svg>
         </span>
       </button>
 
@@ -68,7 +72,8 @@
     </nav>
   </div>
 </header>
-<div class="header-spacer" [class.expanded]="isExpanded"></div>
+<div class="header-spacer" [class.overlay]="isOverlayHeader"></div>
+
 
 
 

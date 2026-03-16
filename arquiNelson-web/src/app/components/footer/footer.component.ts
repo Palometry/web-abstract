@@ -14,16 +14,14 @@ export class FooterComponent {
   socialLinks = [
     { image: 'img/facebook.png', url: 'https://www.facebook.com/Abstract.Daza/', label: 'Facebook' },
     { image: 'img/instagram.png', url: '#', label: 'Instagram' },
-    { image: 'img/linkedin.png', url: 'https://linkedin.com/in/nelson-daza-b37844298', label: 'LinkedIn' },
-    { image: 'img/twitter.png', url: '#', label: 'Twitter' }
+    { image: 'img/linkedin.png', url: 'https://www.linkedin.com/in/ndd-10/', label: 'LinkedIn' },
+    { image: 'img/pngwing.com.png', url: '#', label: 'Tik Tok' }
   ];
 
   quickLinks = [
-    { name: 'Inicio', href: '#home' },
-    { name: 'Sobre Nosotros', href: '#about' },
-    { name: 'Servicios', href: '#services' },
-    { name: 'Portafolio', href: '#portfolio' },
-    { name: 'Proyectos', href: 'projects' },
-    { name: 'Contacto', href: '#contact' }
+    { name: 'Proyectos', href: '/projects' },
+    { name: 'Sobre Nosotros', href: '/blog' },
+    { name: 'Servicios', href: '/services' },
+    { name: 'Contacto', href: '/#contact' }
   ];
 }

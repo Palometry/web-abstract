@@ -1,7 +1,8 @@
 import { Component, HostListener, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ProjectService, ProjectData } from '../../services/project';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-header',
@@ -13,26 +14,32 @@ import { ProjectService, ProjectData } from '../../services/project';
 export class HeaderComponent {
   isMenuOpen = false;
   projects: ProjectData[] = [];
-  isExpanded = true;
+  isOverlayHeader = false;
   isDarkMode = false;
   private readonly isBrowser: boolean;
 
   constructor(
     private projectService: ProjectService,
+    private router: Router,
     @Inject(PLATFORM_ID) platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
     this.projects = this.projectService.getProjects();
     this.initTheme();
-    this.updateExpanded();
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => this.updateHeaderAppearance());
+    this.updateHeaderAppearance();
   }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
+    this.updateHeaderAppearance();
   }
 
   closeMenu() {
     this.isMenuOpen = false;
+    this.updateHeaderAppearance();
   }
 
   toggleTheme() {
@@ -46,14 +53,17 @@ export class HeaderComponent {
 
   @HostListener('window:scroll')
   onWindowScroll() {
-    this.updateExpanded();
+    this.updateHeaderAppearance();
   }
 
-  private updateExpanded() {
+  private updateHeaderAppearance() {
     if (!this.isBrowser) {
       return;
     }
-    this.isExpanded = window.scrollY < 40;
+
+    const currentPath = this.router.url.split('#')[0].split('?')[0] || '/';
+    const isHome = currentPath === '/';
+    this.isOverlayHeader = isHome && window.scrollY < 32 && !this.isMenuOpen;
   }
 
   private initTheme() {
@@ -74,12 +84,11 @@ export class HeaderComponent {
   }
 
   menuItems = [
-    { name: 'INICIO', link: '/', fragment: 'home' },
-    { name: 'SOBRE NOSOTROS', link: '/', fragment: 'about' },
-    { name: 'SERVICIOS', link: '/', fragment: 'services' },
-    { name: 'PORTAFOLIO', link: '/', fragment: 'portfolio' },
-    { name: 'BLOG', link: '/blog' },
+    
     { name: 'PROYECTOS', link: '/projects', dropdown: true },
+    { name: 'SERVICIOS', link: '/services' },
+    { name: 'SOBRE NOSOTROS', link: '/blog' },
+    
     { name: 'CONTACTO', link: '/', fragment: 'contact' }
   ];
 }

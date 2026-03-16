@@ -5,101 +5,54 @@
       <span class="collage-eyebrow">Portafolio</span>
       <h2>Una mirada a nuestros proyectos recientes</h2>
     </div>
-    <div class="collage-grid">
-      <figure
-        class="collage-tile"
-        *ngFor="let item of collageItems; let i = index"
-        [ngClass]="'tile-' + (i + 1)"
-      >
-        <button
-          class="tile-trigger"
-          type="button"
-          [attr.aria-label]="'Abrir detalle de ' + item.title"
-          (click)="openCollageDetail(item, $event)"
-        >
-          <img [src]="item.src" [alt]="item.alt" loading="lazy" (error)="onCollageError(i)" />
-          <div class="tile-caption">
-            <strong>{{ item.title }}</strong>
-            <span>{{ item.category }}</span>
-          </div>
-        </button>
-      </figure>
-    </div>
-  </div>
-</section>
+    <div class="collage-rows">
+      <div class="collage-row" *ngFor="let row of collageRows; let rowIndex = index" [class.row-reverse]="row.reverse">
+        <figure class="collage-tile collage-feature">
+          <a
+            class="tile-trigger"
+            [routerLink]="['/project', row.featured.id]"
+            [attr.aria-label]="'Ver proyecto ' + row.featured.title"
+          >
+            <img
+              [src]="row.featured.src"
+              [alt]="row.featured.alt"
+              loading="lazy"
+              (error)="onCollageError(rowIndex * 3 + (row.reverse ? row.stacked.length : 0))"
+            />
+            <div class="tile-caption">
+              <strong>{{ row.featured.title }}</strong>
+              <span>{{ row.featured.category }}</span>
+            </div>
+          </a>
+        </figure>
 
-<section
-  class="collage-detail-backdrop"
-  *ngIf="isCollageDetailOpen"
-  (click)="onDetailBackdropClick($event)"
->
-  <article
-    class="collage-detail-panel"
-    role="dialog"
-    aria-modal="true"
-    [attr.aria-label]="activeCollageTile?.title"
-    [ngStyle]="detailAnimationStyle"
-  >
-    <header class="detail-topbar">
-      <div class="detail-heading">
-        <span>{{ activePortfolioItem?.category || activeCollageTile?.category }}</span>
-        <h3>{{ activePortfolioItem?.title || activeCollageTile?.title }}</h3>
-      </div>
-      <button class="detail-close" type="button" (click)="closeCollageDetail()" aria-label="Cerrar detalle">
-        Cerrar
-      </button>
-    </header>
-
-    <div class="detail-loading" *ngIf="collageDetailLoading">Cargando informacion del proyecto...</div>
-
-    <div class="detail-tools" *ngIf="!collageDetailLoading">
-      <p>Desliza horizontalmente para ver imagenes y articulo del proyecto.</p>
-      <div>
-        <button type="button" (click)="scrollStory(-1)" aria-label="Desplazar a la izquierda">&larr;</button>
-        <button type="button" (click)="scrollStory(1)" aria-label="Desplazar a la derecha">&rarr;</button>
+        <div class="collage-stack" [class.stack-single]="row.stacked.length === 1">
+          <figure class="collage-tile collage-compact" *ngFor="let item of row.stacked; let stackIndex = index">
+            <a
+              class="tile-trigger"
+              [routerLink]="['/project', item.id]"
+              [attr.aria-label]="'Ver proyecto ' + item.title"
+            >
+              <img
+                [src]="item.src"
+                [alt]="item.alt"
+                loading="lazy"
+                (error)="onCollageError(rowIndex * 3 + (row.reverse ? stackIndex : stackIndex + 1))"
+              />
+              <div class="tile-caption">
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.category }}</span>
+              </div>
+            </a>
+          </figure>
+        </div>
       </div>
     </div>
-
-    <div class="story-rail" #storyRail *ngIf="!collageDetailLoading && collageStorySlides.length">
-      <article class="story-slide" *ngFor="let slide of collageStorySlides; trackBy: trackBySlide">
-        <div class="story-media">
-          <img [src]="slide.image" [alt]="slide.title" loading="lazy" />
-        </div>
-        <div class="story-copy">
-          <h4>{{ slide.title }}</h4>
-          <p class="story-caption">{{ slide.caption }}</p>
-          <p>{{ slide.text }}</p>
-        </div>
-      </article>
-    </div>
-  </article>
-</section>
-
-<app-about></app-about>
-<section class="project-marquee" *ngIf="marqueeProjects.length">
-  <div class="marquee-header">
-    <h2>Proyectos destacados</h2>
-    <span>Desliza para ver todos</span>
-  </div>
-  <div class="marquee-viewport">
-    <div class="marquee-track">
-      <a
-        class="marquee-card"
-        *ngFor="let project of marqueeProjects; let i = index"
-        [routerLink]="['/project', project.id]"
-        [attr.aria-hidden]="i >= marqueeProjects.length / 2 ? 'true' : null"
-      >
-        <img [src]="project.image" [alt]="project.title" />
-        <div class="marquee-info">
-          <h3>{{ project.title }}</h3>
-          <p>{{ project.shortDesc }}</p>
-        </div>
-      </a>
+    <div class="collage-footer" *ngIf="collageItems.length">
+      <a class="collage-cta" [routerLink]="['/projects']">Ver mas proyectos</a>
     </div>
   </div>
 </section>
-<app-services [items]="services"></app-services>
-<app-projects></app-projects>
 
 <section
   class="dynamic-content"
@@ -167,3 +120,4 @@
   </div>
 </section>
 
+<app-about [previewMode]="true" ctaLabel="Conocer mas" [ctaLink]="['/blog']"></app-about>

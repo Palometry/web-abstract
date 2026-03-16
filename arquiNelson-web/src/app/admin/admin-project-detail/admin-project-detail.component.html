@@ -131,6 +131,10 @@
         <input type="number" [(ngModel)]="detailsDraft.units" />
       </label>
       <label class="wide">
+        URL visor AutoCAD 360
+        <input type="text" [(ngModel)]="detailsDraft.autocadUrl" placeholder="https://a360.co/..." />
+      </label>
+      <label class="wide">
         URL Mapa (Google Maps)
         <input type="text" [(ngModel)]="detailsDraft.mapUrl" (blur)="syncMapEmbedUrl()" />
       </label>

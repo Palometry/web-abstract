@@ -8,6 +8,38 @@ use Illuminate\Support\Facades\DB;
 
 class BlogController extends Controller
 {
+    private function resolveFileUrl(?string $url): ?string
+    {
+        $url = is_string($url) ? trim($url) : '';
+        if ($url === '') {
+            return null;
+        }
+
+        $host = request()->getSchemeAndHttpHost();
+
+        if (preg_match('#^https?://#i', $url)) {
+            $parts = parse_url($url);
+            $path = $parts['path'] ?? '';
+            if ($path !== '' && str_starts_with($path, '/uploads/')) {
+                return $host . $path;
+            }
+
+            $currentHost = parse_url($host, PHP_URL_HOST);
+            $urlHost = $parts['host'] ?? null;
+            if ($urlHost && $currentHost && strcasecmp($urlHost, $currentHost) === 0) {
+                return $url;
+            }
+
+            return $url;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return $host . $url;
+        }
+
+        return $host . '/' . $url;
+    }
+
     private function sanitizeStatus(?string $status): string
     {
         $allowed = ['draft', 'published'];
@@ -66,13 +98,13 @@ class BlogController extends Controller
              ORDER BY published_at DESC, created_at DESC, id DESC"
         );
 
-        $posts = array_map(static function ($row) {
+        $posts = array_map(function ($row) {
             return [
                 'id' => $row->id,
                 'title' => $row->title,
                 'slug' => $row->slug,
                 'excerpt' => $row->excerpt,
-                'coverImageUrl' => $row->cover_image_url,
+                'coverImageUrl' => $this->resolveFileUrl($row->cover_image_url),
                 'publishedAt' => $row->published_at,
                 'createdAt' => $row->created_at,
             ];
@@ -106,7 +138,7 @@ class BlogController extends Controller
             'slug' => $post->slug,
             'excerpt' => $post->excerpt,
             'content' => $post->content,
-            'coverImageUrl' => $post->cover_image_url,
+            'coverImageUrl' => $this->resolveFileUrl($post->cover_image_url),
             'publishedAt' => $post->published_at,
             'createdAt' => $post->created_at,
         ]);
@@ -160,7 +192,7 @@ class BlogController extends Controller
             'status' => $post->status,
             'excerpt' => $post->excerpt,
             'content' => $post->content,
-            'coverImageUrl' => $post->cover_image_url,
+            'coverImageUrl' => $this->resolveFileUrl($post->cover_image_url),
             'publishedAt' => $post->published_at,
         ]);
     }
