@@ -4,12 +4,77 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class MediaController extends Controller
 {
+    private function allowedMimeTypes(): array
+    {
+        return config('media.allowed_mime_types', []);
+    }
+
+    private function maxUploadKb(): int
+    {
+        return max(1, (int) config('media.max_upload_kb', 51200));
+    }
+
+    private function extensionForMime(string $mime): ?string
+    {
+        $map = config('media.mime_extensions', []);
+
+        return is_array($map) ? ($map[$mime] ?? null) : null;
+    }
+
+    private function detectMime(string $buffer): ?string
+    {
+        if ($buffer === '') {
+            return null;
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->buffer($buffer);
+
+        return is_string($mime) && $mime !== '' ? $mime : null;
+    }
+
+    private function validateBuffer(string $buffer, ?string $requestedMime = null): array
+    {
+        if ($buffer === '') {
+            throw ValidationException::withMessages([
+                'file' => ['Archivo vacio.'],
+            ]);
+        }
+
+        $maxBytes = $this->maxUploadKb() * 1024;
+        if (strlen($buffer) > $maxBytes) {
+            throw ValidationException::withMessages([
+                'file' => ['El archivo excede el tamano maximo permitido.'],
+            ]);
+        }
+
+        $mime = $this->detectMime($buffer) ?? $requestedMime;
+        if (!is_string($mime) || !in_array($mime, $this->allowedMimeTypes(), true)) {
+            throw ValidationException::withMessages([
+                'file' => ['Tipo de archivo no permitido.'],
+            ]);
+        }
+
+        $extension = $this->extensionForMime($mime);
+        if (!$extension) {
+            throw ValidationException::withMessages([
+                'file' => ['No se pudo determinar una extension segura para el archivo.'],
+            ]);
+        }
+
+        return [
+            'mime' => $mime,
+            'extension' => $extension,
+        ];
+    }
+
     private function tryConvertToWebp(string $buffer): ?string
     {
         if (!function_exists('imagecreatefromstring') || !function_exists('imagewebp')) {
@@ -29,16 +94,20 @@ class MediaController extends Controller
     private function parseData(string $data): array
     {
         if (str_starts_with($data, 'data:')) {
-            if (preg_match('/^data:(.+);base64,(.+)$/', $data, $matches)) {
+            if (preg_match('/^data:([^;,]+);base64,([A-Za-z0-9+\/=]+)$/', $data, $matches)) {
+                $decoded = base64_decode($matches[2], true);
                 return [
                     'mime' => $matches[1],
-                    'buffer' => base64_decode($matches[2]),
+                    'buffer' => $decoded === false ? null : $decoded,
                 ];
             }
         }
+
+        $decoded = base64_decode($data, true);
+
         return [
             'mime' => null,
-            'buffer' => base64_decode($data),
+            'buffer' => $decoded === false ? null : $decoded,
         ];
     }
 
@@ -51,26 +120,27 @@ class MediaController extends Controller
 
     public function store(Request $request)
     {
-        $filename = $request->input('filename');
-        $data = $request->input('data');
-        if (!$filename || !$data) {
-            return response()->json(['error' => 'Archivo o nombre invalido.'], 400);
-        }
+        Validator::make($request->all(), [
+            'filename' => ['required', 'string', 'max:180'],
+            'data' => ['required', 'string'],
+            'title' => ['nullable', 'string', 'max:180'],
+            'altText' => ['nullable', 'string', 'max:180'],
+        ])->validate();
+
+        $filename = (string) $request->input('filename');
+        $data = (string) $request->input('data');
 
         $parsed = $this->parseData((string) $data);
-        $buffer = $parsed['buffer'] ?? '';
-        if (!$buffer) {
-            return response()->json(['error' => 'Archivo vacio.'], 400);
-        }
+        $buffer = is_string($parsed['buffer'] ?? null) ? $parsed['buffer'] : '';
+        $validatedFile = $this->validateBuffer($buffer, is_string($parsed['mime'] ?? null) ? $parsed['mime'] : null);
 
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
         $base = $this->safeBaseName(pathinfo($filename, PATHINFO_FILENAME));
         $unique = Str::random(12);
-        $mime = $request->input('mimeType') ?? $parsed['mime'];
+        $mime = $validatedFile['mime'];
 
         $convertedBuffer = null;
         $useWebp = false;
-        if (is_string($mime) && str_starts_with($mime, 'image/')) {
+        if (str_starts_with($mime, 'image/')) {
             $convertedBuffer = $this->tryConvertToWebp($buffer);
             if ($convertedBuffer) {
                 $useWebp = true;
@@ -78,7 +148,7 @@ class MediaController extends Controller
         }
 
         $finalBuffer = $useWebp ? $convertedBuffer : $buffer;
-        $finalExt = $useWebp ? 'webp' : ($ext ?: 'bin');
+        $finalExt = $useWebp ? 'webp' : $validatedFile['extension'];
         $finalMime = $useWebp ? 'image/webp' : $mime;
 
         $safeName = $base . '-' . time() . '-' . $unique . '.' . $finalExt;
@@ -109,16 +179,22 @@ class MediaController extends Controller
 
     public function storeFile(Request $request)
     {
+        Validator::make($request->all(), [
+            'file' => ['required', 'file', 'max:' . $this->maxUploadKb()],
+            'title' => ['nullable', 'string', 'max:180'],
+            'altText' => ['nullable', 'string', 'max:180'],
+        ])->validate();
+
         $file = $request->file('file');
         if (!$file || !$file->isValid()) {
             return response()->json(['error' => 'Archivo invalido.'], 400);
         }
 
         $originalName = $file->getClientOriginalName() ?: 'media';
-        $ext = $file->getClientOriginalExtension();
+        $validatedFile = $this->validateBuffer((string) file_get_contents($file->getRealPath()), $file->getMimeType());
         $base = $this->safeBaseName(pathinfo($originalName, PATHINFO_FILENAME));
         $unique = Str::random(12);
-        $safeName = $base . '-' . time() . '-' . $unique . '.' . ($ext ?: 'bin');
+        $safeName = $base . '-' . time() . '-' . $unique . '.' . $validatedFile['extension'];
 
         $relativePath = 'uploads/portfolio/' . $safeName;
         $fullPath = public_path($relativePath);
@@ -128,7 +204,7 @@ class MediaController extends Controller
         $file->move(dirname($fullPath), basename($fullPath));
 
         $fileUrl = '/' . $relativePath;
-        $mime = $file->getClientMimeType();
+        $mime = $validatedFile['mime'];
         $size = $file->getSize();
 
         $id = DB::table('media_assets')->insertGetId([

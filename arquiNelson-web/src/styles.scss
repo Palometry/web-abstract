@@ -14,13 +14,13 @@
 }
 
 body.theme-dark {
-	--color-bg: #0f1115;
-	--color-surface: #151a23;
-	--color-surface-alt: #1d2432;
-	--color-text: #f3f5f8;
-	--color-text-muted: #aeb6c6;
-	--color-border: rgba(255, 255, 255, 0.12);
-	--color-shadow: rgba(0, 0, 0, 0.6);
+	--color-bg: #090909;
+	--color-surface: #101010;
+	--color-surface-alt: #171717;
+	--color-text: #f3f3f1;
+	--color-text-muted: #a7a7a2;
+	--color-border: rgba(255, 255, 255, 0.08);
+	--color-shadow: rgba(0, 0, 0, 0.72);
 }
 
 /* Global base styles */
@@ -591,5 +591,26 @@ app-project-detail {
 				font-size: 0.95rem;
 			}
 		}
+	}
+}
+
+app-header,
+app-footer,
+app-hero,
+app-home,
+app-project-list,
+app-project-detail,
+app-services,
+app-contact,
+app-blog,
+app-blog-detail,
+app-about,
+app-projects,
+app-portfolio-detail,
+app-chat-widget {
+	*,
+	*::before,
+	*::after {
+		border-radius: 0 !important;
 	}
 }

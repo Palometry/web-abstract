@@ -208,3 +208,67 @@
     }
   }
 }
+
+:host-context(body.theme-dark) .footer {
+  background-color: #0d1420;
+  background: linear-gradient(180deg, #1a2333 0%, #121927 42%, #0b1018 100%);
+  color: #e8edf4;
+  border-top: 1px solid rgba(123, 151, 198, 0.18);
+
+  .footer-content {
+    .container {
+      color: #e8edf4;
+    }
+
+    .footer-grid {
+      .footer-section {
+        h3,
+        h4 {
+          color: #f3f6fb;
+        }
+
+        p {
+          color: rgba(232, 237, 244, 0.76);
+        }
+
+        ul li {
+          a {
+            color: rgba(232, 237, 244, 0.82);
+
+            &:hover {
+              color: #a8c1f5;
+            }
+          }
+
+          &.contact-info {
+            color: rgba(232, 237, 244, 0.78);
+          }
+        }
+
+        .social-links .social-icon {
+          background: rgba(255, 255, 255, 0.08);
+
+          &:hover {
+            background: rgba(122, 150, 196, 0.28);
+          }
+        }
+      }
+    }
+  }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(123, 151, 198, 0.16);
+    background: rgba(7, 12, 19, 0.9);
+
+    .container {
+      p,
+      .footer-links a {
+        color: rgba(232, 237, 244, 0.84);
+      }
+
+      .footer-links a:hover {
+        color: #c6d7f7;
+      }
+    }
+  }
+}

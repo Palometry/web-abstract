@@ -19,7 +19,10 @@ class JwtAuth
 
         $token = substr($header, 7);
         try {
-            $secret = env('JWT_SECRET', 'change_me');
+            $secret = (string) config('jwt.secret', '');
+            if ($secret === '' || $secret === 'change_me' || strlen($secret) < 32) {
+                return response()->json(['error' => 'JWT not configured securely'], 500);
+            }
             $payload = (array) JWT::decode($token, new Key($secret, 'HS256'));
         } catch (\Throwable) {
             return response()->json(['error' => 'Invalid token'], 401);

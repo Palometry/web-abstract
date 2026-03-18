@@ -13,6 +13,11 @@ class AuthController extends Controller
 {
     public function login(LoginRequest $request)
     {
+        $secret = (string) config('jwt.secret', '');
+        if ($secret === '' || $secret === 'change_me' || strlen($secret) < 32) {
+            return response()->json(['error' => 'JWT not configured securely.'], 500);
+        }
+
         $email = $request->input('email');
         $password = $request->input('password');
 
@@ -37,8 +42,7 @@ class AuthController extends Controller
             ->values()
             ->all();
 
-        $secret = env('JWT_SECRET', 'change_me');
-        $expiresIn = env('JWT_EXPIRES_IN', '12h');
+        $expiresIn = (string) config('jwt.expires_in', '12h');
         $now = time();
         $ttl = $this->parseExpiresIn($expiresIn);
         $token = JWT::encode(

@@ -17,7 +17,7 @@ use App\Http\Controllers\Api\ContactController;
 Route::get('/health', fn () => response()->json(['ok' => true]));
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth.jwt');
 });
 
@@ -34,9 +34,9 @@ Route::get('/blog/public/{slug}', [BlogController::class, 'publicDetail']);
 Route::get('/services/public', [ServiceController::class, 'publicList']);
 Route::get('/projects/public', [ProjectsController::class, 'publicList']);
 Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
-Route::post('/chat', [ChatController::class, 'send']);
-Route::post('/quotes/lead', [QuotesController::class, 'storeLead']);
-Route::post('/contact', [ContactController::class, 'send']);
+Route::post('/chat', [ChatController::class, 'send'])->middleware('throttle:public-chat');
+Route::post('/quotes/lead', [QuotesController::class, 'storeLead'])->middleware('throttle:public-quotes');
+Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:public-contact');
 
 Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::get('/pages', [PagesController::class, 'index']);
