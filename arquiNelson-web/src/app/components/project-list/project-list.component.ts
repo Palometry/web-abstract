@@ -154,6 +154,11 @@ export class ProjectListComponent {
 
   private sortProjectsByRecency(projects: CollageProject[]): CollageProject[] {
     return [...projects].sort((left, right) => {
+      const createdAtDiff = this.getProjectCreatedAtValue(right) - this.getProjectCreatedAtValue(left);
+      if (createdAtDiff !== 0) {
+        return createdAtDiff;
+      }
+
       const yearDiff = this.getProjectRecencyValue(right) - this.getProjectRecencyValue(left);
       if (yearDiff !== 0) {
         return yearDiff;
@@ -171,5 +176,15 @@ export class ProjectListComponent {
 
   private getProjectRecencyValue(project: CollageProject): number {
     return Math.max(project.deliveryYear || 0, project.startYear || 0);
+  }
+
+  private getProjectCreatedAtValue(project: CollageProject): number {
+    const rawValue = 'createdAt' in project ? project.createdAt : undefined;
+    if (!rawValue) {
+      return 0;
+    }
+
+    const timestamp = Date.parse(rawValue);
+    return Number.isNaN(timestamp) ? 0 : timestamp;
   }
 }

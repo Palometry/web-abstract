@@ -6,6 +6,7 @@ export interface ProjectData {
   shortDesc: string;
   image: string;
   thumbImage: string;
+  createdAt?: string;
   brochurePdfUrl?: string;
   brochureCoverUrl?: string;
   masterplanImage?: string;

@@ -22,6 +22,6 @@ export class FooterComponent {
     { name: 'Proyectos', href: '/projects' },
     { name: 'Sobre Nosotros', href: '/blog' },
     { name: 'Servicios', href: '/services' },
-    { name: 'Contacto', href: '/#contact' }
+    { name: 'Contacto', href: '/contact' }
   ];
 }

@@ -536,52 +536,6 @@
     </ng-template>
   </div>
 
-  <div class="panel">
-    <h3>Portafolio</h3>
-    <ng-container *ngIf="projectId; else portfolioDisabled">
-      <div class="form-grid">
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="portfolioDraft.enabled" />
-          Mostrar en portafolio
-        </label>
-        <label>
-          Orden
-          <input type="number" [(ngModel)]="portfolioDraft.sortOrder" />
-        </label>
-        <label class="wide">
-          Titulo alternativo
-          <input type="text" [(ngModel)]="portfolioDraft.titleOverride" />
-        </label>
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="portfolioDraft.isVisible" />
-          Visible
-        </label>
-        <button type="button" (click)="savePortfolio()">Guardar portafolio</button>
-      </div>
-    </ng-container>
-    <ng-template #portfolioDisabled>
-      <p class="hint">Guarda el proyecto para habilitar el portafolio.</p>
-      <div class="form-grid">
-        <label class="toggle">
-          <input type="checkbox" disabled />
-          Mostrar en portafolio
-        </label>
-        <label>
-          Orden
-          <input type="number" disabled />
-        </label>
-        <label class="wide">
-          Titulo alternativo
-          <input type="text" disabled />
-        </label>
-        <label class="toggle">
-          <input type="checkbox" disabled />
-          Visible
-        </label>
-        <button type="button" disabled>Guardar portafolio</button>
-      </div>
-    </ng-template>
-  </div>
 </section>
 
 

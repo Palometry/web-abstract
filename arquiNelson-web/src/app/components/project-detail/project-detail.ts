@@ -425,7 +425,8 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     dflipWindow[`option_${bookId}`] = {
       source: pdfUrl,
       webgl: true,
-      hard: 'cover',
+      webglShadow: true,
+      hard: 'none',
       height: this.getDearFlipHeight(),
       enableDownload: true,
       autoEnableOutline: false,
@@ -433,12 +434,15 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       search: false,
       scrollWheel: false,
       openPage: 1,
-      duration: 900,
+      duration: 1220,
+      stiffness: 1.45,
+      pageMode: 2,
+      singlePageMode: 2,
       backgroundColor: '#f3efe6',
-      paddingTop: 24,
-      paddingRight: 24,
-      paddingBottom: 24,
-      paddingLeft: 24,
+      paddingTop: 18,
+      paddingRight: 18,
+      paddingBottom: 18,
+      paddingLeft: 18,
     };
   }
 

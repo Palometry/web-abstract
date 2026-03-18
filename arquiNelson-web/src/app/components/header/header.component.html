@@ -33,6 +33,20 @@
     </nav>
 
     <div class="header-actions">
+      <div class="header-socials" aria-label="Redes sociales">
+        <a
+          *ngFor="let social of socialLinks"
+          [href]="social.url"
+          class="header-social-link"
+          [attr.aria-label]="social.label"
+          [title]="social.label"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img [src]="social.image" [alt]="social.label" />
+        </a>
+      </div>
+
       <button
         type="button"
         class="theme-toggle"

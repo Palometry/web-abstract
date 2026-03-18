@@ -4,6 +4,13 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { ProjectService, ProjectData } from '../../services/project';
 import { filter } from 'rxjs/operators';
 
+type MenuItem = {
+  name: string;
+  link: string;
+  dropdown?: boolean;
+  fragment?: string;
+};
+
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -17,6 +24,12 @@ export class HeaderComponent {
   isOverlayHeader = false;
   isDarkMode = false;
   private readonly isBrowser: boolean;
+  socialLinks = [
+    { image: 'img/facebook.png', url: 'https://www.facebook.com/Abstract.Daza/', label: 'Facebook' },
+    { image: 'img/instagram.png', url: '#', label: 'Instagram' },
+    { image: 'img/linkedin.png', url: 'https://www.linkedin.com/in/ndd-10/', label: 'LinkedIn' },
+    { image: 'img/pngwing.com.png', url: '#', label: 'Tik Tok' }
+  ];
 
   constructor(
     private projectService: ProjectService,
@@ -83,12 +96,10 @@ export class HeaderComponent {
     document.body.classList.toggle('theme-dark', this.isDarkMode);
   }
 
-  menuItems = [
-    
+  menuItems: MenuItem[] = [
     { name: 'PROYECTOS', link: '/projects', dropdown: true },
     { name: 'SERVICIOS', link: '/services' },
     { name: 'SOBRE NOSOTROS', link: '/blog' },
-    
-    { name: 'CONTACTO', link: '/', fragment: 'contact' }
+    { name: 'CONTACTO', link: '/contact' }
   ];
 }

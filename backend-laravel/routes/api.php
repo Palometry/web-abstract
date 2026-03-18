@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\ContactController;
 
 Route::get('/health', fn () => response()->json(['ok' => true]));
 
@@ -35,6 +36,7 @@ Route::get('/projects/public', [ProjectsController::class, 'publicList']);
 Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
 Route::post('/chat', [ChatController::class, 'send']);
 Route::post('/quotes/lead', [QuotesController::class, 'storeLead']);
+Route::post('/contact', [ContactController::class, 'send']);
 
 Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::get('/pages', [PagesController::class, 'index']);

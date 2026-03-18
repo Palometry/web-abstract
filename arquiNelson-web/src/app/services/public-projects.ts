@@ -11,6 +11,7 @@ export type PublicProject = {
   shortDesc: string;
   image: string;
   thumbImage: string;
+  createdAt?: string | null;
   brochurePdfUrl?: string | null;
   brochureCoverUrl?: string | null;
   masterplanImage?: string | null;

@@ -1,0 +1,119 @@
+<section class="contact-page">
+  <div class="contact-shell">
+    <div class="contact-hero">
+      <span class="contact-kicker">Contacto</span>
+      <h1>Conversemos sobre tu proyecto</h1>
+      <p>
+        Si necesitas asesoria, cotizacion o una reunion inicial, aqui tienes una via
+        directa para escribirnos y ubicar nuestra oficina.
+      </p>
+    </div>
+
+    <div class="contact-layout">
+      <div class="contact-map-panel">
+        <div class="contact-map-card">
+          <iframe
+            class="contact-map"
+            title="Ubicacion de ArquiNelson"
+            [src]="mapEmbedUrl"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+      </div>
+
+      <div class="contact-details-panel">
+        <div class="contact-details-card">
+          <h2>Canales directos</h2>
+          <ul class="contact-points">
+            <li>
+              <span class="label">Correo</span>
+              <a [href]="'mailto:' + email">{{ email }}</a>
+            </li>
+            <li>
+              <span class="label">Celular</span>
+              <a [href]="phoneLink">{{ phoneLabel }}</a>
+            </li>
+            <li>
+              <span class="label">WhatsApp</span>
+              <a [href]="whatsappLink" target="_blank" rel="noopener noreferrer">Escribir por WhatsApp</a>
+            </li>
+            <li>
+              <span class="label">Horario</span>
+              <span>{{ schedule }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="contact-form-card">
+          <div class="contact-form-copy">
+            <h2>Escribenos</h2>
+            <p>Completa el formulario y enviaremos tu mensaje directamente a nuestro correo.</p>
+          </div>
+
+          <div *ngIf="submitSuccess" class="contact-status-card success" role="status" aria-live="polite">
+            <strong>Mensaje enviado</strong>
+            <p>{{ submitSuccess }}</p>
+          </div>
+
+          <form #contactForm="ngForm" class="contact-form" (ngSubmit)="submitContact(contactForm)" novalidate>
+            <label>
+              <span>Nombre y apellido</span>
+              <input
+                type="text"
+                name="fullName"
+                [(ngModel)]="formModel.fullName"
+                #fullName="ngModel"
+                required
+              />
+              <small *ngIf="fullName.invalid && fullName.touched">Ingresa tu nombre.</small>
+            </label>
+
+            <label>
+              <span>Correo</span>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="formModel.email"
+                #emailField="ngModel"
+                required
+                email
+              />
+              <small *ngIf="emailField.invalid && emailField.touched">Ingresa un correo valido.</small>
+            </label>
+
+            <label>
+              <span>N° de celular</span>
+              <input
+                type="tel"
+                name="phone"
+                [(ngModel)]="formModel.phone"
+                #phoneField="ngModel"
+                required
+              />
+              <small *ngIf="phoneField.invalid && phoneField.touched">Ingresa un numero de contacto.</small>
+            </label>
+
+            <label>
+              <span>Mensaje</span>
+              <textarea
+                name="message"
+                [(ngModel)]="formModel.message"
+                #messageField="ngModel"
+                rows="6"
+                required
+              ></textarea>
+              <small *ngIf="messageField.invalid && messageField.touched">Describe tu consulta.</small>
+            </label>
+
+            <p *ngIf="submitError" class="contact-feedback error">{{ submitError }}</p>
+
+            <button type="submit" [disabled]="isSubmitting">
+              {{ isSubmitting ? 'Enviando...' : 'Enviar' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

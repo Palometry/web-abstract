@@ -394,7 +394,7 @@ app-project-detail {
 			align-items: center;
 			gap: 8px;
 			padding: 10px 16px;
-			border-radius: 999px;
+			border-radius: 0;
 			border: 1px solid var(--color-border);
 			background: var(--color-surface);
 			color: var(--color-text);
@@ -422,14 +422,13 @@ app-project-detail {
 			position: relative;
 			min-height: min(78vh, 920px);
 			padding: clamp(20px, 2.5vw, 30px);
-			border-radius: 28px;
+			border-radius: 0;
 			overflow: hidden;
 			background:
-				radial-gradient(circle at top, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.32) 32%, transparent 56%),
-				linear-gradient(180deg, rgba(248, 248, 246, 0.96), rgba(233, 233, 229, 0.98));
+				linear-gradient(180deg, rgba(242, 236, 225, 0.98), rgba(229, 222, 210, 0.98));
 			box-shadow:
-				inset 0 0 0 1px rgba(255, 255, 255, 0.7),
-				0 28px 60px rgba(0, 0, 0, 0.12);
+				inset 0 0 0 1px rgba(255, 255, 255, 0.36),
+				0 24px 46px rgba(0, 0, 0, 0.16);
 			display: flex;
 			align-items: stretch;
 			justify-content: center;
@@ -464,7 +463,7 @@ app-project-detail {
 
 		.brochure-dearflip-stage .df-ui-wrapper,
 		.brochure-dearflip-stage .df-ui-page {
-			border-radius: 18px;
+			border-radius: 0;
 		}
 
 		.brochure-dearflip-stage .df-ui-btn,
@@ -472,8 +471,26 @@ app-project-detail {
 			box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
 		}
 
+		.brochure-dearflip-stage .df-book-wrapper .df-book-side-buttons,
+		.brochure-dearflip-stage .df-book-prev-button.df-book-side-buttons,
+		.brochure-dearflip-stage .df-container.df-floating > .df-ui-next,
+		.brochure-dearflip-stage .df-container.df-floating > .df-ui-prev,
+		.brochure-dearflip-stage .df-floating .df-ui-controls,
+		.brochure-dearflip-stage .df-share-box,
+		.brochure-dearflip-stage .df-thumb-container .df-vrow {
+			border-radius: 0;
+		}
+
+		.brochure-dearflip-stage .df-ui-btn,
+		.brochure-dearflip-stage .df-ui-wrapper,
+		.brochure-dearflip-stage .df-ui-page,
+		.brochure-dearflip-stage .df-book-page .df-page-front,
+		.brochure-dearflip-stage .df-book-page .df-page-back {
+			border-radius: 0 !important;
+		}
+
 		.brochure-dearflip-stage .df-book-wrapper {
-			filter: drop-shadow(0 22px 36px rgba(0, 0, 0, 0.12));
+			filter: drop-shadow(0 20px 34px rgba(0, 0, 0, 0.18));
 		}
 
 		.brochure-inline-retry {
@@ -482,7 +499,7 @@ app-project-detail {
 			justify-content: center;
 			min-height: 42px;
 			padding: 0 16px;
-			border-radius: 999px;
+			border-radius: 0;
 			border: 1px solid var(--color-border);
 			background: var(--color-surface);
 			color: var(--color-text);

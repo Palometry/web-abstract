@@ -114,13 +114,6 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
   activeHouseModelIndex = 0;
   activeHouseImageIndex = 0;
 
-  portfolioDraft = {
-    enabled: false,
-    titleOverride: '',
-    sortOrder: 0,
-    isVisible: true
-  };
-
   private catalog: ProjectCatalog = DEFAULT_PROJECT_CATALOG;
 
   constructor(
@@ -306,12 +299,6 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
           sortOrder: video.sortOrder
         }
       }));
-      this.portfolioDraft = {
-        enabled: !!project.portfolioEntry,
-        titleOverride: project.portfolioEntry?.titleOverride ?? '',
-        sortOrder: project.portfolioEntry?.sortOrder ?? 0,
-        isVisible: project.portfolioEntry?.isVisible ?? true
-      };
     } catch {
       this.error = 'No se pudo cargar el proyecto.';
     } finally {
@@ -512,35 +499,6 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
       return;
     }
     await this.loadProject();
-  }
-
-  async savePortfolio() {
-    if (!this.project) {
-      return;
-    }
-    this.error = '';
-    if (!this.portfolioDraft.enabled) {
-      const ok = await this.data.removeProjectPortfolio(this.project.id);
-      if (!ok) {
-        this.error = 'No se pudo quitar del portafolio.';
-        return;
-      }
-      await this.loadProject();
-      this.showToast('Portafolio actualizado.');
-      return;
-    }
-
-    const result = await this.data.updateProjectPortfolio(this.project.id, {
-      titleOverride: this.portfolioDraft.titleOverride || null,
-      sortOrder: this.portfolioDraft.sortOrder,
-      isVisible: this.portfolioDraft.isVisible
-    });
-    if (!result.ok) {
-      this.error = result.error ?? 'No se pudo actualizar el portafolio.';
-      return;
-    }
-    await this.loadProject();
-    this.showToast('Portafolio actualizado.');
   }
 
   async uploadDetailImage(event: Event, field: keyof typeof this.detailsDraft) {

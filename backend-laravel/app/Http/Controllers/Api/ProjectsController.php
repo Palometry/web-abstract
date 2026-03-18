@@ -55,7 +55,7 @@ class ProjectsController extends Controller
     public function publicList()
     {
         $rows = DB::select(
-            "SELECT p.id, p.name, p.description, p.status, p.details_json,
+            "SELECT p.id, p.name, p.description, p.status, p.details_json, p.created_at,
                     (SELECT m.file_url
                      FROM project_images pi
                      INNER JOIN media_assets m ON m.id = pi.media_id
@@ -64,7 +64,7 @@ class ProjectsController extends Controller
                      LIMIT 1) AS cover_url
              FROM projects p
              WHERE p.status = 'active'
-             ORDER BY p.id DESC"
+             ORDER BY p.created_at DESC, p.id DESC"
         );
 
         $projects = array_map(function ($row) {
@@ -86,7 +86,8 @@ class ProjectsController extends Controller
                 'title' => $row->name,
                 'shortDesc' => $details['shortDesc'] ?? '',
                 'image' => $fallbackImage ?? '',
-                'thumbImage' => $fallbackImage ?? ''
+                'thumbImage' => $fallbackImage ?? '',
+                'createdAt' => $row->created_at,
             ];
         }, $rows);
 
@@ -101,7 +102,7 @@ class ProjectsController extends Controller
         }
 
         $rows = DB::select(
-            "SELECT p.id, p.name, p.description, p.status, p.details_json,
+            "SELECT p.id, p.name, p.description, p.status, p.details_json, p.created_at,
                     (SELECT m.file_url
                      FROM project_images pi
                      INNER JOIN media_assets m ON m.id = pi.media_id
@@ -158,6 +159,7 @@ class ProjectsController extends Controller
             'shortDesc' => $details['shortDesc'] ?? '',
             'image' => $fallbackImage ?? '',
             'thumbImage' => $fallbackImage ?? '',
+            'createdAt' => $project->created_at,
             'masterplanImage' => $masterplanImage,
             'houseModels' => $details['houseModels'] ?? [],
             'housePlans' => $details['housePlans'] ?? [],
