@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.jwt' => \App\Http\Middleware\JwtAuth::class,
             'role' => \App\Http\Middleware\RequireRole::class,
+            'trusted.frontend' => \App\Http\Middleware\EnsureTrustedFrontendRequest::class,
         ]);
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
     })

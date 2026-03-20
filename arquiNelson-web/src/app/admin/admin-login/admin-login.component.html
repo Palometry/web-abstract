@@ -20,16 +20,35 @@
       />
 
       <label for="password">Contrasena</label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        autocomplete="current-password"
-        required
-        [(ngModel)]="password"
-      />
+      <div class="password-field">
+        <input
+          id="password"
+          name="password"
+          [type]="showPassword ? 'text' : 'password'"
+          autocomplete="current-password"
+          required
+          [(ngModel)]="password"
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'"
+        >
+          {{ showPassword ? 'Ocultar' : 'Ver' }}
+        </button>
+      </div>
 
-      <button type="submit" [disabled]="loading">
+      <label class="remember-session">
+        <input
+          type="checkbox"
+          name="rememberSession"
+          [(ngModel)]="rememberSession"
+        />
+        <span>Mantener sesion</span>
+      </label>
+
+      <button type="submit" class="submit-button" [disabled]="loading">
         {{ loading ? 'Ingresando...' : 'Entrar' }}
       </button>
 

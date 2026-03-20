@@ -28,7 +28,6 @@ export class HeroComponent implements AfterViewInit, OnDestroy {
   @ViewChild('heroVideo') private heroVideo?: ElementRef<HTMLVideoElement>;
 
   videos: HeroVideo[] = [
-    { src: '/videos/iberico.mp4', label: 'Video de portada Iberico' },
     { src: '/videos/erni.mp4', label: 'Video de portada Erni' },
     { src: '/videos/gym.mp4', label: 'Video de portada Gym' },
     { src: '/videos/hd.mp4', label: 'Video de portada HD' },

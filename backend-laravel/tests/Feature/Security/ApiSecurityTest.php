@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Security;
 
+use App\Http\Middleware\JwtAuth;
 use Firebase\JWT\JWT;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class ApiSecurityTest extends TestCase
@@ -39,6 +41,25 @@ class ApiSecurityTest extends TestCase
             ->getJson('/api/users');
 
         $editorResponse->assertStatus(403);
+    }
+
+    public function test_jwt_middleware_accepts_http_only_cookie_tokens(): void
+    {
+        $request = Request::create('/api/users', 'GET', [], [
+            (string) config('jwt.cookie_name') => $this->makeToken(25, ['editor']),
+        ]);
+        $middleware = new JwtAuth();
+        $nextCalled = false;
+
+        $response = $middleware->handle($request, function (Request $handledRequest) use (&$nextCalled) {
+            $nextCalled = true;
+            $this->assertSame(25, $handledRequest->attributes->get('jwt_user')['id'] ?? null);
+
+            return response()->json(['ok' => true]);
+        });
+
+        $this->assertTrue($nextCalled);
+        $this->assertSame(200, $response->getStatusCode());
     }
 
     public function test_contact_endpoint_rejects_invalid_payload(): void
@@ -83,6 +104,8 @@ class ApiSecurityTest extends TestCase
         $response = $this->postJson('/api/auth/login', [
             'email' => 'admin@example.com',
             'password' => 'whatever',
+        ], [
+            (string) config('jwt.frontend_header') => (string) config('jwt.frontend_header_value'),
         ]);
 
         $response
@@ -96,15 +119,33 @@ class ApiSecurityTest extends TestCase
             ->withToken($this->makeToken(30, ['admin']))
             ->post('/api/media/file', [
                 'file' => UploadedFile::fake()->create('shell.php', 1, 'application/x-php'),
-            ], ['Accept' => 'application/json']);
+            ], [
+                'Accept' => 'application/json',
+                (string) config('jwt.frontend_header') => (string) config('jwt.frontend_header_value'),
+            ]);
 
         $response->assertStatus(422);
+    }
+
+    public function test_cookie_authenticated_writes_require_the_trusted_frontend_header(): void
+    {
+        $response = $this
+            ->withUnencryptedCookie((string) config('jwt.cookie_name'), $this->makeToken(35, ['admin']))
+            ->postJson('/api/media', [
+                'filename' => 'payload.html',
+                'data' => 'data:text/html;base64,' . base64_encode('<script>alert(1)</script>'),
+            ]);
+
+        $response
+            ->assertStatus(403)
+            ->assertJson(['error' => 'Invalid admin request.']);
     }
 
     public function test_media_base64_upload_rejects_html_payloads(): void
     {
         $response = $this
             ->withToken($this->makeToken(40, ['admin']))
+            ->withHeader((string) config('jwt.frontend_header'), (string) config('jwt.frontend_header_value'))
             ->postJson('/api/media', [
                 'filename' => 'payload.html',
                 'data' => 'data:text/html;base64,' . base64_encode('<script>alert(1)</script>'),

@@ -66,7 +66,7 @@
               Recargar flipbook
             </button>
             @if (brochurePdfUrl) {
-              <a class="brochure-open" [href]="brochurePdfUrl" target="_blank" rel="noopener">
+              <a class="brochure-open" [href]="brochurePdfUrl" target="_blank" rel="noopener noreferrer">
                 Abrir PDF
               </a>
             }
@@ -148,7 +148,7 @@
           <p class="map-hint">Abre el punto exacto en Google Maps.</p>
         }
         @if (project.mapUrl) {
-          <a class="map-link" [href]="project.mapUrl" target="_blank" rel="noopener">
+          <a class="map-link" [href]="project.mapUrl" target="_blank" rel="noopener noreferrer">
             Ver ubicacion en Google Maps
           </a>
         }
@@ -351,7 +351,7 @@
               } @else if (isDirectVideoUrl(video.fileUrl)) {
                 <video [src]="video.fileUrl" controls></video>
               } @else {
-                <a class="video-link" [href]="video.fileUrl" target="_blank" rel="noopener">
+                <a class="video-link" [href]="video.fileUrl" target="_blank" rel="noopener noreferrer">
                   Ver video
                 </a>
               }
@@ -368,8 +368,35 @@
     <aside class="project-contact">
       <h4>Contacto</h4>
       <p>Para mas informacion sobre este proyecto: info@funbellata.example</p>
-      <a [routerLink]="['/projects']" class="btn-back">Volver al listado</a>
     </aside>
+
+    @if (project.autocad360Url && autocadEmbedSafeUrl) {
+      <section class="project-viewer">
+        <div class="viewer-header">
+          <div>
+            <h3>Demostracion del Proyecto</h3>
+            <p>Explora el modelo o plano interactivo del proyecto en Autodesk Viewer.</p>
+          </div>
+          <a
+            class="viewer-open"
+            [href]="project.autocad360Url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir A360
+          </a>
+        </div>
+        <div class="viewer-frame">
+          <iframe
+            [src]="autocadEmbedSafeUrl"
+            title="Visor Autodesk A360"
+            loading="lazy"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+      </section>
+    }
   </div>
 } @else {
   <div class="container">

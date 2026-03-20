@@ -3,7 +3,6 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeroComponent } from '../hero/hero.component';
 import { AboutComponent } from '../about/about.component';
-import { PublicContentService, PublicPageSection } from '../../services/public-content';
 import { ProjectData, ProjectService } from '../../services/project';
 import { PublicProject, PublicProjectsService } from '../../services/public-projects';
 
@@ -33,16 +32,13 @@ type CollageRow = {
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  private readonly fallbackSlug = 'inmo';
   private readonly isBrowser: boolean;
   private readonly maxHomeProjects = 6;
 
-  extraSections: PublicPageSection[] = [];
   collageItems: CollageTile[] = [];
   collageRows: CollageRow[] = [];
 
   constructor(
-    private contentService: PublicContentService,
     private publicProjectsService: PublicProjectsService,
     private legacyProjectService: ProjectService,
     private cdr: ChangeDetectorRef,
@@ -58,15 +54,6 @@ export class HomeComponent implements OnInit {
 
     this.collageItems = await this.buildCollageItems();
     this.collageRows = this.buildCollageRows(this.collageItems);
-
-    const page =
-      (await this.contentService.getHomePage()) ??
-      (await this.contentService.getPageBySlug(this.fallbackSlug));
-    if (!page) {
-      return;
-    }
-
-    this.extraSections = page.sections.filter((section) => !this.isNewsSection(section));
     this.cdr.detectChanges();
   }
 
@@ -198,11 +185,5 @@ export class HomeComponent implements OnInit {
 
     const timestamp = Date.parse(rawValue);
     return Number.isNaN(timestamp) ? 0 : timestamp;
-  }
-
-  private isNewsSection(section: PublicPageSection): boolean {
-    const sectionKey = section.sectionKey?.trim().toLowerCase() ?? '';
-    const title = section.title?.trim().toLowerCase() ?? '';
-    return sectionKey === 'news' || sectionKey === 'noticias' || title === 'news' || title === 'noticias';
   }
 }

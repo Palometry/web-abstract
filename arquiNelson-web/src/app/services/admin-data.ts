@@ -336,7 +336,6 @@ export class AdminDataService {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = API_BASE_URL;
-  private readonly tokenKey = 'arqui_admin_token';
 
   async getPages(): Promise<AdminPage[]> {
     if (!this.isBrowser) {
@@ -1455,12 +1454,6 @@ export class AdminDataService {
   }
 
   private authHeaders(): HttpHeaders {
-    if (!this.isBrowser) {
-      return new HttpHeaders();
-    }
-    const token = localStorage.getItem(this.tokenKey);
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : ''
-    });
+    return new HttpHeaders();
   }
 }

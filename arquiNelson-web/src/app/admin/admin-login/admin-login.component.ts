@@ -15,6 +15,8 @@ import { AdminDataService, AdminPublicDashboardStats } from '../../services/admi
 export class AdminLoginComponent implements OnInit {
   email = '';
   password = '';
+  rememberSession = false;
+  showPassword = false;
   error = '';
   loading = false;
   statsLoading = false;
@@ -27,7 +29,7 @@ export class AdminLoginComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/admin']);
       return;
@@ -38,13 +40,22 @@ export class AdminLoginComponent implements OnInit {
   async submit() {
     this.error = '';
     this.loading = true;
-    const success = await this.auth.login(this.email, this.password);
+    const result = await this.auth.login(this.email, this.password, this.rememberSession);
     this.loading = false;
-    if (!success) {
-      this.error = 'Credenciales invalidas.';
+    if (!result.ok) {
+      this.error =
+        result.reason === 'invalid_credentials'
+          ? 'Credenciales invalidas.'
+          : result.reason === 'server_error'
+            ? 'El servidor no pudo iniciar sesion. Revisa la configuracion del backend.'
+            : 'No se pudo conectar con el servidor.';
       return;
     }
     this.router.navigate(['/admin']);
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 
   private async loadStats() {

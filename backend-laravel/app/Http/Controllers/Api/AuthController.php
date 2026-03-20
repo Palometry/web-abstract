@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Firebase\JWT\JWT;
@@ -58,7 +59,6 @@ class AuthController extends Controller
         );
 
         return response()->json([
-            'token' => $token,
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
@@ -66,7 +66,14 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'roles' => $roles,
             ],
-        ]);
+            'token' => $token,
+            'expiresAt' => gmdate(DATE_ATOM, $now + $ttl),
+        ])->withCookie($this->makeAuthCookie($token, $ttl));
+    }
+
+    public function logout()
+    {
+        return response()->json(['ok' => true])->withCookie($this->forgetAuthCookie());
     }
 
     public function me(Request $request)
@@ -124,5 +131,31 @@ class AuthController extends Controller
         }
 
         return 43200;
+    }
+
+    private function makeAuthCookie(string $token, int $ttlSeconds)
+    {
+        $minutes = max(1, (int) ceil($ttlSeconds / 60));
+
+        return Cookie::make(
+            (string) config('jwt.cookie_name', 'arqui_admin_session'),
+            $token,
+            $minutes,
+            (string) config('jwt.cookie_path', '/'),
+            config('jwt.cookie_domain'),
+            (bool) config('jwt.cookie_secure', false),
+            true,
+            false,
+            (string) config('jwt.cookie_same_site', 'lax')
+        );
+    }
+
+    private function forgetAuthCookie()
+    {
+        return Cookie::forget(
+            (string) config('jwt.cookie_name', 'arqui_admin_session'),
+            (string) config('jwt.cookie_path', '/'),
+            config('jwt.cookie_domain')
+        );
     }
 }

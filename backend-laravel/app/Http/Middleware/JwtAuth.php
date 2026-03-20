@@ -12,12 +12,11 @@ class JwtAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $header = $request->header('Authorization', '');
-        if (!str_starts_with($header, 'Bearer ')) {
+        $token = $this->resolveToken($request);
+        if (!$token) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $token = substr($header, 7);
         try {
             $secret = (string) config('jwt.secret', '');
             if ($secret === '' || $secret === 'change_me' || strlen($secret) < 32) {
@@ -30,5 +29,23 @@ class JwtAuth
 
         $request->attributes->set('jwt_user', $payload);
         return $next($request);
+    }
+
+    private function resolveToken(Request $request): ?string
+    {
+        $header = $request->header('Authorization', '');
+        if (str_starts_with($header, 'Bearer ')) {
+            return substr($header, 7);
+        }
+
+        $cookieName = (string) config('jwt.cookie_name', 'arqui_admin_session');
+        $cookieToken = $request->cookie($cookieName);
+        if (is_string($cookieToken)) {
+            $cookieToken = trim(urldecode($cookieToken), "\"' \t\n\r\0\x0B");
+        }
+
+        return is_string($cookieToken) && trim($cookieToken) !== ''
+            ? $cookieToken
+            : null;
     }
 }

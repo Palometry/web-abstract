@@ -86,6 +86,61 @@
   }
 }
 
+.project-viewer {
+  margin: 40px 0 48px;
+
+  .viewer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.4rem;
+    color: var(--color-text);
+    margin: 0 0 8px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.7;
+  }
+
+  .viewer-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--color-red);
+    color: var(--color-white);
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: var(--color-red-dark);
+    }
+  }
+
+  .viewer-frame {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+    overflow: hidden;
+
+    iframe {
+      width: 100%;
+      min-height: 560px;
+      border: 0;
+      display: block;
+      background: transparent;
+    }
+  }
+}
+
 .project-map {
   margin: 40px 0 48px;
 
@@ -662,6 +717,10 @@
 
   .project-masterplan .lots-grid {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .project-viewer .viewer-frame iframe {
+    min-height: 380px;
   }
 
   .project-plans {

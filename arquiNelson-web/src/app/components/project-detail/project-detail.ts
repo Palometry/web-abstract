@@ -7,7 +7,7 @@ import {
   PLATFORM_ID,
   inject,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { PublicProjectsService, PublicProject } from '../../services/public-projects';
 import { ProjectService, ProjectData } from '../../services/project';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -34,7 +34,7 @@ type DearFlipWindow = Window & Record<string, unknown>;
 
 @Component({
   selector: 'app-project-detail',
-  imports: [RouterLink, CommonModule],
+  imports: [CommonModule],
   templateUrl: './project-detail.html',
   styleUrl: './project-detail.scss',
   host: {
@@ -60,6 +60,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   activeHouseModelIndex = 0;
   activeHouseImageIndex = 0;
   mapEmbedSafeUrl: SafeResourceUrl | null = null;
+  autocadEmbedSafeUrl: SafeResourceUrl | null = null;
   fichaExpanded = false;
   flipbookLoading = false;
   flipbookError = '';
@@ -117,6 +118,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       this.setupBanner();
       this.setupHousePlans();
       this.setupHouseModels();
+      this.setupAutocad();
       this.setupMap();
       this.cdr.detectChanges();
       this.deferFlipbookInit();
@@ -673,6 +675,18 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     }
 
     this.mapEmbedSafeUrl = null;
+  }
+
+  private setupAutocad() {
+    if (!this.project?.autocad360Url) {
+      this.autocadEmbedSafeUrl = null;
+      return;
+    }
+
+    const embedUrl = this.extractIframeSrc(this.project.autocad360Url);
+    this.autocadEmbedSafeUrl = embedUrl
+      ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl)
+      : null;
   }
 
   getVideoEmbedUrl(url?: string | null): SafeResourceUrl | null {

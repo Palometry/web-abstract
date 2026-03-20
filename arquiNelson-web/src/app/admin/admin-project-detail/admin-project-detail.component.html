@@ -438,7 +438,7 @@
               <video *ngIf="isDirectVideoUrl(rawUrl); else videoLink" [src]="rawUrl" controls></video>
             </ng-template>
             <ng-template #videoLink>
-              <a class="video-link" [href]="rawUrl" target="_blank" rel="noopener">Abrir video</a>
+              <a class="video-link" [href]="rawUrl" target="_blank" rel="noopener noreferrer">Abrir video</a>
             </ng-template>
           </ng-container>
           <div class="form-grid compact">

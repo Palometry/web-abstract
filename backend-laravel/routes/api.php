@@ -17,7 +17,8 @@ use App\Http\Controllers\Api\ContactController;
 Route::get('/health', fn () => response()->json(['ok' => true]));
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth-login');
+    Route::post('/login', [AuthController::class, 'login'])->middleware(['trusted.frontend', 'throttle:auth-login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('trusted.frontend');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth.jwt');
 });
 
@@ -38,7 +39,7 @@ Route::post('/chat', [ChatController::class, 'send'])->middleware('throttle:publ
 Route::post('/quotes/lead', [QuotesController::class, 'storeLead'])->middleware('throttle:public-quotes');
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:public-contact');
 
-Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
+Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor'])->group(function () {
     Route::get('/pages', [PagesController::class, 'index']);
     Route::post('/pages', [PagesController::class, 'store']);
     Route::get('/pages/{id}', [PagesController::class, 'show']);
@@ -107,7 +108,7 @@ Route::middleware(['auth.jwt', 'role:admin,editor'])->group(function () {
     Route::post('/media/file', [MediaController::class, 'storeFile']);
 });
 
-Route::middleware(['auth.jwt', 'role:admin,editor_user_manager'])->group(function () {
+Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor_user_manager'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::patch('/users/{id}/status', [UserController::class, 'setStatus']);
