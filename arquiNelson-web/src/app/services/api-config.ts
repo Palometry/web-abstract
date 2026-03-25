@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL =
-  'https://composite-classification-participated-cruises.trycloudflare.com/api';
+  'https://madrid-quickly-bob-consumers.trycloudflare.com/api';
 
 function readApiBaseUrl(): string {
   if (typeof document !== 'undefined') {

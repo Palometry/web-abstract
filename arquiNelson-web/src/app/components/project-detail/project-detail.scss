@@ -1,9 +1,16 @@
 .project-page {
-  width: 100%;
+  width: min(100%, 920px);
+  min-width: 0;
   max-width: 920px;
   margin: 0 auto;
   padding: 32px clamp(28px, 7vw, 96px) 64px;
+  box-sizing: border-box;
   color: var(--color-text);
+  overflow-x: clip;
+}
+
+.project-page--empty {
+  min-height: 40vh;
 }
 
 .project-ficha {
@@ -175,11 +182,13 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
+    max-width: 100%;
     border-radius: 8px;
     background: var(--color-red);
     color: var(--color-white);
     text-decoration: none;
     font-weight: 600;
+    text-align: center;
     transition: background 0.2s ease;
 
     &:hover {
@@ -380,6 +389,7 @@
 
     select {
       min-width: 220px;
+      max-width: 100%;
       padding: 10px 12px;
       border: 1px solid var(--color-border);
       border-radius: 8px;
@@ -531,9 +541,12 @@
 
   .masterplan {
     margin-bottom: 20px;
+    overflow: hidden;
 
     img {
       width: 100%;
+      max-width: 100%;
+      height: auto;
       border-radius: 8px;
       display: block;
       object-fit: cover;
@@ -749,5 +762,117 @@
     align-items: flex-start;
   }
 
+}
+
+@media (max-width: 640px) {
+  .project-page {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    padding: 20px 12px 44px;
+  }
+
+  .project-ficha .ficha-header,
+  .project-plans .plans-header,
+  .project-brochure .brochure-header,
+  .project-viewer .viewer-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ficha-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ficha-table,
+  .ficha-table tbody,
+  .ficha-table tr,
+  .ficha-table th,
+  .ficha-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .ficha-table tr {
+    padding: 12px 0;
+  }
+
+  .ficha-table th {
+    padding: 0 0 6px;
+    font-size: 0.78rem;
+  }
+
+  .ficha-table td {
+    padding: 0;
+    font-size: 1rem;
+  }
+
+  .project-viewer .viewer-frame iframe {
+    min-height: 260px;
+  }
+
+  .project-map .map-frame iframe {
+    height: 260px;
+  }
+
+  .project-map .map-link,
+  .project-viewer .viewer-open,
+  .project-brochure .brochure-launch,
+  .project-brochure .brochure-open {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gallery-grid {
+    gap: 8px;
+  }
+
+  .gallery-grid img {
+    height: 180px;
+  }
+
+  .model-gallery img {
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .project-page {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    padding: 18px 10px 40px;
+  }
+
+  .project-ficha h3,
+  .project-description h3,
+  .project-map h3,
+  .project-models h3,
+  .project-plans h3,
+  .project-areas h3,
+  .project-masterplan h3,
+  .project-gallery h3,
+  .project-videos h3,
+  .project-viewer h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .ficha-table th,
+  .ficha-table td,
+  .plan-name,
+  .plan-info,
+  .video-meta h4,
+  .video-meta p {
+    overflow-wrap: anywhere;
+  }
+
+  .project-masterplan .lots-grid,
+  .project-areas .areas-grid,
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-contact {
+    padding: 18px;
+  }
 }
 

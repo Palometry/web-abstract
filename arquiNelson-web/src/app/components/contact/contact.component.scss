@@ -22,7 +22,7 @@
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-red);
+    color: rgb(128, 128, 128);
   }
 
   h1 {
@@ -30,6 +30,7 @@
     font-size: clamp(2.4rem, 5vw, 4.3rem);
     line-height: 0.95;
     letter-spacing: -0.04em;
+    color: var(--color-red);
   }
 
   p {

@@ -25,6 +25,42 @@
   }
 }
 
+.projects-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 340px));
+  justify-content: center;
+  gap: 20px;
+  margin: 0 auto 32px;
+  padding: 0 clamp(16px, 4vw, 60px);
+}
+
+.filter-field {
+  display: grid;
+  gap: 10px;
+
+  span {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+  }
+
+  select {
+    width: 100%;
+    border: 1px solid color-mix(in srgb, var(--color-text) 14%, transparent);
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 14px 16px;
+    font-size: 1rem;
+    outline: none;
+    box-shadow: none;
+
+    &:focus {
+      border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-text) 20%);
+    }
+  }
+}
+
 .collage-rows {
   --gap: clamp(4px, 0.7vw, 8px);
   display: grid;
@@ -70,7 +106,7 @@
   overflow: hidden;
   background: #ececec;
   box-shadow: 0 12px 24px var(--color-shadow);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease;
   width: 100%;
   height: 100%;
   min-height: 100%;
@@ -81,6 +117,7 @@
     height: 100%;
     display: block;
     position: relative;
+    overflow: hidden;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
@@ -122,11 +159,10 @@
   }
 
   &:hover {
-    transform: translateY(-4px) scale(1.01);
     box-shadow: 0 16px 30px var(--color-shadow);
 
     img {
-      transform: scale(1.04);
+      transform: scale(1.06);
     }
 
     .tile-caption {
@@ -154,6 +190,12 @@
 @media (max-width: 960px) {
   .projects-page {
     padding-top: 64px;
+  }
+
+  .projects-filters {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    max-width: 560px;
   }
 
   .collage-row {
@@ -184,12 +226,34 @@
 }
 
 @media (max-width: 640px) {
+  .projects-page {
+    padding-top: 52px;
+  }
+
+  .projects-hero {
+    margin-bottom: 24px;
+    padding-inline: 12px;
+  }
+
+  .projects-filters {
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-inline: 12px;
+  }
+
+  .collage-rows,
+  .collage-row,
+  .collage-stack {
+    --gap: 6px;
+    gap: 6px;
+  }
+
   .collage-stack {
     grid-template-columns: 1fr;
   }
 
   .collage-feature,
   .collage-compact {
-    min-height: clamp(220px, 62vw, 320px);
+    min-height: clamp(170px, 54vw, 230px);
   }
 }

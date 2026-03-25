@@ -76,7 +76,7 @@
         <select [(ngModel)]="detailsDraft.publicScope" (ngModelChange)="onPublicScopeChange()">
           <option value="">Selecciona...</option>
           <option *ngFor="let option of publicScopeOptions" [value]="option">
-            {{ option }}
+            {{ formatClassificationLabel(option) }}
           </option>
         </select>
       </label>
@@ -93,7 +93,7 @@
         >
           <option value="">Selecciona...</option>
           <option *ngFor="let option of publicTypeOptions" [value]="option">
-            {{ option }}
+            {{ formatTypeLabel(option) }}
           </option>
         </select>
       </label>
@@ -106,7 +106,7 @@
         >
           <option value="">Selecciona...</option>
           <option *ngFor="let option of publicClassificationOptions" [value]="option">
-            {{ option }}
+            {{ formatClassificationLabel(option) }}
           </option>
         </select>
       </label>
@@ -118,7 +118,7 @@
         >
           <option value="">Selecciona...</option>
           <option *ngFor="let option of publicCategoryOptions" [value]="option">
-            {{ option }}
+            {{ formatCategoryOptionLabel(option) }}
           </option>
         </select>
       </label>

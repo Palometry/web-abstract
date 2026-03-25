@@ -13,6 +13,10 @@ import { ProjectService, ProjectData } from '../../services/project';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import {
+  formatProjectLabel,
+  formatProjectTypeLabel
+} from '../../admin/project-classifications';
 
 type HousePlan = {
   name: string;
@@ -270,6 +274,20 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     this.fichaExpanded = !this.fichaExpanded;
   }
 
+  formatFichaLabel(value?: string | null): string {
+    if (!value) {
+      return '';
+    }
+    return formatProjectLabel(value);
+  }
+
+  formatFichaType(value?: string | null): string {
+    if (!value) {
+      return '';
+    }
+    return formatProjectTypeLabel(value);
+  }
+
   ngOnDestroy() {
     this.sub?.unsubscribe();
     this.destroyFlipbook();
@@ -290,8 +308,17 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     }
 
     if (this.project) {
+      const bannerImageSource =
+        'bannerImages' in this.project && Array.isArray(this.project.bannerImages)
+          ? this.project.bannerImages
+          : [];
+      const bannerImages = bannerImageSource.length ? bannerImageSource : [];
       const gallery = this.project.gallery?.length ? this.project.gallery : [];
-      this.bannerImages = gallery.length ? gallery : [this.project.image];
+      this.bannerImages = bannerImages.length
+        ? bannerImages
+        : gallery.length
+          ? gallery
+          : [this.project.image];
     } else {
       this.bannerImages = [];
     }

@@ -1,4 +1,5 @@
 <app-hero></app-hero>
+<app-about [previewMode]="true" ctaLabel="Conocer mas" [ctaLink]="['/blog']"></app-about>
 <section class="portfolio-collage" aria-label="Collage de portafolio">
   <div class="collage-shell">
     <div class="collage-heading">
@@ -54,4 +55,13 @@
   </div>
 </section>
 
-<app-about [previewMode]="true" ctaLabel="Conocer mas" [ctaLink]="['/blog']"></app-about>
+<section class="home-contact-cta" aria-label="Llamado final a contacto">
+  <div class="home-contact-cta__backdrop">
+    <div class="home-contact-cta__content">
+      <span class="home-contact-cta__eyebrow">Contacto</span>
+      <h2>Contactanos para tu proyecto</h2>
+      <p>Hablemos sobre tu proximo proyecto y encontremos la mejor forma de desarrollarlo juntos.</p>
+      <a class="home-contact-cta__button" [routerLink]="['/contact']">Contactanos</a>
+    </div>
+  </div>
+</section>

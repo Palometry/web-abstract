@@ -3,6 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PublicProjectsService, PublicProject } from '../../services/public-projects';
 import { ProjectData, ProjectService } from '../../services/project';
+import {
+  DEFAULT_PROJECT_CATALOG,
+  formatProjectLabel,
+  formatProjectTypeLabel,
+} from '../../admin/project-classifications';
 
 type CollageProject = PublicProject | ProjectData;
 
@@ -13,6 +18,7 @@ type CollageTile = {
   title: string;
   summary: string;
   category: string;
+  classification: string;
   project: CollageProject;
 };
 
@@ -20,6 +26,17 @@ type CollageRow = {
   featured: CollageTile;
   stacked: CollageTile[];
   reverse: boolean;
+};
+
+type TaxonomyResolution = {
+  type: string;
+  classification: string;
+};
+
+type ScopeCatalogMaps = {
+  types: Map<string, string>;
+  classifications: Map<string, TaxonomyResolution>;
+  categories: Map<string, TaxonomyResolution>;
 };
 
 @Component({
@@ -32,6 +49,11 @@ type CollageRow = {
 export class ProjectListComponent {
   collageItems: CollageTile[] = [];
   collageRows: CollageRow[] = [];
+  private allCollageItems: CollageTile[] = [];
+  private readonly edificacionesCatalog = this.buildEdificacionesCatalog();
+  private readonly habilitacionesCatalog = this.buildHabilitacionesCatalog();
+  selectedType = '';
+  selectedClassification = '';
 
   constructor(
     private projectService: PublicProjectsService,
@@ -61,6 +83,64 @@ export class ProjectListComponent {
     this.cdr.detectChanges();
   }
 
+  get typeOptions(): string[] {
+    const edificaciones = Object.keys(DEFAULT_PROJECT_CATALOG.edificaciones).map((label) => formatProjectTypeLabel(label));
+    const habilitaciones = Object.keys(DEFAULT_PROJECT_CATALOG.habilitaciones).map((label) => formatProjectTypeLabel(label));
+
+    return this.getUniqueOptions([...edificaciones, ...habilitaciones]);
+  }
+
+  get classificationOptions(): string[] {
+    if (!this.selectedType) {
+      return [];
+    }
+
+    const selectedKey = this.toLookupKey(this.selectedType);
+
+    for (const [typeLabel, classificationMap] of Object.entries(DEFAULT_PROJECT_CATALOG.edificaciones)) {
+      if (this.toLookupKey(typeLabel) !== selectedKey) {
+        continue;
+      }
+
+      return this.getUniqueOptions(
+        Object.keys(classificationMap).map((label) => formatProjectLabel(label))
+      );
+    }
+
+    for (const [typeLabel, classificationList] of Object.entries(DEFAULT_PROJECT_CATALOG.habilitaciones)) {
+      if (this.toLookupKey(typeLabel) !== selectedKey) {
+        continue;
+      }
+
+      return this.getUniqueOptions(
+        classificationList.map((label) => formatProjectLabel(label))
+      );
+    }
+
+    return [];
+  }
+
+  onTypeChange(value: string): void {
+    this.selectedType = value;
+    if (this.selectedClassification && !this.classificationOptions.includes(this.selectedClassification)) {
+      this.selectedClassification = '';
+    }
+    this.applyFilters();
+  }
+
+  onClassificationChange(value: string): void {
+    this.selectedClassification = value;
+    this.applyFilters();
+  }
+
+  formatTypeLabel(label: string): string {
+    return formatProjectTypeLabel(label);
+  }
+
+  formatClassificationLabel(label: string): string {
+    return formatProjectLabel(label);
+  }
+
   private async loadProjects() {
     try {
       const [apiProjects, legacyProjects] = await Promise.all([
@@ -70,13 +150,13 @@ export class ProjectListComponent {
 
       const merged = this.mergeProjects(apiProjects, legacyProjects);
       const ordered = this.sortProjectsByRecency(merged);
-      this.collageItems = this.buildCollageItems(ordered);
-      this.collageRows = this.buildCollageRows(this.collageItems);
+      this.allCollageItems = this.buildCollageItems(ordered);
+      this.applyFilters();
       this.cdr.detectChanges();
     } catch {
       const ordered = this.sortProjectsByRecency(this.legacyProjectService.getProjects());
-      this.collageItems = this.buildCollageItems(ordered);
-      this.collageRows = this.buildCollageRows(this.collageItems);
+      this.allCollageItems = this.buildCollageItems(ordered);
+      this.applyFilters();
       this.cdr.detectChanges();
     }
   }
@@ -102,16 +182,172 @@ export class ProjectListComponent {
     return projects.map((project) => {
       const images = this.collectProjectImages(project);
       const image = images[0] || '/LOGO.jpg';
+      const taxonomy = this.resolveProjectTaxonomy(project);
       return {
         id: project.id,
         src: image,
         alt: project.title,
         title: project.title,
         summary: project.shortDesc || project.description || 'Explora este proyecto en detalle.',
-        category: project.type || project.status || 'Proyecto',
+        category: taxonomy.type || project.type || project.status || 'Proyecto',
+        classification: taxonomy.classification,
         project,
       };
     });
+  }
+
+  private applyFilters(): void {
+    this.collageItems = this.allCollageItems.filter((item) => {
+      const matchesType = !this.selectedType || item.category === this.selectedType;
+      const matchesClassification = !this.selectedClassification || item.classification === this.selectedClassification;
+      return matchesType && matchesClassification;
+    });
+    this.collageRows = this.buildCollageRows(this.collageItems);
+  }
+
+  private getUniqueOptions(values: string[]): string[] {
+    return Array.from(
+      new Set(
+        values
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0)
+      )
+    ).sort((left, right) => left.localeCompare(right, 'es'));
+  }
+
+  private resolveProjectTaxonomy(project: CollageProject): TaxonomyResolution {
+    const rawType = formatProjectTypeLabel(project.type || '');
+    const rawClassification = formatProjectLabel('classification' in project ? project.classification || '' : '');
+    const rawScope = formatProjectLabel('scope' in project ? project.scope || '' : '');
+
+    const scopesToTry = this.getScopesToTry(rawScope);
+    const labelsToTry = [rawType, rawClassification].filter((label, index, values) => label && values.indexOf(label) === index);
+
+    for (const scope of scopesToTry) {
+      const resolution = this.resolveForScope(scope, labelsToTry);
+      if (resolution) {
+        return resolution;
+      }
+    }
+
+    return {
+      type: rawType,
+      classification: rawClassification,
+    };
+  }
+
+  private getScopesToTry(scope: string): Array<'Edificaciones' | 'Habilitaciones'> {
+    const normalized = this.toLookupKey(scope);
+    if (normalized === this.toLookupKey('Edificaciones')) {
+      return ['Edificaciones', 'Habilitaciones'];
+    }
+
+    if (normalized === this.toLookupKey('Habilitaciones')) {
+      return ['Habilitaciones', 'Edificaciones'];
+    }
+
+    return ['Edificaciones', 'Habilitaciones'];
+  }
+
+  private resolveForScope(scope: 'Edificaciones' | 'Habilitaciones', labels: string[]): TaxonomyResolution | null {
+    const catalog = scope === 'Edificaciones' ? this.edificacionesCatalog : this.habilitacionesCatalog;
+
+    for (const label of labels) {
+      const typeMatch = catalog.types.get(this.toLookupKey(label));
+      if (!typeMatch) {
+        continue;
+      }
+
+      for (const secondary of labels) {
+        const classificationMatch = catalog.classifications.get(this.toLookupKey(secondary));
+        if (classificationMatch && classificationMatch.type === typeMatch) {
+          return classificationMatch;
+        }
+
+        const categoryMatch = catalog.categories.get(this.toLookupKey(secondary));
+        if (categoryMatch && categoryMatch.type === typeMatch) {
+          return categoryMatch;
+        }
+      }
+
+      return {
+        type: typeMatch,
+        classification: '',
+      };
+    }
+
+    for (const label of labels) {
+      const classificationMatch = catalog.classifications.get(this.toLookupKey(label));
+      if (classificationMatch) {
+        return classificationMatch;
+      }
+    }
+
+    for (const label of labels) {
+      const categoryMatch = catalog.categories.get(this.toLookupKey(label));
+      if (categoryMatch) {
+        return categoryMatch;
+      }
+    }
+
+    return null;
+  }
+
+  private buildEdificacionesCatalog(): ScopeCatalogMaps {
+    const types = new Map<string, string>();
+    const classifications = new Map<string, TaxonomyResolution>();
+    const categories = new Map<string, TaxonomyResolution>();
+
+    for (const [typeLabel, classificationMap] of Object.entries(DEFAULT_PROJECT_CATALOG.edificaciones)) {
+      const cleanType = formatProjectTypeLabel(typeLabel);
+      types.set(this.toLookupKey(cleanType), cleanType);
+      types.set(this.toLookupKey(typeLabel), cleanType);
+
+      for (const [classificationLabel, categoryList] of Object.entries(classificationMap)) {
+        const cleanClassification = formatProjectLabel(classificationLabel);
+        const resolution = { type: cleanType, classification: cleanClassification };
+        classifications.set(this.toLookupKey(cleanClassification), resolution);
+        classifications.set(this.toLookupKey(classificationLabel), resolution);
+
+        for (const categoryLabel of categoryList) {
+          const cleanCategory = formatProjectLabel(categoryLabel);
+          categories.set(this.toLookupKey(cleanCategory), resolution);
+          categories.set(this.toLookupKey(categoryLabel), resolution);
+        }
+      }
+    }
+
+    return { types, classifications, categories };
+  }
+
+  private buildHabilitacionesCatalog(): ScopeCatalogMaps {
+    const types = new Map<string, string>();
+    const classifications = new Map<string, TaxonomyResolution>();
+    const categories = new Map<string, TaxonomyResolution>();
+
+    for (const [typeLabel, classificationList] of Object.entries(DEFAULT_PROJECT_CATALOG.habilitaciones)) {
+      const cleanType = formatProjectTypeLabel(typeLabel);
+      types.set(this.toLookupKey(cleanType), cleanType);
+      types.set(this.toLookupKey(typeLabel), cleanType);
+
+      for (const classificationLabel of classificationList) {
+        const cleanClassification = formatProjectLabel(classificationLabel);
+        const resolution = { type: cleanType, classification: cleanClassification };
+        classifications.set(this.toLookupKey(cleanClassification), resolution);
+        classifications.set(this.toLookupKey(classificationLabel), resolution);
+      }
+    }
+
+    return { types, classifications, categories };
+  }
+
+  private toLookupKey(value: string): string {
+    return formatProjectLabel(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
   }
 
   private buildCollageRows(items: CollageTile[]): CollageRow[] {

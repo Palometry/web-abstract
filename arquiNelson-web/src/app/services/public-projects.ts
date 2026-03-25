@@ -12,6 +12,9 @@ export type PublicProject = {
   image: string;
   thumbImage: string;
   createdAt?: string | null;
+  classification?: string;
+  category?: string;
+  scope?: string;
   brochurePdfUrl?: string | null;
   brochureCoverUrl?: string | null;
   masterplanImage?: string | null;
@@ -38,6 +41,7 @@ export type PublicProject = {
   startYear: number;
   deliveryYear: number;
   description: string;
+  bannerImages?: string[];
   gallery: string[];
   lots?: { id: string; area: string; status: 'Disponible' | 'Reservado' | 'Vendido' }[];
   videos?: {

@@ -89,6 +89,15 @@
   resize: vertical;
 }
 
+.form-grid select {
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.form-grid label.select-wide {
+  grid-column: span 2;
+}
+
 .wide {
   grid-column: 1 / -1;
 }
@@ -472,5 +481,11 @@
   left: 0;
   color: #3b7a57;
   font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .form-grid label.select-wide {
+    grid-column: auto;
+  }
 }
 

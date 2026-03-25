@@ -1,8 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AdminDataService,
   AdminProjectDetail,
@@ -10,7 +11,15 @@ import {
   AdminProjectImage,
   AdminProjectVideo
 } from '../../services/admin-data';
-import { DEFAULT_PROJECT_CATALOG, ProjectCatalog } from '../project-classifications';
+import {
+  DEFAULT_PROJECT_CATALOG,
+  ProjectCatalog,
+  formatCompactProjectLabel,
+  formatCompactProjectTypeLabel,
+  formatProjectLabel,
+  formatProjectTypeLabel,
+  isHospedajeType
+} from '../project-classifications';
 
 type ProjectImageView = AdminProjectImage & {
   draft: {
@@ -84,6 +93,7 @@ export class AdminProjectCreateComponent implements OnInit {
     startYear: '',
     deliveryYear: '',
     autocadUrl: '',
+    brochurePdfUrl: '',
     mapUrl: '',
     mapEmbedUrl: '',
     masterplanImage: '',
@@ -96,9 +106,7 @@ export class AdminProjectCreateComponent implements OnInit {
 
   imageDraft = {
     fileUrl: '',
-    title: '',
-    altText: '',
-    isCover: false,
+    isCover: true,
     sortOrder: 0
   };
 
@@ -113,9 +121,11 @@ export class AdminProjectCreateComponent implements OnInit {
   activeHouseModelIndex = 0;
   activeHouseImageIndex = 0;
 
+  private readonly destroyRef = inject(DestroyRef);
   private catalog: ProjectCatalog = DEFAULT_PROJECT_CATALOG;
 
   constructor(
+    private route: ActivatedRoute,
     private data: AdminDataService,
     private sanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef
@@ -123,6 +133,21 @@ export class AdminProjectCreateComponent implements OnInit {
 
   async ngOnInit() {
     await this.loadCatalog();
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => void this.handleRouteChange(params.get('id')));
+  }
+
+  get isEditMode(): boolean {
+    return this.projectId !== null;
+  }
+
+  get coverImage(): ProjectImageView | null {
+    return this.images.find((image) => image.isCover) ?? this.images[0] ?? null;
+  }
+
+  get hasCoverImage(): boolean {
+    return !!this.imageDraft.fileUrl.trim();
   }
 
   private async loadCatalog() {
@@ -130,6 +155,25 @@ export class AdminProjectCreateComponent implements OnInit {
     if (catalog) {
       this.catalog = catalog;
     }
+  }
+
+  private async handleRouteChange(rawProjectId: string | null) {
+    if (!rawProjectId) {
+      this.resetProjectState();
+      this.cdr.detectChanges();
+      return;
+    }
+
+    const projectId = Number(rawProjectId);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      this.resetProjectState();
+      this.error = 'Proyecto invalido.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.projectId = projectId;
+    await this.loadProject(projectId);
   }
 
   getVideoEmbedUrl(url?: string | null): SafeResourceUrl | null {
@@ -187,7 +231,7 @@ export class AdminProjectCreateComponent implements OnInit {
     if (this.detailsDraft.publicScope !== 'Edificaciones') {
       return [];
     }
-    if (this.detailsDraft.publicType === 'A.030 HOSPEDAJE') {
+    if (isHospedajeType(this.detailsDraft.publicType)) {
       const starOptions = this.getHospedajeStars();
       if (starOptions.length) {
         return starOptions;
@@ -201,10 +245,30 @@ export class AdminProjectCreateComponent implements OnInit {
   }
 
   get publicCategoryLabel(): string {
-    if (this.detailsDraft.publicType === 'A.030 HOSPEDAJE') {
+    if (isHospedajeType(this.detailsDraft.publicType)) {
       return 'Categoría (estrellas)';
     }
     return 'Categoría';
+  }
+
+  formatTypeLabel(label: string): string {
+    return formatCompactProjectTypeLabel(label);
+  }
+
+  formatClassificationLabel(label: string): string {
+    return formatCompactProjectLabel(label);
+  }
+
+  formatCategoryOptionLabel(label: string): string {
+    return formatCompactProjectLabel(label);
+  }
+
+  getFullTypeLabel(label: string): string {
+    return formatProjectTypeLabel(label);
+  }
+
+  getFullClassificationLabel(label: string): string {
+    return formatProjectLabel(label);
   }
 
   private getHospedajeStars(): string[] {
@@ -305,69 +369,118 @@ export class AdminProjectCreateComponent implements OnInit {
   private async loadProject(projectId: number) {
     this.loading = true;
     this.error = '';
-    const project = await this.data.getProjectDetail(projectId);
-    if (!project) {
-      this.error = 'No se encontro el proyecto.';
+    try {
+      const project = await this.data.getProjectDetail(projectId);
+      if (!project) {
+        this.error = 'No se encontro el proyecto.';
+        this.resetProjectState(projectId);
+        return;
+      }
+      this.projectId = project.id;
+      this.project = project;
+      this.draft = {
+        name: project.name,
+        clientName: project.clientName,
+        address: project.address,
+        description: project.description ?? '',
+        status: project.status,
+        startDate: project.startDate ?? '',
+        endDate: project.endDate ?? ''
+      };
+      this.applyDetailsToDraft(project.details);
+      const images = Array.isArray(project.images) ? project.images : [];
+      this.images = images.map((image) => ({
+        ...image,
+        draft: {
+          fileUrl: image.fileUrl,
+          title: image.title ?? '',
+          altText: image.altText ?? '',
+          isCover: image.isCover,
+          sortOrder: image.sortOrder
+        }
+      }));
+      this.syncCoverDraft();
+      const videos = Array.isArray(project.videos) ? project.videos : [];
+      this.videos = videos.map((video) => ({
+        ...video,
+        draft: {
+          fileUrl: video.fileUrl,
+          title: video.title ?? '',
+          description: video.description ?? '',
+          sortOrder: video.sortOrder
+        }
+      }));
+    } catch {
+      this.error = 'No se pudo cargar el proyecto.';
+      this.resetProjectState(projectId);
+    } finally {
       this.loading = false;
-      return;
+      this.cdr.detectChanges();
     }
-    this.project = project;
-    this.draft = {
-      name: project.name,
-      clientName: project.clientName,
-      address: project.address,
-      description: project.description ?? '',
-      status: project.status,
-      startDate: project.startDate ?? '',
-      endDate: project.endDate ?? ''
-    };
-    this.applyDetailsToDraft(project.details);
-    const images = Array.isArray(project.images) ? project.images : [];
-    this.images = images.map((image) => ({
-      ...image,
-      draft: {
-        fileUrl: image.fileUrl,
-        title: image.title ?? '',
-        altText: image.altText ?? '',
-        isCover: image.isCover,
-        sortOrder: image.sortOrder
-      }
-    }));
-    const videos = Array.isArray(project.videos) ? project.videos : [];
-    this.videos = videos.map((video) => ({
-      ...video,
-      draft: {
-        fileUrl: video.fileUrl,
-        title: video.title ?? '',
-        description: video.description ?? '',
-        sortOrder: video.sortOrder
-      }
-    }));
-    this.loading = false;
   }
 
-  async addImage() {
+  private resetProjectState(projectId: number | null = null) {
+    this.projectId = projectId;
+    this.project = null;
+    this.images = [];
+    this.videos = [];
+    this.imageDraft = { fileUrl: '', isCover: true, sortOrder: 0 };
+    this.videoDraft = { fileUrl: '', title: '', description: '', sortOrder: 0 };
+    this.draft = {
+      name: '',
+      clientName: '',
+      address: '',
+      description: '',
+      status: 'draft',
+      startDate: '',
+      endDate: ''
+    };
+    this.applyDetailsToDraft(null);
+  }
+
+  private syncCoverDraft() {
+    const cover = this.coverImage;
+    this.imageDraft = cover
+      ? {
+          fileUrl: cover.fileUrl,
+          isCover: true,
+          sortOrder: 0
+        }
+      : {
+          fileUrl: '',
+          isCover: true,
+          sortOrder: 0
+        };
+  }
+
+  async saveCoverImage() {
     if (!this.projectId) {
       return;
     }
+    this.error = '';
     const fileUrl = this.imageDraft.fileUrl.trim();
     if (!fileUrl) {
-      this.error = 'La URL de la imagen es obligatoria.';
+      this.error = 'La URL de la imagen de portada es obligatoria.';
       return;
     }
-    const result = await this.data.createProjectImage(this.projectId, {
-      fileUrl,
-      title: this.imageDraft.title || null,
-      altText: this.imageDraft.altText || null,
-      isCover: this.imageDraft.isCover,
-      sortOrder: this.imageDraft.sortOrder
-    });
+    const currentCover = this.coverImage;
+    const result = currentCover
+      ? await this.data.updateProjectImage(this.projectId, currentCover.id, {
+          fileUrl,
+          isCover: true,
+          sortOrder: 0
+        })
+      : await this.data.createProjectImage(this.projectId, {
+          fileUrl,
+          isCover: true,
+          sortOrder: 0
+        });
     if (!result.ok) {
-      this.error = result.error ?? 'No se pudo agregar la imagen.';
+      this.error = result.error ?? 'No se pudo guardar la imagen de portada.';
       return;
     }
-    this.imageDraft = { fileUrl: '', title: '', altText: '', isCover: false, sortOrder: 0 };
     await this.loadProject(this.projectId);
+    this.showToast(currentCover ? 'Imagen de portada actualizada.' : 'Imagen de portada guardada.');
   }
 
   async addVideo() {
@@ -397,13 +510,14 @@ export class AdminProjectCreateComponent implements OnInit {
     if (!this.projectId) {
       return;
     }
+    this.error = '';
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
     if (!file) {
       return;
     }
     this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: this.imageDraft.title || undefined });
+    const result = await this.data.uploadMedia(file, { title: file.name });
     this.uploading = false;
     if (!result.ok || !result.fileUrl) {
       this.error = result.error ?? 'No se pudo subir la imagen.';
@@ -413,25 +527,26 @@ export class AdminProjectCreateComponent implements OnInit {
     if (input) {
       input.value = '';
     }
+    await this.saveCoverImage();
   }
 
-
-  async saveImage(image: ProjectImageView) {
-    if (!this.projectId) {
+  async uploadBrochurePdf(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
       return;
     }
-    const result = await this.data.updateProjectImage(this.projectId, image.id, {
-      fileUrl: image.draft.fileUrl.trim(),
-      title: image.draft.title || null,
-      altText: image.draft.altText || null,
-      isCover: image.draft.isCover,
-      sortOrder: image.draft.sortOrder
-    });
-    if (!result.ok) {
-      this.error = result.error ?? 'No se pudo guardar la imagen.';
+    this.uploading = true;
+    const result = await this.data.uploadMedia(file, { title: file.name });
+    this.uploading = false;
+    if (!result.ok || !result.fileUrl) {
+      this.error = result.error ?? 'No se pudo subir el brochure.';
       return;
     }
-    await this.loadProject(this.projectId);
+    this.detailsDraft.brochurePdfUrl = result.fileUrl;
+    if (input) {
+      input.value = '';
+    }
   }
 
   async saveVideo(video: ProjectVideoView) {
@@ -451,43 +566,41 @@ export class AdminProjectCreateComponent implements OnInit {
     await this.loadProject(this.projectId);
   }
 
-  async uploadImageForExisting(image: ProjectImageView, event: Event) {
+  async deleteCoverImage() {
     if (!this.projectId) {
       return;
     }
-    const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) {
+    this.error = '';
+    const cover = this.coverImage;
+    if (!cover) {
       return;
     }
-    this.imageUploadStates[image.id] = true;
-    const result = await this.data.uploadMedia(file, { title: image.draft.title || undefined });
-    this.imageUploadStates[image.id] = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
-      return;
-    }
-    image.draft.fileUrl = result.fileUrl;
-    if (input) {
-      input.value = '';
-    }
-  }
-
-
-  async deleteImage(image: ProjectImageView) {
-    if (!this.projectId) {
-      return;
-    }
-    const confirmed = confirm('Eliminar esta imagen?');
+    const confirmed = confirm('Eliminar la imagen de portada?');
     if (!confirmed) {
       return;
     }
-    const ok = await this.data.deleteProjectImage(this.projectId, image.id);
+    const ok = await this.data.deleteProjectImage(this.projectId, cover.id);
     if (!ok) {
-      this.error = 'No se pudo eliminar la imagen.';
+      this.error = 'No se pudo eliminar la imagen de portada.';
       return;
     }
     await this.loadProject(this.projectId);
+    this.showToast('Imagen de portada eliminada.');
+  }
+
+  async removeCoverImage() {
+    const draftUrl = this.imageDraft.fileUrl.trim();
+    if (!draftUrl) {
+      return;
+    }
+
+    const cover = this.coverImage;
+    if (cover && cover.fileUrl.trim() === draftUrl) {
+      await this.deleteCoverImage();
+      return;
+    }
+
+    this.imageDraft.fileUrl = '';
   }
 
   async deleteVideo(video: ProjectVideoView) {
@@ -921,6 +1034,7 @@ export class AdminProjectCreateComponent implements OnInit {
       startYear,
       deliveryYear,
       autocadUrl: this.nullIfEmpty(this.detailsDraft.autocadUrl),
+      brochurePdfUrl: this.nullIfEmpty(this.detailsDraft.brochurePdfUrl),
       mapUrl: this.nullIfEmpty(mapUrl),
       mapEmbedUrl: this.nullIfEmpty(mapEmbedUrl),
       masterplanImage: this.nullIfEmpty(this.detailsDraft.masterplanImage),
@@ -1019,6 +1133,7 @@ export class AdminProjectCreateComponent implements OnInit {
       startYear: details?.startYear !== undefined && details?.startYear !== null ? String(details.startYear) : '',
       deliveryYear: details?.deliveryYear !== undefined && details?.deliveryYear !== null ? String(details.deliveryYear) : '',
       autocadUrl: details?.autocadUrl ?? '',
+      brochurePdfUrl: details?.brochurePdfUrl ?? '',
       mapUrl: details?.mapUrl ?? '',
       mapEmbedUrl: details?.mapEmbedUrl ?? '',
       masterplanImage: details?.masterplanImage ?? '',

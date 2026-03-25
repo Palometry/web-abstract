@@ -155,6 +155,45 @@ export class AdminAuthService {
     }
   }
 
+  async updateUser(
+    userId: number,
+    payload: {
+      fullName: string;
+      email: string;
+      password?: string;
+      roles: string[];
+    }
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    const fullName = payload.fullName.trim();
+    const email = payload.email.trim().toLowerCase();
+    if (!fullName || !email) {
+      return { ok: false, error: 'Completa los campos requeridos.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.apiBaseUrl}/users/${userId}`,
+          {
+            fullName,
+            email,
+            password: payload.password?.trim() ? payload.password.trim() : null,
+            roles: payload.roles.length ? payload.roles : ['client']
+          },
+          { headers: this.authHeaders() }
+        )
+      );
+      return { ok: true };
+    } catch (error: any) {
+      if (error?.status === 409) {
+        return { ok: false, error: error?.error?.error ?? 'El correo ya existe.' };
+      }
+      return { ok: false, error: 'No se pudo actualizar el usuario.' };
+    }
+  }
+
   async setUserActive(userId: number, active: boolean) {
     if (!this.isBrowser) {
       return;

@@ -7,7 +7,6 @@ import { AdminLoginComponent } from './admin/admin-login/admin-login.component';
 import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.component';
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { AdminProjectsComponent } from './admin/admin-projects/admin-projects.component';
-import { AdminProjectDetailComponent } from './admin/admin-project-detail/admin-project-detail.component';
 import { AdminProjectCreateComponent } from './admin/admin-project-create/admin-project-create.component';
 import { AdminBlogComponent } from './admin/admin-blog/admin-blog.component';
 import { AdminBlogDetailComponent } from './admin/admin-blog-detail/admin-blog-detail.component';
@@ -33,7 +32,7 @@ export const routes: Routes = [
       { path: '', component: AdminDashboardComponent },
       { path: 'projects', component: AdminProjectsComponent },
       { path: 'projects/new', component: AdminProjectCreateComponent },
-      { path: 'projects/:id', component: AdminProjectDetailComponent },
+      { path: 'projects/:id', component: AdminProjectCreateComponent },
       { path: 'blog', component: AdminBlogComponent },
       { path: 'blog/:id', component: AdminBlogDetailComponent },
       { path: 'quotes', component: AdminQuotesComponent },

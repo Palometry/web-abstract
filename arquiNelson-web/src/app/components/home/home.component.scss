@@ -85,7 +85,7 @@
     overflow: hidden;
     background: #ececec;
     box-shadow: 0 12px 24px var(--color-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: box-shadow 0.3s ease;
     width: 100%;
     height: 100%;
     min-height: 100%;
@@ -96,6 +96,7 @@
       height: 100%;
       display: block;
       position: relative;
+      overflow: hidden;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
@@ -137,11 +138,10 @@
     }
 
     &:hover {
-      transform: translateY(-4px) scale(1.01);
       box-shadow: 0 16px 30px var(--color-shadow);
 
       img {
-        transform: scale(1.04);
+        transform: scale(1.06);
       }
 
       .tile-caption {
@@ -325,13 +325,19 @@
 
 @media (max-width: 640px) {
   .portfolio-collage {
+    .collage-row,
+    .collage-stack {
+      --gap: 6px;
+      gap: 6px;
+    }
+
     .collage-stack {
       grid-template-columns: 1fr;
     }
 
     .collage-feature,
     .collage-compact {
-      min-height: clamp(220px, 62vw, 320px);
+      min-height: clamp(170px, 54vw, 230px);
     }
   }
 
@@ -409,6 +415,70 @@
   }
 }
 
+.home-contact-cta {
+  padding: 0 0 24px;
+  background: var(--color-bg);
+}
+
+.home-contact-cta__backdrop {
+  min-height: clamp(340px, 44vw, 540px);
+  display: grid;
+  place-items: center;
+  padding: clamp(32px, 6vw, 72px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(255, 255, 255, 0.76) 100%),
+    url('/img/isometricos.jpg') center / cover no-repeat;
+}
+
+.home-contact-cta__content {
+  width: min(720px, 100%);
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  text-align: center;
+  color: var(--color-text);
+
+  h2 {
+    margin: 0;
+    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    line-height: 0.95;
+  }
+
+  p {
+    margin: 0;
+    max-width: 42rem;
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+    color: var(--color-text-muted);
+  }
+}
+
+.home-contact-cta__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.home-contact-cta__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+  padding: 14px 24px;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background: transparent;
+    color: var(--color-text);
+  }
+}
+
 @media (max-width: 960px) {
   .story-slide {
     grid-template-columns: 1fr;
@@ -421,6 +491,10 @@
 
   .story-copy p {
     max-height: 28vh;
+  }
+
+  .home-contact-cta__backdrop {
+    padding: 36px 20px;
   }
 }
 

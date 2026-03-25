@@ -1,5 +1,5 @@
 @if (project) {
-  <div class="container project-page">
+  <div class="project-page">
     <section class="project-hero">
       <div class="hero-slider" *ngIf="currentBannerImage">
         <div
@@ -115,8 +115,10 @@
       <table class="ficha-table" [class.expanded]="fichaExpanded">
         <tbody>
           <tr><th>Promotor</th><td>{{ project.promoter || 'Por definir' }}</td></tr>
-          <tr><th>Estado</th><td>{{ project.status || 'Por definir' }}</td></tr>
-          <tr><th>Tipo</th><td>{{ project.type || 'Por definir' }}</td></tr>
+          <tr><th>Tipo de proyecto</th><td>{{ formatFichaLabel(project.scope) || 'Por definir' }}</td></tr>
+          <tr><th>Tipo de edificacion</th><td>{{ formatFichaType(project.type) || 'Por definir' }}</td></tr>
+          <tr><th>Clasificacion</th><td>{{ formatFichaLabel(project.classification) || 'Por definir' }}</td></tr>
+          <tr><th>Categoria</th><td>{{ formatFichaLabel(project.category) || 'Por definir' }}</td></tr>
           <tr><th>Ubicacion</th><td>{{ project.location || 'Por definir' }}</td></tr>
           <tr><th>Area del terreno</th><td>{{ project.landArea || '-' }}</td></tr>
           <tr><th>Unidades</th><td>{{ project.units || '-' }}</td></tr>
@@ -399,7 +401,7 @@
     }
   </div>
 } @else {
-  <div class="container">
+  <div class="project-page project-page--empty">
     <p>Proyecto no encontrado.</p>
   </div>
 }

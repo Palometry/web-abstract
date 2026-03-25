@@ -52,6 +52,65 @@ class ProjectsController extends Controller
         return $normalized;
     }
 
+    private function uniqueUrlList(array ...$groups): array
+    {
+        $seen = [];
+        $unique = [];
+
+        foreach ($groups as $group) {
+            foreach ($group as $url) {
+                if (!is_string($url)) {
+                    continue;
+                }
+                $normalized = trim($url);
+                if ($normalized === '' || isset($seen[$normalized])) {
+                    continue;
+                }
+                $seen[$normalized] = true;
+                $unique[] = $normalized;
+            }
+        }
+
+        return $unique;
+    }
+
+    private function normalizeProjectDetails(?array $details): ?array
+    {
+        if (!$details) {
+            return $details;
+        }
+
+        $details['masterplanImage'] = $this->resolveFileUrl($details['masterplanImage'] ?? null);
+        $details['brochurePdfUrl'] = $this->resolveFileUrl($details['brochurePdfUrl'] ?? null);
+        $details['bannerImages'] = $this->resolveUrlList($details['bannerImages'] ?? []);
+        $details['gallery'] = $this->resolveUrlList($details['gallery'] ?? []);
+
+        if (!empty($details['houseModels']) && is_array($details['houseModels'])) {
+            $details['houseModels'] = array_map(function ($model) {
+                if (!is_array($model)) {
+                    return $model;
+                }
+
+                $model['image'] = $this->resolveFileUrl($model['image'] ?? null);
+                $model['images'] = $this->resolveUrlList($model['images'] ?? []);
+                return $model;
+            }, $details['houseModels']);
+        }
+
+        if (!empty($details['housePlans']) && is_array($details['housePlans'])) {
+            $details['housePlans'] = array_map(function ($plan) {
+                if (!is_array($plan)) {
+                    return $plan;
+                }
+
+                $plan['image'] = $this->resolveFileUrl($plan['image'] ?? null);
+                return $plan;
+            }, $details['housePlans']);
+        }
+
+        return $details;
+    }
+
     public function publicList()
     {
         $rows = DB::select(
@@ -88,6 +147,10 @@ class ProjectsController extends Controller
                 'image' => $fallbackImage ?? '',
                 'thumbImage' => $fallbackImage ?? '',
                 'createdAt' => $row->created_at,
+                'type' => $details['publicType'] ?? '',
+                'classification' => $details['publicClassification'] ?? '',
+                'category' => $details['publicCategory'] ?? '',
+                'scope' => $details['publicScope'] ?? '',
             ];
         }, $rows);
 
@@ -152,6 +215,7 @@ class ProjectsController extends Controller
         $coverUrl = $this->resolveFileUrl($project->cover_url ?? null);
         $fallbackImage = $coverUrl
             ?? ($bannerImages[0] ?? ($gallery[0] ?? $masterplanImage));
+        $fullGallery = $this->uniqueUrlList($bannerImages, $gallery);
 
         return response()->json([
             'id' => $project->id,
@@ -161,6 +225,7 @@ class ProjectsController extends Controller
             'thumbImage' => $fallbackImage ?? '',
             'createdAt' => $project->created_at,
             'masterplanImage' => $masterplanImage,
+            'brochurePdfUrl' => $details['brochurePdfUrl'] ?? null,
             'houseModels' => $details['houseModels'] ?? [],
             'housePlans' => $details['housePlans'] ?? [],
             'autocad360Url' => $details['autocadUrl'] ?? null,
@@ -171,13 +236,17 @@ class ProjectsController extends Controller
             'promoter' => $details['promoter'] ?? '',
             'status' => $details['publicStatus'] ?? $project->status,
             'type' => $details['publicType'] ?? '',
+            'classification' => $details['publicClassification'] ?? '',
+            'category' => $details['publicCategory'] ?? '',
+            'scope' => $details['publicScope'] ?? '',
             'landArea' => $details['landArea'] ?? '',
             'units' => (int) ($details['units'] ?? 0),
             'amenities' => $details['amenities'] ?? [],
             'startYear' => (int) ($details['startYear'] ?? 0),
             'deliveryYear' => (int) ($details['deliveryYear'] ?? 0),
             'description' => $project->description ?? '',
-            'gallery' => !empty($gallery) ? $gallery : $bannerImages,
+            'bannerImages' => $bannerImages,
+            'gallery' => $fullGallery,
             'lots' => $details['lots'] ?? [],
             'videos' => $videos,
         ]);
@@ -355,7 +424,7 @@ class ProjectsController extends Controller
         $details = null;
         if (!empty($project->details_json)) {
             $decoded = json_decode($project->details_json, true);
-            $details = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+            $details = json_last_error() === JSON_ERROR_NONE ? $this->normalizeProjectDetails($decoded) : null;
         }
 
         return response()->json([

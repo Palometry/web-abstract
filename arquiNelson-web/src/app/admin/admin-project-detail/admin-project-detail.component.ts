@@ -10,7 +10,13 @@ import {
   AdminProjectImage,
   AdminProjectVideo
 } from '../../services/admin-data';
-import { DEFAULT_PROJECT_CATALOG, ProjectCatalog } from '../project-classifications';
+import {
+  DEFAULT_PROJECT_CATALOG,
+  ProjectCatalog,
+  formatProjectLabel,
+  formatProjectTypeLabel,
+  isHospedajeType
+} from '../project-classifications';
 
 type ProjectImageView = AdminProjectImage & {
   draft: {
@@ -188,7 +194,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     if (this.detailsDraft.publicScope !== 'Edificaciones') {
       return [];
     }
-    if (this.detailsDraft.publicType === 'A.030 HOSPEDAJE') {
+    if (isHospedajeType(this.detailsDraft.publicType)) {
       const starOptions = this.getHospedajeStars();
       if (starOptions.length) {
         return starOptions;
@@ -202,10 +208,22 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
   }
 
   get publicCategoryLabel(): string {
-    if (this.detailsDraft.publicType === 'A.030 HOSPEDAJE') {
+    if (isHospedajeType(this.detailsDraft.publicType)) {
       return 'Categoría (estrellas)';
     }
     return 'Categoría';
+  }
+
+  formatTypeLabel(label: string): string {
+    return formatProjectTypeLabel(label);
+  }
+
+  formatClassificationLabel(label: string): string {
+    return formatProjectLabel(label);
+  }
+
+  formatCategoryOptionLabel(label: string): string {
+    return formatProjectLabel(label);
   }
 
   private getHospedajeStars(): string[] {
@@ -518,6 +536,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     if (input) {
       input.value = '';
     }
+    this.cdr.detectChanges();
   }
 
   clearDetailImage(field: keyof typeof this.detailsDraft) {
@@ -543,6 +562,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     if (input) {
       input.value = '';
     }
+    this.cdr.detectChanges();
   }
 
   removeDetailListImage(field: keyof typeof this.detailsDraft, index: number) {
@@ -553,6 +573,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     }
     lines.splice(index, 1);
     this.detailsDraft[field] = lines.join('\n') as any;
+    this.cdr.detectChanges();
   }
 
   async appendHouseModelImage(event: Event) {
@@ -583,6 +604,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     if (input) {
       input.value = '';
     }
+    this.cdr.detectChanges();
   }
 
   get activeHouseModel(): HouseModelDraft | null {
@@ -664,6 +686,7 @@ export class AdminProjectDetailComponent implements OnInit, AfterViewInit {
     if (input) {
       input.value = '';
     }
+    this.cdr.detectChanges();
   }
 
   removeHouseModelImage(model: HouseModelDraft, index: number) {

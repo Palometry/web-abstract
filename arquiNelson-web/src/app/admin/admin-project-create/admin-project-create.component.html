@@ -3,10 +3,10 @@
 
   <div class="header">
     <div>
-      <h2>{{ projectId ? 'Editar proyecto' : 'Crear proyecto' }}</h2>
+      <h2>{{ isEditMode ? 'Editar proyecto' : 'Crear proyecto' }}</h2>
       <p>
         {{
-          projectId
+          isEditMode
             ? 'Actualiza informacion general del proyecto.'
             : 'Completa la informacion principal del proyecto.'
         }}
@@ -14,15 +14,15 @@
     </div>
     <button
       type="button"
-      (click)="projectId ? saveProject() : createProject()"
+      (click)="isEditMode ? saveProject() : createProject()"
       [disabled]="saving"
     >
       {{
         saving
-          ? projectId
+          ? isEditMode
             ? 'Guardando...'
             : 'Creando...'
-          : projectId
+          : isEditMode
             ? 'Guardar proyecto'
             : 'Crear proyecto'
       }}
@@ -88,16 +88,16 @@
         Promotor
         <input type="text" [(ngModel)]="detailsDraft.promoter" />
       </label>
-      <label>
+      <label class="select-wide">
         Tipo de proyecto
         <select [(ngModel)]="detailsDraft.publicScope" (ngModelChange)="onPublicScopeChange()">
           <option value="">Selecciona...</option>
-          <option *ngFor="let option of publicScopeOptions" [value]="option">
-            {{ option }}
+          <option *ngFor="let option of publicScopeOptions" [value]="option" [title]="getFullClassificationLabel(option)">
+            {{ formatClassificationLabel(option) }}
           </option>
         </select>
       </label>
-      <label>
+      <label class="select-wide">
         {{
           detailsDraft.publicScope === 'Habilitaciones'
             ? 'Tipo de habilitación'
@@ -109,12 +109,12 @@
           [disabled]="!detailsDraft.publicScope"
         >
           <option value="">Selecciona...</option>
-          <option *ngFor="let option of publicTypeOptions" [value]="option">
-            {{ option }}
+          <option *ngFor="let option of publicTypeOptions" [value]="option" [title]="getFullTypeLabel(option)">
+            {{ formatTypeLabel(option) }}
           </option>
         </select>
       </label>
-      <label>
+      <label class="select-wide">
         Clasificación
         <select
           [(ngModel)]="detailsDraft.publicClassification"
@@ -122,20 +122,28 @@
           [disabled]="!detailsDraft.publicType"
         >
           <option value="">Selecciona...</option>
-          <option *ngFor="let option of publicClassificationOptions" [value]="option">
-            {{ option }}
+          <option
+            *ngFor="let option of publicClassificationOptions"
+            [value]="option"
+            [title]="getFullClassificationLabel(option)"
+          >
+            {{ formatClassificationLabel(option) }}
           </option>
         </select>
       </label>
-      <label *ngIf="detailsDraft.publicScope === 'Edificaciones'">
+      <label *ngIf="detailsDraft.publicScope === 'Edificaciones'" class="select-wide">
         {{ publicCategoryLabel }}
         <select
           [(ngModel)]="detailsDraft.publicCategory"
           [disabled]="!detailsDraft.publicClassification"
         >
           <option value="">Selecciona...</option>
-          <option *ngFor="let option of publicCategoryOptions" [value]="option">
-            {{ option }}
+          <option
+            *ngFor="let option of publicCategoryOptions"
+            [value]="option"
+            [title]="getFullClassificationLabel(option)"
+          >
+            {{ formatCategoryOptionLabel(option) }}
           </option>
         </select>
       </label>
@@ -152,21 +160,29 @@
         <input type="text" [(ngModel)]="detailsDraft.autocadUrl" placeholder="https://a360.co/..." />
       </label>
       <label class="wide">
+        Brochure PDF / Flipbook
+        <input type="text" [(ngModel)]="detailsDraft.brochurePdfUrl" placeholder="https://.../brochure.pdf" />
+      </label>
+      <label class="wide">
+        Subir brochure PDF
+        <input type="file" accept="application/pdf,.pdf" (change)="uploadBrochurePdf($event)" />
+      </label>
+      <label class="wide">
         URL Mapa (Google Maps)
         <input type="text" [(ngModel)]="detailsDraft.mapUrl" (blur)="syncMapEmbedUrl()" />
       </label>
       <label class="wide">
-        Imagen masterplan / lotización
+        Imagen de lotización o lotes
         <input type="text" [(ngModel)]="detailsDraft.masterplanImage" />
       </label>
       <div class="image-preview-inline" *ngIf="detailsDraft.masterplanImage">
-        <img [src]="detailsDraft.masterplanImage" alt="Masterplan" />
+        <img [src]="detailsDraft.masterplanImage" alt="Lotización o lotes" />
         <button type="button" class="danger" (click)="clearDetailImage('masterplanImage')">
           Quitar imagen
         </button>
       </div>
       <label class="wide">
-        Subir imagen masterplan
+        Subir imagen de lotización o lotes
         <input type="file" accept="image/*" (change)="uploadDetailImage($event, 'masterplanImage')" />
       </label>
       <label class="wide">
@@ -347,100 +363,41 @@
   </div>
 
   <div class="panel">
-    <h3>Imagenes</h3>
-    <ng-container *ngIf="projectId; else imagesDisabled">
+    <h3>Imagen de portada</h3>
+    <p class="hint">Se usa como portada principal del proyecto en los listados.</p>
+    <ng-container *ngIf="projectId; else coverDisabled">
       <div class="form-grid">
         <label class="wide">
-          URL de imagen
+          URL de la portada
           <input type="text" [(ngModel)]="imageDraft.fileUrl" />
         </label>
         <div class="image-preview-inline" *ngIf="imageDraft.fileUrl">
-          <img [src]="imageDraft.fileUrl" alt="Vista previa" />
+          <img [src]="imageDraft.fileUrl" alt="Portada del proyecto" />
         </div>
         <label class="wide">
-          Subir imagen (archivo)
+          Subir imagen de portada
           <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
         </label>
-        <label>
-          Titulo
-          <input type="text" [(ngModel)]="imageDraft.title" />
-        </label>
-        <label>
-          Alt
-          <input type="text" [(ngModel)]="imageDraft.altText" />
-        </label>
-        <label>
-          Orden
-          <input type="number" [(ngModel)]="imageDraft.sortOrder" />
-        </label>
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="imageDraft.isCover" />
-          Portada
-        </label>
-        <button type="button" (click)="addImage()">Agregar imagen</button>
       </div>
 
-      <div class="image-grid" *ngIf="images.length">
-        <div class="image-card" *ngFor="let image of images">
-          <img [src]="image.draft.fileUrl || image.fileUrl" [alt]="image.altText || ''" />
-          <div class="form-grid compact">
-            <label class="wide">
-              URL
-              <input type="text" [(ngModel)]="image.draft.fileUrl" />
-            </label>
-            <label class="wide">
-              Subir imagen (archivo)
-              <input type="file" accept="image/*" (change)="uploadImageForExisting(image, $event)" />
-            </label>
-            <label>
-              Titulo
-              <input type="text" [(ngModel)]="image.draft.title" />
-            </label>
-            <label>
-              Alt
-              <input type="text" [(ngModel)]="image.draft.altText" />
-            </label>
-            <label>
-              Orden
-              <input type="number" [(ngModel)]="image.draft.sortOrder" />
-            </label>
-            <label class="toggle">
-              <input type="checkbox" [(ngModel)]="image.draft.isCover" />
-              Portada
-            </label>
-          </div>
-          <div class="actions">
-            <button type="button" (click)="saveImage(image)">Guardar</button>
-            <button type="button" class="danger" (click)="deleteImage(image)">Eliminar</button>
-          </div>
-        </div>
+      <div class="actions">
+        <button type="button" (click)="saveCoverImage()">
+          {{ coverImage ? 'Guardar portada' : 'Agregar portada' }}
+        </button>
+        <button type="button" class="danger" *ngIf="hasCoverImage" (click)="removeCoverImage()">
+          Quitar portada
+        </button>
       </div>
     </ng-container>
-    <ng-template #imagesDisabled>
-      <p class="hint">Guarda el proyecto para habilitar la carga de imágenes.</p>
+    <ng-template #coverDisabled>
+      <p class="hint">Guarda el proyecto para habilitar la carga de la portada.</p>
       <div class="form-grid">
         <label class="wide">
-          URL de imagen
+          URL de la portada
           <input type="text" disabled />
         </label>
-        <label>
-          Titulo
-          <input type="text" disabled />
-        </label>
-        <label>
-          Alt
-          <input type="text" disabled />
-        </label>
-        <label>
-          Orden
-          <input type="number" disabled />
-        </label>
-        <label class="toggle">
-          <input type="checkbox" disabled />
-          Portada
-        </label>
-        <button type="button" disabled>Agregar imagen</button>
       </div>
+      <button type="button" disabled>Guardar portada</button>
     </ng-template>
   </div>
 

@@ -8,15 +8,15 @@
 
   <div class="users-grid">
     <div class="user-form" *ngIf="canCreate">
-      <h3>Nuevo usuario</h3>
+      <h3>{{ editingUserId === null ? 'Nuevo usuario' : 'Editar usuario' }}</h3>
       <label>Nombre completo</label>
-      <input type="text" [(ngModel)]="newUser.fullName" />
+      <input type="text" [ngModel]="editingUserId === null ? newUser.fullName : editUser.fullName" (ngModelChange)="editingUserId === null ? newUser.fullName = $event : editUser.fullName = $event" />
 
       <label>Correo</label>
-      <input type="email" [(ngModel)]="newUser.email" />
+      <input type="email" [ngModel]="editingUserId === null ? newUser.email : editUser.email" (ngModelChange)="editingUserId === null ? newUser.email = $event : editUser.email = $event" />
 
-      <label>Contrasena</label>
-      <input type="password" [(ngModel)]="newUser.password" />
+      <label>{{ editingUserId === null ? 'Contrasena' : 'Nueva contrasena' }}</label>
+      <input type="password" [ngModel]="editingUserId === null ? newUser.password : editUser.password" (ngModelChange)="editingUserId === null ? newUser.password = $event : editUser.password = $event" />
 
       <div class="roles">
         <span>Roles</span>
@@ -24,15 +24,22 @@
           <label *ngFor="let role of roles">
             <input
               type="checkbox"
-              [checked]="isRoleSelected(role.key)"
-              (change)="toggleRole(role.key)"
+              [checked]="editingUserId === null ? isRoleSelected(role.key) : isEditRoleSelected(role.key)"
+              (change)="editingUserId === null ? toggleRole(role.key) : toggleEditRole(role.key)"
             />
             {{ role.label }}
           </label>
         </div>
       </div>
 
-      <button type="button" (click)="createUser()">Crear usuario</button>
+      <div class="form-actions">
+        <button type="button" (click)="editingUserId === null ? createUser() : saveUser()">
+          {{ editingUserId === null ? 'Crear usuario' : 'Guardar cambios' }}
+        </button>
+        <button type="button" class="secondary" *ngIf="editingUserId !== null" (click)="cancelEdit()">
+          Cancelar
+        </button>
+      </div>
       <p class="error" *ngIf="error">{{ error }}</p>
     </div>
 
@@ -51,6 +58,13 @@
           <span class="status" [class.inactive]="!user.active">
             {{ user.active ? 'Activo' : 'Inactivo' }}
           </span>
+          <button
+            type="button"
+            *ngIf="canCreate"
+            (click)="startEdit(user)"
+          >
+            Editar
+          </button>
           <button
             type="button"
             *ngIf="canCreate"

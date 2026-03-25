@@ -132,11 +132,16 @@
 
 @media (max-width: 600px) {
   .chat-widget {
-    right: 16px;
-    bottom: 90px;
+    right: 12px;
+    bottom: 72px;
   }
 
   .chat-panel {
-    width: min(90vw, 320px);
+    width: min(86vw, 300px);
+    max-height: min(58vh, 420px);
+  }
+
+  .chat-toggle {
+    padding: 10px 14px;
   }
 }

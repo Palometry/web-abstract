@@ -7,6 +7,9 @@ export interface ProjectData {
   image: string;
   thumbImage: string;
   createdAt?: string;
+  classification?: string;
+  category?: string;
+  scope?: string;
   brochurePdfUrl?: string;
   brochureCoverUrl?: string;
   masterplanImage?: string;

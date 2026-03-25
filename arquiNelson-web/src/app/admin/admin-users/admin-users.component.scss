@@ -90,6 +90,17 @@
   cursor: pointer;
 }
 
+.form-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.user-form button.secondary {
+  background: transparent;
+  color: var(--color-red);
+  border: 1px solid #d8d2c6;
+}
+
 .error {
   margin: 10px 0 0;
   color: #b35a3a;

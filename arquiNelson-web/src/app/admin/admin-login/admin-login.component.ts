@@ -40,6 +40,7 @@ export class AdminLoginComponent implements OnInit {
   async submit() {
     this.error = '';
     this.loading = true;
+    this.cdr.detectChanges();
     const result = await this.auth.login(this.email, this.password, this.rememberSession);
     this.loading = false;
     if (!result.ok) {
@@ -49,8 +50,10 @@ export class AdminLoginComponent implements OnInit {
           : result.reason === 'server_error'
             ? 'El servidor no pudo iniciar sesion. Revisa la configuracion del backend.'
             : 'No se pudo conectar con el servidor.';
+      this.cdr.detectChanges();
       return;
     }
+    this.cdr.detectChanges();
     this.router.navigate(['/admin']);
   }
 

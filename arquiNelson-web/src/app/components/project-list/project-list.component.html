@@ -4,6 +4,28 @@
     <p>Explora todos nuestros proyectos en una composicion visual continua.</p>
   </section>
 
+  <section class="projects-filters" *ngIf="typeOptions.length || classificationOptions.length">
+    <label class="filter-field">
+      <span>Tipo</span>
+      <select [value]="selectedType" (change)="onTypeChange($any($event.target).value)">
+        <option value="">Todos los tipos</option>
+        <option *ngFor="let option of typeOptions" [value]="option">{{ formatTypeLabel(option) }}</option>
+      </select>
+    </label>
+
+    <label class="filter-field">
+      <span>Clasificacion</span>
+      <select
+        [value]="selectedClassification"
+        [disabled]="!selectedType"
+        (change)="onClassificationChange($any($event.target).value)"
+      >
+        <option value="">Todas las clasificaciones</option>
+        <option *ngFor="let option of classificationOptions" [value]="option">{{ formatClassificationLabel(option) }}</option>
+      </select>
+    </label>
+  </section>
+
   <section class="collage-rows" *ngIf="collageRows.length">
     <div class="collage-row" *ngFor="let row of collageRows; let rowIndex = index" [class.row-reverse]="row.reverse">
       <figure class="collage-tile collage-feature">
@@ -20,7 +42,7 @@
           />
           <div class="tile-caption">
             <strong>{{ row.featured.title }}</strong>
-            <span>{{ row.featured.category }}</span>
+            <span>{{ formatTypeLabel(row.featured.category) }}</span>
           </div>
         </a>
       </figure>
@@ -40,7 +62,7 @@
             />
             <div class="tile-caption">
               <strong>{{ item.title }}</strong>
-              <span>{{ item.category }}</span>
+              <span>{{ formatTypeLabel(item.category) }}</span>
             </div>
           </a>
         </figure>

@@ -111,5 +111,6 @@ Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor'])->group(
 Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor_user_manager'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
+    Route::patch('/users/{id}', [UserController::class, 'update']);
     Route::patch('/users/{id}/status', [UserController::class, 'setStatus']);
 });
