@@ -8,6 +8,58 @@ use Illuminate\Support\Facades\DB;
 
 class ProjectsController extends Controller
 {
+    private function requestOrigin(): string
+    {
+        $scheme = request()->headers->get('x-forwarded-proto')
+            ?: request()->headers->get('x-forwarded-scheme')
+            ?: request()->getScheme();
+
+        return strtolower((string) $scheme) . '://' . request()->getHttpHost();
+    }
+
+    private function resolvePublicBrochureUrl(int $projectId, ?string $url): ?string
+    {
+        $resolved = $this->resolveFileUrl($url);
+        if (!$resolved) {
+            return null;
+        }
+
+        $parts = parse_url($resolved);
+        $path = $parts['path'] ?? '';
+        if ($path !== '' && str_starts_with($path, '/uploads/')) {
+            return $this->requestOrigin() . '/api/projects/public/' . $projectId . '/brochure';
+        }
+
+        return $resolved;
+    }
+
+    private function resolveLocalUploadPath(?string $url): ?string
+    {
+        $resolved = $this->resolveFileUrl($url);
+        if (!$resolved) {
+            return null;
+        }
+
+        $parts = parse_url($resolved);
+        $path = $parts['path'] ?? '';
+        if ($path === '' || !str_starts_with($path, '/uploads/')) {
+            return null;
+        }
+
+        $fullPath = realpath(public_path(ltrim($path, '/')));
+        $uploadsRoot = realpath(public_path('uploads'));
+
+        if (!$fullPath || !$uploadsRoot) {
+            return null;
+        }
+
+        if (!str_starts_with($fullPath, $uploadsRoot) || !is_file($fullPath)) {
+            return null;
+        }
+
+        return $fullPath;
+    }
+
     private function resolveFileUrl(?string $url): ?string
     {
         $url = is_string($url) ? trim($url) : '';
@@ -15,7 +67,7 @@ class ProjectsController extends Controller
             return null;
         }
 
-        $host = request()->getSchemeAndHttpHost();
+        $host = $this->requestOrigin();
 
         if (preg_match('#^https?://#i', $url)) {
             $parts = parse_url($url);
@@ -82,6 +134,7 @@ class ProjectsController extends Controller
 
         $details['masterplanImage'] = $this->resolveFileUrl($details['masterplanImage'] ?? null);
         $details['brochurePdfUrl'] = $this->resolveFileUrl($details['brochurePdfUrl'] ?? null);
+        $details['heroVideoUrl'] = $this->resolveFileUrl($details['heroVideoUrl'] ?? null);
         $details['bannerImages'] = $this->resolveUrlList($details['bannerImages'] ?? []);
         $details['gallery'] = $this->resolveUrlList($details['gallery'] ?? []);
 
@@ -136,6 +189,7 @@ class ProjectsController extends Controller
             $bannerImages = $this->resolveUrlList($details['bannerImages'] ?? []);
             $gallery = $this->resolveUrlList($details['gallery'] ?? []);
             $masterplanImage = $this->resolveFileUrl($details['masterplanImage'] ?? null);
+            $heroVideoUrl = $this->resolveFileUrl($details['heroVideoUrl'] ?? null);
             $coverUrl = $this->resolveFileUrl($row->cover_url ?? null);
             $fallbackImage = $coverUrl
                 ?? ($bannerImages[0] ?? ($gallery[0] ?? $masterplanImage));
@@ -147,6 +201,9 @@ class ProjectsController extends Controller
                 'image' => $fallbackImage ?? '',
                 'thumbImage' => $fallbackImage ?? '',
                 'createdAt' => $row->created_at,
+                'heroVideoUrl' => $heroVideoUrl,
+                'startYear' => (int) ($details['startYear'] ?? 0),
+                'deliveryYear' => (int) ($details['deliveryYear'] ?? 0),
                 'type' => $details['publicType'] ?? '',
                 'classification' => $details['publicClassification'] ?? '',
                 'category' => $details['publicCategory'] ?? '',
@@ -212,6 +269,7 @@ class ProjectsController extends Controller
         $bannerImages = $this->resolveUrlList($details['bannerImages'] ?? []);
         $gallery = $this->resolveUrlList($details['gallery'] ?? []);
         $masterplanImage = $this->resolveFileUrl($details['masterplanImage'] ?? null);
+        $heroVideoUrl = $this->resolveFileUrl($details['heroVideoUrl'] ?? null);
         $coverUrl = $this->resolveFileUrl($project->cover_url ?? null);
         $fallbackImage = $coverUrl
             ?? ($bannerImages[0] ?? ($gallery[0] ?? $masterplanImage));
@@ -225,7 +283,8 @@ class ProjectsController extends Controller
             'thumbImage' => $fallbackImage ?? '',
             'createdAt' => $project->created_at,
             'masterplanImage' => $masterplanImage,
-            'brochurePdfUrl' => $details['brochurePdfUrl'] ?? null,
+            'heroVideoUrl' => $heroVideoUrl,
+            'brochurePdfUrl' => $this->resolvePublicBrochureUrl($project->id, $details['brochurePdfUrl'] ?? null),
             'houseModels' => $details['houseModels'] ?? [],
             'housePlans' => $details['housePlans'] ?? [],
             'autocad360Url' => $details['autocadUrl'] ?? null,
@@ -240,7 +299,7 @@ class ProjectsController extends Controller
             'category' => $details['publicCategory'] ?? '',
             'scope' => $details['publicScope'] ?? '',
             'landArea' => $details['landArea'] ?? '',
-            'units' => (int) ($details['units'] ?? 0),
+            'units' => $details['units'] ?? null,
             'amenities' => $details['amenities'] ?? [],
             'startYear' => (int) ($details['startYear'] ?? 0),
             'deliveryYear' => (int) ($details['deliveryYear'] ?? 0),
@@ -249,6 +308,43 @@ class ProjectsController extends Controller
             'gallery' => $fullGallery,
             'lots' => $details['lots'] ?? [],
             'videos' => $videos,
+        ]);
+    }
+
+    public function publicBrochure(string $id)
+    {
+        $projectId = (int) $id;
+        if ($projectId <= 0) {
+            return response()->json(['error' => 'Invalid project id.'], 400);
+        }
+
+        $rows = DB::select(
+            "SELECT details_json
+             FROM projects
+             WHERE id = ?
+             LIMIT 1",
+            [$projectId]
+        );
+        $project = !empty($rows) ? $rows[0] : null;
+        if (!$project) {
+            return response()->json(['error' => 'Project not found.'], 404);
+        }
+
+        $details = null;
+        if (!empty($project->details_json)) {
+            $decoded = json_decode($project->details_json, true);
+            $details = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+        }
+
+        $fullPath = $this->resolveLocalUploadPath($details['brochurePdfUrl'] ?? null);
+        if (!$fullPath) {
+            return response()->json(['error' => 'Brochure not found.'], 404);
+        }
+
+        return response()->file($fullPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="brochure.pdf"',
+            'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 

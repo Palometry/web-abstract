@@ -50,6 +50,8 @@ export class AdminQuotesComponent implements OnInit, AfterViewInit {
 
   formatStatus(status: string) {
     switch (status) {
+      case 'draft':
+        return 'Borrador';
       case 'new':
         return 'Nueva';
       case 'reviewed':

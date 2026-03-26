@@ -677,23 +677,7 @@
   }
 }
 
-.project-contact {
-  margin: 40px 0;
-  padding: 24px;
-  background: var(--color-surface-alt);
-  border-left: 4px solid var(--color-red);
-  border-radius: 4px;
 
-  h4 {
-    margin-top: 0;
-    color: var(--color-text);
-  }
-
-  p {
-    color: var(--color-text-muted);
-    margin-bottom: 16px;
-  }
-}
 
 .btn-back {
   display: inline-block;
@@ -871,8 +855,6 @@
     grid-template-columns: 1fr;
   }
 
-  .project-contact {
-    padding: 18px;
-  }
+
 }
 

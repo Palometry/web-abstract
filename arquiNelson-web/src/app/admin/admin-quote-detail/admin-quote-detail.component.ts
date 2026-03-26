@@ -60,7 +60,7 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     planName: '',
     planMinDays: null as number | null,
     planMaxDays: null as number | null,
-    status: 'new',
+    status: 'draft',
     expiresAt: '',
     notes: ''
   };
@@ -195,6 +195,8 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
 
   formatStatus(status: string) {
     switch (status) {
+      case 'draft':
+        return 'Borrador';
       case 'new':
         return 'Nueva';
       case 'reviewed':

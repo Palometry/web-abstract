@@ -52,7 +52,7 @@ class QuotesController extends Controller
         if (!$status) {
             return null;
         }
-        $allowed = ['new', 'reviewed', 'sent', 'accepted', 'rejected'];
+        $allowed = ['draft', 'new', 'reviewed', 'sent', 'accepted', 'rejected'];
         return in_array($status, $allowed, true) ? $status : null;
     }
 
@@ -483,15 +483,24 @@ class QuotesController extends Controller
             return response()->json(['error' => 'Missing required fields.'], 400);
         }
 
-        $areaM2 = $this->toNumber($request->input('areaM2'), 0);
-        $areaM2 = $areaM2 < 0 ? 0 : $areaM2;
+        $areaM2 = $this->toNumber($request->input('areaM2'), -1);
+        if ($areaM2 <= 0) {
+            return response()->json(['error' => 'areaM2 must be greater than 0.'], 400);
+        }
 
         $documentType = is_string($request->input('documentType')) ? trim((string) $request->input('documentType')) : null;
         $documentNumber = is_string($request->input('documentNumber')) ? trim((string) $request->input('documentNumber')) : null;
         $projectAddress = is_string($request->input('projectAddress')) ? trim((string) $request->input('projectAddress')) : null;
         $notes = is_string($request->input('notes')) ? trim((string) $request->input('notes')) : null;
-        $notes = $notes ? "Lead chatbot: {$notes}" : 'Lead chatbot';
+        $notes = $notes ? "Solicitud web: {$notes}" : 'Solicitud web';
         $currency = strtoupper((string) $request->input('currency', 'PEN'));
+
+        $uncovered = $this->toNumber($request->input('areaUncoveredPercent'), 30);
+        $uncovered = ($uncovered >= 0 && $uncovered <= 100) ? $uncovered : 30;
+        $coveredM2 = $this->roundMoney($areaM2 * (1 - $uncovered / 100));
+
+        $floorCount = $this->toNumber($request->input('floorCount'), -1);
+        $floorCount = $floorCount > 0 ? (float) round($floorCount) : 1;
 
         $pricingRateId = $request->input('pricingRateId');
         $selectedRateId = is_numeric($pricingRateId) ? (int) $pricingRateId : null;
@@ -528,7 +537,64 @@ class QuotesController extends Controller
             $currency = $rate->currency;
         }
 
+        if ($baseRatePerM2 <= 0) {
+            return response()->json(['error' => 'baseRatePerM2 must be greater than 0.'], 400);
+        }
+
+        $baseCost = $this->roundMoney($coveredM2 * $floorCount * $baseRatePerM2);
+        $expiresAt = now()->addMonth()->format('Y-m-d');
+
         try {
+            $serviceInputs = is_array($request->input('services')) ? $request->input('services') : [];
+            $serviceIds = [];
+            foreach ($serviceInputs as $item) {
+                $serviceId = isset($item['serviceId']) && is_numeric($item['serviceId']) ? (int) $item['serviceId'] : null;
+                if ($serviceId) {
+                    $serviceIds[$serviceId] = true;
+                }
+            }
+            $serviceIds = array_keys($serviceIds);
+
+            $serviceMap = [];
+            if (!empty($serviceIds)) {
+                $rows = DB::table('services')
+                    ->select('id', 'pricing_type', 'price', 'is_active')
+                    ->whereIn('id', $serviceIds)
+                    ->get();
+                foreach ($rows as $row) {
+                    $serviceMap[$row->id] = [
+                        'pricingType' => $row->pricing_type,
+                        'price' => (float) $row->price,
+                        'isActive' => (bool) $row->is_active,
+                    ];
+                }
+            }
+
+            $lineItems = [];
+            $extrasCost = 0.0;
+
+            foreach ($serviceInputs as $item) {
+                $serviceId = isset($item['serviceId']) && is_numeric($item['serviceId']) ? (int) $item['serviceId'] : null;
+                if (!$serviceId) {
+                    continue;
+                }
+                $service = $serviceMap[$serviceId] ?? null;
+                if (!$service || !$service['isActive']) {
+                    return response()->json(['error' => 'Invalid service selection.'], 400);
+                }
+                $quantity = max(1, $this->toNumber($item['quantity'] ?? null, 1));
+                $unitPrice = isset($item['unitPrice']) ? $this->toNumber($item['unitPrice'], $service['price']) : $service['price'];
+                $lineTotal = $this->computeLineTotal($service['pricingType'], $unitPrice, $quantity, $areaM2, $baseCost);
+                $lineItems[] = [
+                    'serviceId' => $serviceId,
+                    'quantity' => $quantity,
+                    'unitPrice' => $unitPrice,
+                    'lineTotal' => $lineTotal,
+                ];
+                $extrasCost += $lineTotal;
+            }
+
+            $extrasCost = $this->roundMoney($extrasCost);
             if ($idempotencyKey) {
                 $existing = DB::table('quotes')
                     ->select('id')
@@ -550,24 +616,34 @@ class QuotesController extends Controller
                 'project_name' => $projectName,
                 'project_address' => $projectAddress ?: null,
                 'area_m2' => $areaM2,
-                'area_covered_m2' => null,
-                'area_uncovered_percent' => null,
-                'floor_count' => null,
+                'area_covered_m2' => $coveredM2,
+                'area_uncovered_percent' => $uncovered,
+                'floor_count' => $floorCount,
                 'base_rate_per_m2' => $baseRatePerM2,
-                'base_cost' => 0,
-                'extras_cost' => 0,
-                'total_cost' => 0,
+                'base_cost' => $baseCost,
+                'extras_cost' => $extrasCost,
+                'total_cost' => $this->roundMoney($baseCost + $extrasCost),
                 'currency' => $currency,
-                'status' => 'new',
+                'status' => 'draft',
                 'idempotency_key' => $idempotencyKey,
                 'notes' => $notes,
-                'expires_at' => null,
+                'expires_at' => $expiresAt,
                 'plan_name' => $planName,
                 'plan_min_days' => $planMinDays,
                 'plan_max_days' => $planMaxDays,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+
+            foreach ($lineItems as $line) {
+                DB::table('quote_services')->insert([
+                    'quote_id' => $quoteId,
+                    'service_id' => $line['serviceId'],
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $line['unitPrice'],
+                    'line_total' => $line['lineTotal'],
+                ]);
+            }
 
             return response()->json(['id' => $quoteId], 201);
         } catch (\Throwable) {

@@ -28,6 +28,12 @@ type CollageRow = {
   reverse: boolean;
 };
 
+type CollageSection = {
+  year: number | null;
+  label: string | null;
+  rows: CollageRow[];
+};
+
 type TaxonomyResolution = {
   type: string;
   classification: string;
@@ -49,6 +55,7 @@ type ScopeCatalogMaps = {
 export class ProjectListComponent {
   collageItems: CollageTile[] = [];
   collageRows: CollageRow[] = [];
+  collageSections: CollageSection[] = [];
   private allCollageItems: CollageTile[] = [];
   private readonly edificacionesCatalog = this.buildEdificacionesCatalog();
   private readonly habilitacionesCatalog = this.buildHabilitacionesCatalog();
@@ -63,24 +70,36 @@ export class ProjectListComponent {
     this.loadProjects();
   }
 
-  onCollageError(index: number): void {
-    const project = this.collageItems[index]?.project;
+  onCollageError(tile: CollageTile): void {
+    const project = tile.project;
     if (!project) {
       return;
     }
 
-    const fallbackImage = this.collectProjectImages(project)[0];
+    const fallbackImage = this.collectProjectImages(project).find((image) => image !== tile.src);
     if (!fallbackImage) {
       return;
     }
 
-    this.collageItems[index] = {
-      ...this.collageItems[index],
+    this.collageItems = this.collageItems.map((item) => item === tile ? {
+      ...item,
       src: fallbackImage,
       alt: project.title,
-    };
-    this.collageRows = this.buildCollageRows(this.collageItems);
+    } : item);
+    this.rebuildCollageLayout();
     this.cdr.detectChanges();
+  }
+
+  trackSection(_index: number, section: CollageSection): string {
+    return section.year === null ? 'current' : String(section.year);
+  }
+
+  trackRow(index: number, row: CollageRow): string {
+    return `${row.featured.id}-${index}`;
+  }
+
+  trackTile(_index: number, tile: CollageTile): string | number {
+    return tile.id;
   }
 
   get typeOptions(): string[] {
@@ -196,13 +215,44 @@ export class ProjectListComponent {
     });
   }
 
+  private rebuildCollageLayout(): void {
+    this.collageRows = this.buildCollageRows(this.collageItems);
+    this.collageSections = this.buildCollageSections(this.collageItems);
+  }
+
+  private buildCollageSections(items: CollageTile[]): CollageSection[] {
+    if (!items.length) {
+      return [];
+    }
+
+    const currentYear = new Date().getFullYear();
+    const sections = new Map<number | 'current', CollageTile[]>();
+
+    for (const item of items) {
+      const year = this.getProjectDisplayYearValue(item.project);
+      const key = year > 0 ? year : 'current';
+      const bucket = sections.get(key) ?? [];
+      bucket.push(item);
+      sections.set(key, bucket);
+    }
+
+    return Array.from(sections.entries()).map(([key, sectionItems]) => {
+      const year = key === 'current' ? null : key;
+      return {
+        year,
+        label: year !== null && year < currentYear ? String(year) : null,
+        rows: this.buildCollageRows(sectionItems),
+      };
+    });
+  }
+
   private applyFilters(): void {
     this.collageItems = this.allCollageItems.filter((item) => {
       const matchesType = !this.selectedType || item.category === this.selectedType;
       const matchesClassification = !this.selectedClassification || item.classification === this.selectedClassification;
       return matchesType && matchesClassification;
     });
-    this.collageRows = this.buildCollageRows(this.collageItems);
+    this.rebuildCollageLayout();
   }
 
   private getUniqueOptions(values: string[]): string[] {
@@ -388,16 +438,30 @@ export class ProjectListComponent {
     return Array.from(unique);
   }
 
+  private getProjectDisplayYearValue(project: CollageProject): number {
+    const recency = this.getProjectRecencyValue(project);
+    if (recency > 0) {
+      return recency;
+    }
+
+    const createdAt = this.getProjectCreatedAtValue(project);
+    if (createdAt > 0) {
+      return new Date(createdAt).getFullYear();
+    }
+
+    return 0;
+  }
+
   private sortProjectsByRecency(projects: CollageProject[]): CollageProject[] {
     return [...projects].sort((left, right) => {
-      const createdAtDiff = this.getProjectCreatedAtValue(right) - this.getProjectCreatedAtValue(left);
-      if (createdAtDiff !== 0) {
-        return createdAtDiff;
-      }
-
       const yearDiff = this.getProjectRecencyValue(right) - this.getProjectRecencyValue(left);
       if (yearDiff !== 0) {
         return yearDiff;
+      }
+
+      const createdAtDiff = this.getProjectCreatedAtValue(right) - this.getProjectCreatedAtValue(left);
+      if (createdAtDiff !== 0) {
+        return createdAtDiff;
       }
 
       const rightId = typeof right.id === 'number' ? right.id : Number.NaN;
@@ -406,7 +470,7 @@ export class ProjectListComponent {
         return rightId - leftId;
       }
 
-      return left.title.localeCompare(right.title);
+      return left.title.localeCompare(right.title, 'es');
     });
   }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -49,6 +49,12 @@ type HouseModelDraft = {
   newImageUrl: string;
 };
 
+type PendingLocalFile = {
+  file: File;
+  name: string;
+  previewUrl: string;
+};
+
 @Component({
   selector: 'app-admin-project-create',
   standalone: true,
@@ -56,7 +62,7 @@ type HouseModelDraft = {
   templateUrl: './admin-project-create.component.html',
   styleUrls: ['./admin-project-create.component.scss']
 })
-export class AdminProjectCreateComponent implements OnInit {
+export class AdminProjectCreateComponent implements OnInit, OnDestroy {
   saving = false;
   loading = false;
   error = '';
@@ -68,6 +74,17 @@ export class AdminProjectCreateComponent implements OnInit {
   videos: ProjectVideoView[] = [];
   successMessage = '';
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingBrochureFile: File | null = null;
+  private pendingHeroVideoFile: PendingLocalFile | null = null;
+  private pendingCoverFile: PendingLocalFile | null = null;
+  private pendingCoverDeletion = false;
+  private pendingSingleImages: Record<'masterplanImage', PendingLocalFile | null> = {
+    masterplanImage: null
+  };
+  private pendingListImages: Record<'bannerImagesText' | 'galleryText', PendingLocalFile[]> = {
+    bannerImagesText: [],
+    galleryText: []
+  };
 
   draft = {
     name: '',
@@ -93,6 +110,7 @@ export class AdminProjectCreateComponent implements OnInit {
     startYear: '',
     deliveryYear: '',
     autocadUrl: '',
+    heroVideoUrl: '',
     brochurePdfUrl: '',
     mapUrl: '',
     mapEmbedUrl: '',
@@ -128,7 +146,8 @@ export class AdminProjectCreateComponent implements OnInit {
     private route: ActivatedRoute,
     private data: AdminDataService,
     private sanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   async ngOnInit() {
@@ -136,6 +155,19 @@ export class AdminProjectCreateComponent implements OnInit {
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => void this.handleRouteChange(params.get('id')));
+  }
+
+  ngOnDestroy() {
+    this.clearPendingLocalMediaState();
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (!this.hasPendingLocalChanges) {
+      return;
+    }
+    event.preventDefault();
+    event.returnValue = '';
   }
 
   get isEditMode(): boolean {
@@ -147,7 +179,51 @@ export class AdminProjectCreateComponent implements OnInit {
   }
 
   get hasCoverImage(): boolean {
-    return !!this.imageDraft.fileUrl.trim();
+    return !!this.coverPreviewUrl;
+  }
+
+  get hasBrochurePdf(): boolean {
+    return !!this.detailsDraft.brochurePdfUrl.trim();
+  }
+
+  get pendingBrochureName(): string {
+    return this.pendingBrochureFile?.name ?? '';
+  }
+
+  get heroVideoPreviewUrl(): string {
+    return this.pendingHeroVideoFile?.previewUrl ?? this.detailsDraft.heroVideoUrl.trim();
+  }
+
+  get pendingHeroVideoName(): string {
+    return this.pendingHeroVideoFile?.name ?? '';
+  }
+
+  get hasHeroVideo(): boolean {
+    return !!this.heroVideoPreviewUrl;
+  }
+
+  get coverPreviewUrl(): string {
+    return this.pendingCoverFile?.previewUrl ?? this.imageDraft.fileUrl.trim();
+  }
+
+  get pendingCoverName(): string {
+    return this.pendingCoverFile?.name ?? '';
+  }
+
+  get hasPendingLocalChanges(): boolean {
+    const currentCoverUrl = this.coverImage?.fileUrl?.trim() ?? '';
+    const draftCoverUrl = this.imageDraft.fileUrl.trim();
+
+    return !!(
+      this.pendingBrochureFile
+      || this.pendingHeroVideoFile
+      || this.pendingCoverFile
+      || this.pendingCoverDeletion
+      || this.pendingSingleImages.masterplanImage
+      || this.pendingListImages.bannerImagesText.length
+      || this.pendingListImages.galleryText.length
+      || draftCoverUrl !== currentCoverUrl
+    );
   }
 
   private async loadCatalog() {
@@ -309,6 +385,18 @@ export class AdminProjectCreateComponent implements OnInit {
     this.saving = true;
     this.error = '';
     try {
+      const brochureReady = await this.preparePendingBrochureUpload();
+      if (!brochureReady) {
+        return;
+      }
+      const heroVideoReady = await this.preparePendingHeroVideoUpload();
+      if (!heroVideoReady) {
+        return;
+      }
+      const detailImagesReady = await this.preparePendingDetailImageUploads();
+      if (!detailImagesReady) {
+        return;
+      }
       const result = await this.data.createProject({
         name,
         clientName,
@@ -324,10 +412,17 @@ export class AdminProjectCreateComponent implements OnInit {
         return;
       }
       this.projectId = result.id;
+      const coverReady = await this.commitCoverImageChange(result.id);
+      if (!coverReady) {
+        return;
+      }
       await this.loadProject(result.id);
       this.showToast('Proyecto creado.');
     } finally {
-      this.saving = false;
+      queueMicrotask(() => {
+        this.saving = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -345,6 +440,18 @@ export class AdminProjectCreateComponent implements OnInit {
     this.saving = true;
     this.error = '';
     try {
+      const brochureReady = await this.preparePendingBrochureUpload();
+      if (!brochureReady) {
+        return;
+      }
+      const heroVideoReady = await this.preparePendingHeroVideoUpload();
+      if (!heroVideoReady) {
+        return;
+      }
+      const detailImagesReady = await this.preparePendingDetailImageUploads();
+      if (!detailImagesReady) {
+        return;
+      }
       const result = await this.data.updateProject(this.projectId, {
         name,
         clientName,
@@ -359,10 +466,17 @@ export class AdminProjectCreateComponent implements OnInit {
         this.error = result.error ?? 'No se pudo guardar el proyecto.';
         return;
       }
+      const coverReady = await this.commitCoverImageChange(this.projectId);
+      if (!coverReady) {
+        return;
+      }
       await this.loadProject(this.projectId);
       this.showToast('Proyecto actualizado.');
     } finally {
-      this.saving = false;
+      queueMicrotask(() => {
+        this.saving = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -424,6 +538,9 @@ export class AdminProjectCreateComponent implements OnInit {
     this.project = null;
     this.images = [];
     this.videos = [];
+    this.clearPendingLocalMediaState();
+    this.pendingBrochureFile = null;
+    this.pendingCoverDeletion = false;
     this.imageDraft = { fileUrl: '', isCover: true, sortOrder: 0 };
     this.videoDraft = { fileUrl: '', title: '', description: '', sortOrder: 0 };
     this.draft = {
@@ -440,9 +557,10 @@ export class AdminProjectCreateComponent implements OnInit {
 
   private syncCoverDraft() {
     const cover = this.coverImage;
+    this.pendingCoverDeletion = false;
     this.imageDraft = cover
       ? {
-          fileUrl: cover.fileUrl,
+          fileUrl: this.normalizeSecureUrl(cover.fileUrl),
           isCover: true,
           sortOrder: 0
         }
@@ -454,33 +572,7 @@ export class AdminProjectCreateComponent implements OnInit {
   }
 
   async saveCoverImage() {
-    if (!this.projectId) {
-      return;
-    }
-    this.error = '';
-    const fileUrl = this.imageDraft.fileUrl.trim();
-    if (!fileUrl) {
-      this.error = 'La URL de la imagen de portada es obligatoria.';
-      return;
-    }
-    const currentCover = this.coverImage;
-    const result = currentCover
-      ? await this.data.updateProjectImage(this.projectId, currentCover.id, {
-          fileUrl,
-          isCover: true,
-          sortOrder: 0
-        })
-      : await this.data.createProjectImage(this.projectId, {
-          fileUrl,
-          isCover: true,
-          sortOrder: 0
-        });
-    if (!result.ok) {
-      this.error = result.error ?? 'No se pudo guardar la imagen de portada.';
-      return;
-    }
-    await this.loadProject(this.projectId);
-    this.showToast(currentCover ? 'Imagen de portada actualizada.' : 'Imagen de portada guardada.');
+    this.showToast('La portada se guardará cuando guardes el proyecto.');
   }
 
   async addVideo() {
@@ -507,27 +599,23 @@ export class AdminProjectCreateComponent implements OnInit {
   }
 
   async uploadImageDraft(event: Event) {
-    if (!this.projectId) {
-      return;
-    }
-    this.error = '';
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
     if (!file) {
+      if (input) {
+        input.value = '';
+      }
       return;
     }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: file.name });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
-      return;
-    }
-    this.imageDraft.fileUrl = result.fileUrl;
-    if (input) {
-      input.value = '';
-    }
-    await this.saveCoverImage();
+    this.ngZone.run(() => {
+      this.replacePendingCoverFile(file);
+      this.pendingCoverDeletion = false;
+      if (input) {
+        input.value = '';
+      }
+      this.showToast('Portada seleccionada. Se guardará cuando guardes el proyecto.');
+      this.cdr.detectChanges();
+    });
   }
 
   async uploadBrochurePdf(event: Event) {
@@ -536,17 +624,50 @@ export class AdminProjectCreateComponent implements OnInit {
     if (!file) {
       return;
     }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: file.name });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir el brochure.';
+    this.ngZone.run(() => {
+      this.pendingBrochureFile = file;
+      this.error = '';
+      if (input) {
+        input.value = '';
+      }
+      this.showToast('PDF seleccionado. Guarda el proyecto para aplicar el cambio.');
+      this.cdr.detectChanges();
+    });
+  }
+
+  async uploadHeroVideo(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
       return;
     }
-    this.detailsDraft.brochurePdfUrl = result.fileUrl;
-    if (input) {
-      input.value = '';
+    this.ngZone.run(() => {
+      this.replacePendingHeroVideoFile(file);
+      this.error = '';
+      if (input) {
+        input.value = '';
+      }
+      this.showToast('Video del banner seleccionado. Se guardará cuando guardes el proyecto.');
+      this.cdr.detectChanges();
+    });
+  }
+
+  async removeBrochurePdf() {
+    if (!this.hasBrochurePdf && !this.pendingBrochureFile) {
+      return;
     }
+    this.pendingBrochureFile = null;
+    this.detailsDraft.brochurePdfUrl = '';
+    this.cdr.detectChanges();
+  }
+
+  removeHeroVideo() {
+    if (this.pendingHeroVideoFile) {
+      this.revokePendingFile(this.pendingHeroVideoFile);
+      this.pendingHeroVideoFile = null;
+    }
+    this.detailsDraft.heroVideoUrl = '';
+    this.cdr.detectChanges();
   }
 
   async saveVideo(video: ProjectVideoView) {
@@ -589,6 +710,13 @@ export class AdminProjectCreateComponent implements OnInit {
   }
 
   async removeCoverImage() {
+    if (this.pendingCoverFile) {
+      this.revokePendingFile(this.pendingCoverFile);
+      this.pendingCoverFile = null;
+      this.cdr.detectChanges();
+      return;
+    }
+
     const draftUrl = this.imageDraft.fileUrl.trim();
     if (!draftUrl) {
       return;
@@ -596,11 +724,11 @@ export class AdminProjectCreateComponent implements OnInit {
 
     const cover = this.coverImage;
     if (cover && cover.fileUrl.trim() === draftUrl) {
-      await this.deleteCoverImage();
-      return;
+      this.pendingCoverDeletion = true;
     }
 
     this.imageDraft.fileUrl = '';
+    this.cdr.detectChanges();
   }
 
   async deleteVideo(video: ProjectVideoView) {
@@ -622,45 +750,52 @@ export class AdminProjectCreateComponent implements OnInit {
   async uploadDetailImage(event: Event, field: keyof typeof this.detailsDraft) {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
+    this.ngZone.run(() => {
+      if (file && field === 'masterplanImage') {
+        this.replacePendingSingleImage(field, file);
+      }
+      if (input) {
+        input.value = '';
+      }
+      if (file) {
+        this.showToast('Imagen seleccionada. Se guardará cuando guardes el proyecto.');
+      }
+      this.cdr.detectChanges();
+    });
     if (!file) {
       return;
-    }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: file.name });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
-      return;
-    }
-    this.detailsDraft[field] = result.fileUrl as any;
-    if (input) {
-      input.value = '';
     }
   }
 
   clearDetailImage(field: keyof typeof this.detailsDraft) {
+    if (field === 'masterplanImage' && this.pendingSingleImages.masterplanImage) {
+      this.revokePendingFile(this.pendingSingleImages.masterplanImage);
+      this.pendingSingleImages.masterplanImage = null;
+      this.cdr.detectChanges();
+      return;
+    }
     this.detailsDraft[field] = '' as any;
   }
 
   async appendDetailImage(event: Event, field: keyof typeof this.detailsDraft) {
     const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) {
+    const files = Array.from(input?.files ?? []);
+    if (!files.length) {
+      if (input) {
+        input.value = '';
+      }
       return;
     }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: file.name });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
-      return;
-    }
-    const current = (this.detailsDraft[field] as unknown as string) || '';
-    const next = current ? `${current}\n${result.fileUrl}` : result.fileUrl;
-    this.detailsDraft[field] = next as any;
-    if (input) {
-      input.value = '';
-    }
+    this.ngZone.run(() => {
+      if (field === 'bannerImagesText' || field === 'galleryText') {
+        this.pendingListImages[field].push(...files.map((file) => this.createPendingLocalFile(file)));
+      }
+      if (input) {
+        input.value = '';
+      }
+      this.showToast('Imágenes seleccionadas. Se guardarán cuando guardes el proyecto.');
+      this.cdr.detectChanges();
+    });
   }
 
   removeDetailListImage(field: keyof typeof this.detailsDraft, index: number) {
@@ -673,6 +808,16 @@ export class AdminProjectCreateComponent implements OnInit {
     this.detailsDraft[field] = lines.join('\n') as any;
   }
 
+  removePendingDetailListImage(field: 'bannerImagesText' | 'galleryText', index: number) {
+    const pending = this.pendingListImages[field];
+    if (index < 0 || index >= pending.length) {
+      return;
+    }
+    this.revokePendingFile(pending[index]);
+    pending.splice(index, 1);
+    this.cdr.detectChanges();
+  }
+
   async appendHouseModelImage(event: Event) {
     const model = this.activeHouseModel;
     if (!model) {
@@ -683,24 +828,24 @@ export class AdminProjectCreateComponent implements OnInit {
 
   async appendHousePlanImage(event: Event) {
     const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) {
+    const selected = await this.uploadSelectedFiles(input?.files ?? null, 'No se pudo subir la imagen.');
+    const fileUrl = selected.urls[0];
+    if (!fileUrl) {
+      if (input) {
+        input.value = '';
+      }
       return;
     }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: file.name });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
-      return;
-    }
-    const line = `Tipo | 0 | Area total | Area techada | ${result.fileUrl}`;
-    this.detailsDraft.housePlansText = this.detailsDraft.housePlansText
-      ? `${this.detailsDraft.housePlansText}\n${line}`
-      : line;
-    if (input) {
-      input.value = '';
-    }
+    this.ngZone.run(() => {
+      const line = `Tipo | 0 | Area total | Area techada | ${fileUrl}`;
+      this.detailsDraft.housePlansText = this.detailsDraft.housePlansText
+        ? `${this.detailsDraft.housePlansText}\n${line}`
+        : line;
+      if (input) {
+        input.value = '';
+      }
+      this.cdr.detectChanges();
+    });
   }
 
   get activeHouseModel(): HouseModelDraft | null {
@@ -766,22 +911,21 @@ export class AdminProjectCreateComponent implements OnInit {
 
   async uploadHouseModelImage(model: HouseModelDraft, event: Event) {
     const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.[0];
-    if (!file) {
+    const selected = await this.uploadSelectedFiles(input?.files ?? null, 'No se pudo subir la imagen.');
+    if (!selected.urls.length) {
+      if (input) {
+        input.value = '';
+      }
       return;
     }
-    this.uploading = true;
-    const result = await this.data.uploadMedia(file, { title: file.name });
-    this.uploading = false;
-    if (!result.ok || !result.fileUrl) {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
-      return;
-    }
-    model.images.push(result.fileUrl);
-    this.activeHouseImageIndex = 0;
-    if (input) {
-      input.value = '';
-    }
+    this.ngZone.run(() => {
+      model.images.push(...selected.urls);
+      this.activeHouseImageIndex = 0;
+      if (input) {
+        input.value = '';
+      }
+      this.cdr.detectChanges();
+    });
   }
 
   removeHouseModelImage(model: HouseModelDraft, index: number) {
@@ -869,7 +1013,7 @@ export class AdminProjectCreateComponent implements OnInit {
         description: model.description ?? '',
         rooms,
         featuresText: features.join('\n'),
-        images: images.filter(Boolean),
+        images: images.filter(Boolean).map((image) => this.normalizeSecureUrl(image)),
         newImageUrl: ''
       };
     });
@@ -886,6 +1030,14 @@ export class AdminProjectCreateComponent implements OnInit {
     return this.splitLines(value).slice(0, 12);
   }
 
+  getPendingSingleImagePreview(field: 'masterplanImage'): string | null {
+    return this.pendingSingleImages[field]?.previewUrl ?? null;
+  }
+
+  getPendingListImagePreviews(field: 'bannerImagesText' | 'galleryText'): string[] {
+    return this.pendingListImages[field].map((entry) => entry.previewUrl);
+  }
+
   private joinLines(values?: string[] | null): string {
     return values?.length ? values.join('\n') : '';
   }
@@ -893,6 +1045,23 @@ export class AdminProjectCreateComponent implements OnInit {
   private nullIfEmpty(value: string): string | null {
     const trimmed = value.trim();
     return trimmed ? trimmed : null;
+  }
+
+  private normalizeSecureUrl(value?: string | null): string {
+    const trimmed = value?.trim() ?? '';
+    if (!trimmed || typeof window === 'undefined' || window.location.protocol !== 'https:') {
+      return trimmed;
+    }
+
+    try {
+      const url = new URL(trimmed, window.location.origin);
+      if (url.protocol === 'http:') {
+        url.protocol = 'https:';
+      }
+      return url.toString();
+    } catch {
+      return trimmed;
+    }
   }
 
   private extractIframeSrc(value: string): string {
@@ -1021,19 +1190,23 @@ export class AdminProjectCreateComponent implements OnInit {
 
     return {
       shortDesc: this.nullIfEmpty(this.detailsDraft.shortDesc),
-      location: this.nullIfEmpty(this.detailsDraft.location),
-      promoter: this.nullIfEmpty(this.detailsDraft.promoter),
+      location: this.nullIfEmpty(this.draft.address),
+      promoter: this.nullIfEmpty(this.draft.clientName),
       publicScope,
       publicStatus: publicScope,
       publicType,
       publicClassification,
       publicCategory,
       landArea: this.nullIfEmpty(this.detailsDraft.landArea),
-      units: this.detailsDraft.units ? Number(this.detailsDraft.units) : null,
+      units:
+        String(this.detailsDraft.units ?? '').trim() !== ''
+          ? Number(this.detailsDraft.units)
+          : null,
       amenities,
       startYear,
       deliveryYear,
       autocadUrl: this.nullIfEmpty(this.detailsDraft.autocadUrl),
+      heroVideoUrl: this.nullIfEmpty(this.detailsDraft.heroVideoUrl),
       brochurePdfUrl: this.nullIfEmpty(this.detailsDraft.brochurePdfUrl),
       mapUrl: this.nullIfEmpty(mapUrl),
       mapEmbedUrl: this.nullIfEmpty(mapEmbedUrl),
@@ -1118,7 +1291,259 @@ export class AdminProjectCreateComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  canDeactivate(): boolean {
+    if (!this.hasPendingLocalChanges) {
+      return true;
+    }
+    return confirm('Tienes archivos pendientes sin guardar. Si sales ahora, se perderán.');
+  }
+
+  private createPendingLocalFile(file: File): PendingLocalFile {
+    return {
+      file,
+      name: file.name,
+      previewUrl: URL.createObjectURL(file)
+    };
+  }
+
+  private revokePendingFile(entry: PendingLocalFile | null) {
+    if (entry?.previewUrl) {
+      URL.revokeObjectURL(entry.previewUrl);
+    }
+  }
+
+  private replacePendingCoverFile(file: File) {
+    this.revokePendingFile(this.pendingCoverFile);
+    this.pendingCoverFile = this.createPendingLocalFile(file);
+  }
+
+  private replacePendingSingleImage(field: 'masterplanImage', file: File) {
+    this.revokePendingFile(this.pendingSingleImages[field]);
+    this.pendingSingleImages[field] = this.createPendingLocalFile(file);
+  }
+
+  private clearPendingLocalMediaState() {
+    this.revokePendingFile(this.pendingHeroVideoFile);
+    this.pendingHeroVideoFile = null;
+    this.revokePendingFile(this.pendingCoverFile);
+    this.pendingCoverFile = null;
+    this.pendingCoverDeletion = false;
+    this.revokePendingFile(this.pendingSingleImages.masterplanImage);
+    this.pendingSingleImages.masterplanImage = null;
+
+    for (const field of ['bannerImagesText', 'galleryText'] as const) {
+      for (const entry of this.pendingListImages[field]) {
+        this.revokePendingFile(entry);
+      }
+      this.pendingListImages[field] = [];
+    }
+  }
+
+  private replacePendingHeroVideoFile(file: File) {
+    this.revokePendingFile(this.pendingHeroVideoFile);
+    this.pendingHeroVideoFile = this.createPendingLocalFile(file);
+  }
+
+  private async uploadSelectedFiles(
+    files: FileList | null,
+    fallbackError: string
+  ): Promise<{ urls: string[]; error?: string }> {
+    const selectedFiles = Array.from(files ?? []);
+    if (!selectedFiles.length) {
+      return { urls: [] };
+    }
+
+    this.ngZone.run(() => {
+      this.uploading = true;
+      this.error = '';
+      this.cdr.detectChanges();
+    });
+
+    const uploadedUrls: string[] = [];
+    let errorMessage = '';
+
+    for (const file of selectedFiles) {
+      const result = await this.data.uploadMedia(file, { title: file.name });
+      if (!result.ok || !result.fileUrl) {
+        errorMessage = uploadedUrls.length
+          ? 'Algunos archivos no se pudieron subir.'
+          : (result.error ?? fallbackError);
+        break;
+      }
+      uploadedUrls.push(result.fileUrl);
+    }
+
+    this.ngZone.run(() => {
+      this.uploading = false;
+      if (errorMessage) {
+        this.error = errorMessage;
+      }
+      this.cdr.detectChanges();
+    });
+
+    return errorMessage ? { urls: uploadedUrls, error: errorMessage } : { urls: uploadedUrls };
+  }
+
+  private async preparePendingBrochureUpload(): Promise<boolean> {
+    if (!this.pendingBrochureFile) {
+      return true;
+    }
+
+    this.uploading = true;
+    this.error = '';
+    this.cdr.detectChanges();
+
+    const file = this.pendingBrochureFile;
+    const result = await this.data.uploadMedia(file, { title: file.name });
+
+    this.ngZone.run(() => {
+      this.uploading = false;
+      if (!result.ok || !result.fileUrl) {
+        this.error = result.error ?? 'No se pudo subir el brochure.';
+        this.cdr.detectChanges();
+        return;
+      }
+
+      this.detailsDraft.brochurePdfUrl = result.fileUrl;
+      this.pendingBrochureFile = null;
+      this.cdr.detectChanges();
+    });
+
+    return !!result.ok && !!result.fileUrl;
+  }
+
+  private async preparePendingHeroVideoUpload(): Promise<boolean> {
+    if (!this.pendingHeroVideoFile) {
+      return true;
+    }
+
+    this.uploading = true;
+    this.error = '';
+    this.cdr.detectChanges();
+
+    const file = this.pendingHeroVideoFile.file;
+    const result = await this.data.uploadMedia(file, { title: this.pendingHeroVideoFile.name });
+
+    this.ngZone.run(() => {
+      this.uploading = false;
+      if (!result.ok || !result.fileUrl) {
+        this.error = result.error ?? 'No se pudo subir el video del banner.';
+        this.cdr.detectChanges();
+        return;
+      }
+
+      this.detailsDraft.heroVideoUrl = result.fileUrl;
+      this.revokePendingFile(this.pendingHeroVideoFile);
+      this.pendingHeroVideoFile = null;
+      this.cdr.detectChanges();
+    });
+
+    return !!result.ok && !!result.fileUrl;
+  }
+
+  private async preparePendingDetailImageUploads(): Promise<boolean> {
+    const masterplan = this.pendingSingleImages.masterplanImage;
+    if (masterplan) {
+      const result = await this.data.uploadMedia(masterplan.file, { title: masterplan.name });
+      if (!result.ok || !result.fileUrl) {
+        this.error = result.error ?? 'No se pudo subir la imagen.';
+        this.cdr.detectChanges();
+        return false;
+      }
+      this.detailsDraft.masterplanImage = result.fileUrl;
+      this.revokePendingFile(masterplan);
+      this.pendingSingleImages.masterplanImage = null;
+    }
+
+    for (const field of ['bannerImagesText', 'galleryText'] as const) {
+      if (!this.pendingListImages[field].length) {
+        continue;
+      }
+
+      const current = (this.detailsDraft[field] as unknown as string) || '';
+      const currentLines = this.splitLines(current);
+      const uploadedUrls: string[] = [];
+
+      while (this.pendingListImages[field].length) {
+        const entry = this.pendingListImages[field][0];
+        const result = await this.data.uploadMedia(entry.file, { title: entry.name });
+        if (!result.ok || !result.fileUrl) {
+          this.detailsDraft[field] = [...currentLines, ...uploadedUrls].join('\n') as any;
+          this.error = result.error ?? 'No se pudo subir la imagen.';
+          this.cdr.detectChanges();
+          return false;
+        }
+
+        uploadedUrls.push(result.fileUrl);
+        this.revokePendingFile(entry);
+        this.pendingListImages[field].shift();
+      }
+
+      this.detailsDraft[field] = [...currentLines, ...uploadedUrls].join('\n') as any;
+    }
+
+    this.cdr.detectChanges();
+    return true;
+  }
+
+  private async commitCoverImageChange(projectId: number): Promise<boolean> {
+    if (this.pendingCoverFile) {
+      const result = await this.data.uploadMedia(this.pendingCoverFile.file, {
+        title: this.pendingCoverFile.name
+      });
+      if (!result.ok || !result.fileUrl) {
+        this.error = result.error ?? 'No se pudo subir la imagen de portada.';
+        this.cdr.detectChanges();
+        return false;
+      }
+      this.imageDraft.fileUrl = result.fileUrl;
+      this.revokePendingFile(this.pendingCoverFile);
+      this.pendingCoverFile = null;
+    }
+
+    const currentCover = this.coverImage;
+    const fileUrl = this.imageDraft.fileUrl.trim();
+
+    if (!fileUrl) {
+      if (currentCover && this.pendingCoverDeletion) {
+        const ok = await this.data.deleteProjectImage(projectId, currentCover.id);
+        if (!ok) {
+          this.error = 'No se pudo eliminar la imagen de portada.';
+          return false;
+        }
+      }
+      this.pendingCoverDeletion = false;
+      return true;
+    }
+
+    if (currentCover && currentCover.fileUrl.trim() === fileUrl && !this.pendingCoverDeletion) {
+      return true;
+    }
+
+    const result = currentCover
+      ? await this.data.updateProjectImage(projectId, currentCover.id, {
+          fileUrl,
+          isCover: true,
+          sortOrder: 0
+        })
+      : await this.data.createProjectImage(projectId, {
+          fileUrl,
+          isCover: true,
+          sortOrder: 0
+        });
+
+    if (!result.ok) {
+      this.error = result.error ?? 'No se pudo guardar la imagen de portada.';
+      return false;
+    }
+
+    this.pendingCoverDeletion = false;
+    return true;
+  }
+
   private applyDetailsToDraft(details?: AdminProjectDetails | null) {
+    this.clearPendingLocalMediaState();
+    this.pendingBrochureFile = null;
     this.detailsDraft = {
       shortDesc: details?.shortDesc ?? '',
       location: details?.location ?? '',
@@ -1132,13 +1557,14 @@ export class AdminProjectCreateComponent implements OnInit {
       amenitiesText: this.joinLines(details?.amenities),
       startYear: details?.startYear !== undefined && details?.startYear !== null ? String(details.startYear) : '',
       deliveryYear: details?.deliveryYear !== undefined && details?.deliveryYear !== null ? String(details.deliveryYear) : '',
-      autocadUrl: details?.autocadUrl ?? '',
-      brochurePdfUrl: details?.brochurePdfUrl ?? '',
+      autocadUrl: this.normalizeSecureUrl(details?.autocadUrl ?? ''),
+      heroVideoUrl: this.normalizeSecureUrl(details?.heroVideoUrl ?? ''),
+      brochurePdfUrl: this.normalizeSecureUrl(details?.brochurePdfUrl ?? ''),
       mapUrl: details?.mapUrl ?? '',
       mapEmbedUrl: details?.mapEmbedUrl ?? '',
-      masterplanImage: details?.masterplanImage ?? '',
-      bannerImagesText: this.joinLines(details?.bannerImages),
-      galleryText: this.joinLines(details?.gallery),
+      masterplanImage: this.normalizeSecureUrl(details?.masterplanImage ?? ''),
+      bannerImagesText: this.joinLines((details?.bannerImages ?? []).map((image) => this.normalizeSecureUrl(image))),
+      galleryText: this.joinLines((details?.gallery ?? []).map((image) => this.normalizeSecureUrl(image))),
       enjoyAreasText: this.joinLines(details?.enjoyAreas),
       housePlansText: details?.housePlans?.length
         ? details.housePlans

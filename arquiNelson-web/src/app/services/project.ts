@@ -13,6 +13,7 @@ export interface ProjectData {
   brochurePdfUrl?: string;
   brochureCoverUrl?: string;
   masterplanImage?: string;
+  heroVideoUrl?: string;
   houseModels?: {
     name: string;
     description?: string;
@@ -31,7 +32,7 @@ export interface ProjectData {
   status: string;
   type: string;
   landArea: string;
-  units: number;
+  units: number | null;
   amenities: string[];
   startYear: number;
   deliveryYear: number;

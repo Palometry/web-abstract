@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL =
-  'https://madrid-quickly-bob-consumers.trycloudflare.com/api';
+  'https://wheat-processes-raymond-template.trycloudflare.com/api';
 
 function readApiBaseUrl(): string {
   if (typeof document !== 'undefined') {

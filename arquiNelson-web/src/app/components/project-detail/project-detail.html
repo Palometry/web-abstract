@@ -54,57 +54,6 @@
       </div>
     </section>
 
-    @if (hasFlipbook) {
-      <section class="project-brochure">
-        <div class="brochure-header">
-          <div>
-            <h3>Brochure del proyecto</h3>
-            <p>Brochure interactivo integrado en la misma pagina.</p>
-          </div>
-          <div class="brochure-actions">
-            <button type="button" class="brochure-launch" (click)="reloadFlipbook()">
-              Recargar flipbook
-            </button>
-            @if (brochurePdfUrl) {
-              <a class="brochure-open" [href]="brochurePdfUrl" target="_blank" rel="noopener noreferrer">
-                Abrir PDF
-              </a>
-            }
-          </div>
-        </div>
-
-        <div class="brochure-inline">
-          <div class="brochure-inline-shell">
-            <div class="brochure-inline-loading" *ngIf="flipbookLoading">
-              <p>Cargando brochure interactivo...</p>
-            </div>
-
-            <div class="brochure-inline-error" *ngIf="flipbookError">
-              <p>{{ flipbookError }}</p>
-              <button type="button" class="brochure-inline-retry" (click)="reloadFlipbook()">
-                Reintentar
-              </button>
-            </div>
-
-            @if (flipbookMounted) {
-              <div class="dflip-books brochure-dearflip-stage">
-                <div
-                  class="_df_book brochure-dearflip-book"
-                  [attr.id]="dearFlipBookId"
-                  [attr.source]="brochurePdfUrl"
-                  [attr.data-title]="project.title"
-                ></div>
-              </div>
-            }
-          </div>
-        </div>
-
-        <div class="brochure-inline-footer">
-          <p class="brochure-inline-hint">Pasa las paginas como revista desde el visor integrado.</p>
-        </div>
-      </section>
-    }
-
     <section class="project-ficha">
       <div class="ficha-header">
         <h3>Ficha de datos</h3>
@@ -121,7 +70,7 @@
           <tr><th>Categoria</th><td>{{ formatFichaLabel(project.category) || 'Por definir' }}</td></tr>
           <tr><th>Ubicacion</th><td>{{ project.location || 'Por definir' }}</td></tr>
           <tr><th>Area del terreno</th><td>{{ project.landArea || '-' }}</td></tr>
-          <tr><th>Unidades</th><td>{{ project.units || '-' }}</td></tr>
+          <tr><th>Area techada</th><td>{{ project.units ?? '-' }}</td></tr>
           <tr><th>Areas comunes</th><td>{{ project.amenities.length ? project.amenities.join(', ') : 'Por definir' }}</td></tr>
           <tr><th>Inicio de obra</th><td>{{ project.startYear || '-' }}</td></tr>
           <tr><th>Entrega estimada</th><td>{{ project.deliveryYear || '-' }}</td></tr>
@@ -325,17 +274,6 @@
       </section>
     }
 
-    @if (project.gallery && project.gallery.length > 0) {
-      <section class="project-gallery">
-        <h3>Galeria</h3>
-        <div class="gallery-grid">
-          @for (image of project.gallery; track image) {
-            <img [src]="image" [alt]="project.title" />
-          }
-        </div>
-      </section>
-    }
-
     @if (project.videos && project.videos.length > 0) {
       <section class="project-videos">
         <h3>Videos</h3>
@@ -367,10 +305,56 @@
       </section>
     }
 
-    <aside class="project-contact">
-      <h4>Contacto</h4>
-      <p>Para mas informacion sobre este proyecto: info@funbellata.example</p>
-    </aside>
+    @if (hasFlipbook) {
+      <section class="project-brochure">
+        <div class="brochure-header">
+          <div>
+            <h3>Brochure del proyecto</h3>
+            <p>Brochure interactivo integrado en la misma pagina.</p>
+          </div>
+          <div class="brochure-actions">
+            <button type="button" class="brochure-launch" (click)="reloadFlipbook()">
+              Recargar flipbook
+            </button>
+            @if (brochurePdfUrl) {
+              <a class="brochure-open" [href]="brochurePdfUrl" target="_blank" rel="noopener noreferrer">
+                Abrir PDF
+              </a>
+            }
+          </div>
+        </div>
+
+        <div class="brochure-inline">
+          <div class="brochure-inline-shell">
+            <div class="brochure-inline-loading" *ngIf="flipbookLoading">
+              <p>Cargando brochure interactivo...</p>
+            </div>
+
+            <div class="brochure-inline-error" *ngIf="flipbookError">
+              <p>{{ flipbookError }}</p>
+              <button type="button" class="brochure-inline-retry" (click)="reloadFlipbook()">
+                Reintentar
+              </button>
+            </div>
+
+            @if (flipbookMounted) {
+              <div class="dflip-books brochure-dearflip-stage">
+                <div
+                  class="_df_book brochure-dearflip-book"
+                  [attr.id]="dearFlipBookId"
+                  [attr.source]="brochurePdfUrl"
+                  [attr.data-title]="project.title"
+                ></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="brochure-inline-footer">
+          <p class="brochure-inline-hint">Pasa las paginas como revista desde el visor integrado.</p>
+        </div>
+      </section>
+    }
 
     @if (project.autocad360Url && autocadEmbedSafeUrl) {
       <section class="project-viewer">
@@ -396,6 +380,17 @@
             allowfullscreen
             referrerpolicy="strict-origin-when-cross-origin"
           ></iframe>
+        </div>
+      </section>
+    }
+
+    @if (project.gallery && project.gallery.length > 0) {
+      <section class="project-gallery">
+        <h3>Galeria</h3>
+        <div class="gallery-grid">
+          @for (image of project.gallery; track image) {
+            <img [src]="image" [alt]="project.title" />
+          }
         </div>
       </section>
     }

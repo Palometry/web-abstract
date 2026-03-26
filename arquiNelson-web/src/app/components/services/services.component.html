@@ -1,40 +1,350 @@
-<section id="services" class="services" [class.services-page]="standalonePage">
+<section class="services" [class.services-page]="standalonePage">
   <div class="container">
-    <div class="section-header">
+    <header class="section-header">
       <h2>{{ title || defaultTitle }}</h2>
       <p>{{ summary || defaultSummary }}</p>
-    </div>
+    </header>
 
     <div class="services-grid">
       <ng-container *ngFor="let service of displayServices">
         <a
           *ngIf="service.url && isInternal(service.url)"
-          class="service-card service-link"
+          class="service-link"
           [routerLink]="service.url"
+          [attr.target]="getTarget(service)"
         >
-          <div class="service-icon">{{ service.icon }}</div>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
+          <article class="service-card">
+            <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.description }}</p>
+          </article>
         </a>
 
         <a
-          *ngIf="service.url && !isInternal(service.url)"
-          class="service-card service-link"
+          *ngIf="service.url && isExternal(service.url)"
+          class="service-link"
           [href]="service.url"
           [attr.target]="getTarget(service)"
-          [attr.rel]="getTarget(service) ? 'noopener noreferrer' : null"
+          rel="noreferrer"
         >
-          <div class="service-icon">{{ service.icon }}</div>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
+          <article class="service-card">
+            <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.description }}</p>
+          </article>
         </a>
 
-        <div *ngIf="!service.url" class="service-card">
-          <div class="service-icon">{{ service.icon }}</div>
+        <article class="service-card" *ngIf="!service.url">
+          <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
           <h3>{{ service.title }}</h3>
           <p>{{ service.description }}</p>
-        </div>
+        </article>
       </ng-container>
     </div>
+
+    <section class="public-quote-create" *ngIf="standalonePage">
+      <header class="quote-header">
+        <div>
+          <span class="quote-eyebrow">Cotizacion web</span>
+          <h3>Arma tu cotizacion</h3>
+          <p>Completa los datos del cliente, proyecto y plan. Se enviara al admin como borrador.</p>
+        </div>
+        <button
+          type="button"
+          class="quote-toggle"
+          (click)="toggleQuoteExpanded()"
+          [attr.aria-expanded]="isQuoteExpanded"
+        >
+          {{ isQuoteExpanded ? 'Cerrar formulario' : 'Realizar Cotizacion' }}
+        </button>
+      </header>
+
+      <p class="hint" *ngIf="loadingQuoteOptions">Cargando opciones...</p>
+      <p class="feedback success" *ngIf="quoteSuccess">{{ quoteSuccess }}</p>
+      <p class="feedback error" *ngIf="quoteError">{{ quoteError }}</p>
+
+      <form class="quote-form" *ngIf="isQuoteExpanded" (ngSubmit)="submitQuoteLead()">
+        <div class="panel-grid">
+          <section class="panel">
+            <h4>Datos de la cotizacion</h4>
+            <div class="form-grid">
+              <label>
+                N° cotizacion
+                <input name="quoteNumber" value="Se asigna al guardar" readonly />
+              </label>
+              <label>
+                Estado
+                <input name="statusLabel" value="Borrador" readonly />
+              </label>
+              <label>
+                Fecha creacion
+                <input name="createdAt" [value]="todayLabel" readonly />
+              </label>
+              <label>
+                Vigente hasta
+                <input name="expiresAt" type="date" [value]="quoteDraft.expiresAt" readonly />
+              </label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h4>Datos del cliente</h4>
+            <div class="form-grid">
+              <label>
+                Tipo documento
+                <select name="documentType" [(ngModel)]="quoteDraft.documentType">
+                  <option *ngFor="let doc of docTypes" [value]="doc.value">{{ doc.label }}</option>
+                </select>
+              </label>
+              <label>
+                N° documento
+                <input
+                  name="documentNumber"
+                  [(ngModel)]="quoteDraft.documentNumber"
+                  placeholder="Numero de documento"
+                />
+              </label>
+              <label>
+                Nombre completo
+                <input name="fullName" [(ngModel)]="quoteDraft.fullName" placeholder="Nombre y apellido" />
+              </label>
+              <label>
+                Telefono
+                <input name="phone" [(ngModel)]="quoteDraft.phone" placeholder="999 999 999" />
+              </label>
+              <label class="wide">
+                Correo
+                <input
+                  name="email"
+                  type="email"
+                  [(ngModel)]="quoteDraft.email"
+                  placeholder="correo@empresa.com"
+                />
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <div class="panel-grid">
+          <section class="panel">
+            <h4>Datos del proyecto</h4>
+            <div class="form-grid">
+              <label>
+                Nombre del proyecto
+                <input
+                  name="projectName"
+                  [(ngModel)]="quoteDraft.projectName"
+                  placeholder="Nombre provisional"
+                />
+              </label>
+              <label class="wide">
+                Direccion
+                <input
+                  name="projectAddress"
+                  [(ngModel)]="quoteDraft.projectAddress"
+                  placeholder="Direccion del proyecto"
+                />
+              </label>
+              <label>
+                Area total (m2)
+                <input
+                  name="areaM2"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [(ngModel)]="quoteDraft.areaM2"
+                  (input)="updateAreaCovered()"
+                />
+              </label>
+              <label>
+                Area libre (%)
+                <input
+                  name="areaUncoveredPercent"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  [(ngModel)]="quoteDraft.areaUncoveredPercent"
+                  (input)="updateAreaCovered()"
+                />
+              </label>
+              <label>
+                Area libre (m2)
+                <input name="areaUncoveredM2" type="number" [value]="getAreaUncoveredM2()" readonly />
+              </label>
+              <label>
+                Area techada total (m2)
+                <input name="areaCoveredM2" type="number" [value]="getAreaCoveredTotal()" readonly />
+              </label>
+              <label>
+                N° pisos
+                <input
+                  name="floorCount"
+                  type="number"
+                  min="1"
+                  step="1"
+                  [(ngModel)]="quoteDraft.floorCount"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h4>Datos del plan</h4>
+            <div class="form-grid">
+              <label>
+                Plan
+                <select
+                  name="pricingRateId"
+                  [(ngModel)]="quoteDraft.pricingRateId"
+                  (change)="onRateChange()"
+                  [disabled]="loadingQuoteOptions || !rates.length"
+                >
+                  <option *ngIf="loadingQuoteOptions" [ngValue]="null">Cargando planes...</option>
+                  <option *ngIf="!loadingQuoteOptions && rates.length" [ngValue]="null">Selecciona un plan</option>
+                  <option *ngIf="!loadingQuoteOptions && !rates.length" [ngValue]="null">Sin planes activos</option>
+                  <option *ngFor="let rate of rates" [ngValue]="rate.id">
+                    {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
+                  </option>
+                </select>
+              </label>
+              <label>
+                Nombre del plan
+                <input name="planName" [(ngModel)]="quoteDraft.planName" readonly placeholder="Nombre del plan" />
+              </label>
+              <label>
+                Costo x m2 ({{ quoteDraft.currency }})
+                <input
+                  name="baseRatePerM2"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [(ngModel)]="quoteDraft.baseRatePerM2"
+                  readonly
+                />
+              </label>
+              <label>
+                Plazo minimo (dias)
+                <input
+                  name="planMinDays"
+                  type="number"
+                  min="0"
+                  step="1"
+                  [(ngModel)]="quoteDraft.planMinDays"
+                  readonly
+                />
+              </label>
+              <label>
+                Plazo maximo (dias)
+                <input
+                  name="planMaxDays"
+                  type="number"
+                  min="0"
+                  step="1"
+                  [(ngModel)]="quoteDraft.planMaxDays"
+                  readonly
+                />
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <h4>Resumen</h4>
+          <div class="summary">
+            <div>
+              <span>Base</span>
+              <strong>{{ formatCurrency(baseCost, quoteDraft.currency) }}</strong>
+            </div>
+            <div>
+              <span>Extras</span>
+              <strong>{{ formatCurrency(extrasCost, quoteDraft.currency) }}</strong>
+            </div>
+            <div>
+              <span>Total</span>
+              <strong>{{ formatCurrency(totalCost, quoteDraft.currency) }}</strong>
+            </div>
+          </div>
+          <label class="summary-notes">
+            Notas para el equipo
+            <textarea
+              name="notes"
+              rows="4"
+              [(ngModel)]="quoteDraft.notes"
+              placeholder="Cuéntanos el alcance, referencia o necesidad del proyecto."
+            ></textarea>
+          </label>
+        </section>
+
+        <section class="panel">
+          <h4>Servicios extra</h4>
+
+          <div class="service-list" *ngIf="servicesDraft.length; else emptyServices">
+            <article class="service-row" *ngFor="let service of servicesDraft">
+              <div class="service-meta">
+                <h5>{{ service.name }}</h5>
+                <p>{{ pricingTypeLabel(service.pricingType) }}</p>
+              </div>
+
+              <div class="service-controls">
+                <label>
+                  Cantidad
+                  <input type="number" min="1" step="0.01" [(ngModel)]="service.quantity" [name]="'serviceQuantity' + service.serviceId" />
+                </label>
+                <label>
+                  Precio
+                  <input type="number" min="0" step="0.01" [(ngModel)]="service.unitPrice" [name]="'servicePrice' + service.serviceId" />
+                </label>
+                <div class="line-total">
+                  <span>Total</span>
+                  <strong>{{ formatCurrency(computeServiceLineTotal(service), quoteDraft.currency) }}</strong>
+                </div>
+                <button type="button" class="secondary danger" (click)="removeService(service.serviceId)">
+                  Eliminar
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <ng-template #emptyServices>
+            <p class="hint">No hay servicios extra agregados.</p>
+          </ng-template>
+
+          <div class="add-service">
+            <h5>Agregar servicio</h5>
+            <div class="form-grid compact">
+              <label>
+                Servicio
+                <select name="serviceDraftId" [(ngModel)]="serviceDraft.serviceId" (change)="onServiceChange()">
+                  <option [ngValue]="0">Selecciona un servicio</option>
+                  <option *ngFor="let service of serviceOptions" [ngValue]="service.id">
+                    {{ service.name }} ({{ service.price }} {{ service.currency }})
+                  </option>
+                </select>
+              </label>
+              <label>
+                Cantidad
+                <input name="serviceDraftQuantity" type="number" min="1" step="0.01" [(ngModel)]="serviceDraft.quantity" />
+              </label>
+              <label>
+                Precio
+                <input name="serviceDraftPrice" type="number" min="0" step="0.01" [(ngModel)]="serviceDraft.unitPrice" />
+              </label>
+              <button type="button" class="secondary" (click)="addService()">Agregar servicio</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="quote-actions">
+          <button
+            type="submit"
+            class="quote-submit"
+            [disabled]="isSubmittingQuote || loadingQuoteOptions"
+          >
+            {{ isSubmittingQuote ? 'Enviando...' : 'Enviar cotizacion' }}
+          </button>
+        </div>
+      </form>
+    </section>
   </div>
 </section>

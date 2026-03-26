@@ -11,6 +11,15 @@ use Illuminate\Validation\ValidationException;
 
 class MediaController extends Controller
 {
+    private function requestOrigin(): string
+    {
+        $scheme = $requestScheme = request()->headers->get('x-forwarded-proto')
+            ?: request()->headers->get('x-forwarded-scheme')
+            ?: request()->getScheme();
+
+        return strtolower((string) $requestScheme) . '://' . request()->getHttpHost();
+    }
+
     private function allowedMimeTypes(): array
     {
         return config('media.allowed_mime_types', []);
@@ -173,7 +182,7 @@ class MediaController extends Controller
 
         return response()->json([
             'id' => $id,
-            'fileUrl' => $request->getSchemeAndHttpHost() . $fileUrl,
+            'fileUrl' => $this->requestOrigin() . $fileUrl,
         ], 201);
     }
 
@@ -218,7 +227,7 @@ class MediaController extends Controller
 
         return response()->json([
             'id' => $id,
-            'fileUrl' => $request->getSchemeAndHttpHost() . $fileUrl,
+            'fileUrl' => $this->requestOrigin() . $fileUrl,
         ], 201);
     }
 }

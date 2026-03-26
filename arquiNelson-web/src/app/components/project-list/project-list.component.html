@@ -26,46 +26,54 @@
     </label>
   </section>
 
-  <section class="collage-rows" *ngIf="collageRows.length">
-    <div class="collage-row" *ngFor="let row of collageRows; let rowIndex = index" [class.row-reverse]="row.reverse">
-      <figure class="collage-tile collage-feature">
-        <a
-          class="tile-trigger"
-          [routerLink]="['/project', row.featured.id]"
-          [attr.aria-label]="'Ver proyecto ' + row.featured.title"
-        >
-          <img
-            [src]="row.featured.src"
-            [alt]="row.featured.alt"
-            loading="lazy"
-            (error)="onCollageError(rowIndex * 3 + (row.reverse ? row.stacked.length : 0))"
-          />
-          <div class="tile-caption">
-            <strong>{{ row.featured.title }}</strong>
-            <span>{{ formatTypeLabel(row.featured.category) }}</span>
-          </div>
-        </a>
-      </figure>
+  <section class="projects-timeline" *ngIf="collageSections.length">
+    <div class="year-section" *ngFor="let section of collageSections; trackBy: trackSection">
+      <header class="year-heading" *ngIf="section.label">
+        <span>{{ section.label }}</span>
+      </header>
 
-      <div class="collage-stack" [class.stack-single]="row.stacked.length === 1">
-        <figure class="collage-tile collage-compact" *ngFor="let item of row.stacked; let stackIndex = index">
-          <a
-            class="tile-trigger"
-            [routerLink]="['/project', item.id]"
-            [attr.aria-label]="'Ver proyecto ' + item.title"
-          >
-            <img
-              [src]="item.src"
-              [alt]="item.alt"
-              loading="lazy"
-              (error)="onCollageError(rowIndex * 3 + (row.reverse ? stackIndex : stackIndex + 1))"
-            />
-            <div class="tile-caption">
-              <strong>{{ item.title }}</strong>
-              <span>{{ formatTypeLabel(item.category) }}</span>
-            </div>
-          </a>
-        </figure>
+      <div class="collage-rows">
+        <div class="collage-row" *ngFor="let row of section.rows; trackBy: trackRow" [class.row-reverse]="row.reverse">
+          <figure class="collage-tile collage-feature">
+            <a
+              class="tile-trigger"
+              [routerLink]="['/project', row.featured.id]"
+              [attr.aria-label]="'Ver proyecto ' + row.featured.title"
+            >
+              <img
+                [src]="row.featured.src"
+                [alt]="row.featured.alt"
+                loading="lazy"
+                (error)="onCollageError(row.featured)"
+              />
+              <div class="tile-caption">
+                <strong>{{ row.featured.title }}</strong>
+                <span>{{ formatTypeLabel(row.featured.category) }}</span>
+              </div>
+            </a>
+          </figure>
+
+          <div class="collage-stack" [class.stack-single]="row.stacked.length === 1">
+            <figure class="collage-tile collage-compact" *ngFor="let item of row.stacked; trackBy: trackTile">
+              <a
+                class="tile-trigger"
+                [routerLink]="['/project', item.id]"
+                [attr.aria-label]="'Ver proyecto ' + item.title"
+              >
+                <img
+                  [src]="item.src"
+                  [alt]="item.alt"
+                  loading="lazy"
+                  (error)="onCollageError(item)"
+                />
+                <div class="tile-caption">
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ formatTypeLabel(item.category) }}</span>
+                </div>
+              </a>
+            </figure>
+          </div>
+        </div>
       </div>
     </div>
   </section>

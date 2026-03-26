@@ -8,6 +8,7 @@ import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.componen
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { AdminProjectsComponent } from './admin/admin-projects/admin-projects.component';
 import { AdminProjectCreateComponent } from './admin/admin-project-create/admin-project-create.component';
+import { pendingProjectChangesGuard } from './admin/admin-project-create/admin-project-create.guard';
 import { AdminBlogComponent } from './admin/admin-blog/admin-blog.component';
 import { AdminBlogDetailComponent } from './admin/admin-blog-detail/admin-blog-detail.component';
 import { AdminQuotesComponent } from './admin/admin-quotes/admin-quotes.component';
@@ -31,8 +32,8 @@ export const routes: Routes = [
     children: [
       { path: '', component: AdminDashboardComponent },
       { path: 'projects', component: AdminProjectsComponent },
-      { path: 'projects/new', component: AdminProjectCreateComponent },
-      { path: 'projects/:id', component: AdminProjectCreateComponent },
+      { path: 'projects/new', component: AdminProjectCreateComponent, canDeactivate: [pendingProjectChangesGuard] },
+      { path: 'projects/:id', component: AdminProjectCreateComponent, canDeactivate: [pendingProjectChangesGuard] },
       { path: 'blog', component: AdminBlogComponent },
       { path: 'blog/:id', component: AdminBlogDetailComponent },
       { path: 'quotes', component: AdminQuotesComponent },

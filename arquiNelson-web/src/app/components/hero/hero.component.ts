@@ -4,12 +4,14 @@ import {
   Component,
   ElementRef,
   Inject,
+  OnInit,
   OnDestroy,
   PLATFORM_ID,
   ViewChild,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
+import { PublicProjectsService } from '../../services/public-projects';
 
 type HeroVideo = {
   src: string;
@@ -24,11 +26,10 @@ type HeroVideo = {
   templateUrl: './hero.component.html',
   styleUrls: ['./hero.component.scss']
 })
-export class HeroComponent implements AfterViewInit, OnDestroy {
+export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('heroVideo') private heroVideo?: ElementRef<HTMLVideoElement>;
 
-  videos: HeroVideo[] = [
-    { src: '/videos/erni.mp4', label: 'Video de portada Erni' },
+  private readonly fallbackVideos: HeroVideo[] = [
     { src: '/videos/gym.mp4', label: 'Video de portada Gym' },
     { src: '/videos/hd.mp4', label: 'Video de portada HD' },
     { src: '/videos/kr.mp4', label: 'Video de portada KR' },
@@ -40,6 +41,7 @@ export class HeroComponent implements AfterViewInit, OnDestroy {
     },
     { src: '/videos/video.mp4', label: 'Video de portada VIDEO' },
   ];
+  videos: HeroVideo[] = [...this.fallbackVideos];
   activeVideoIndex = 0;
   progressValues: number[] = this.videos.map(() => 0);
   private readonly isBrowser: boolean;
@@ -47,9 +49,52 @@ export class HeroComponent implements AfterViewInit, OnDestroy {
   constructor(
     private cdr: ChangeDetectorRef,
     private router: Router,
+    private publicProjectsService: PublicProjectsService,
     @Inject(PLATFORM_ID) platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  async ngOnInit(): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    try {
+      const projects = await this.publicProjectsService.getProjects();
+      const projectVideos = projects
+        .filter((project) => !!project.heroVideoUrl?.trim())
+        .sort((left, right) => {
+          const yearDiff = Math.max(right.deliveryYear || 0, right.startYear || 0)
+            - Math.max(left.deliveryYear || 0, left.startYear || 0);
+          if (yearDiff !== 0) {
+            return yearDiff;
+          }
+
+          const createdAtDiff = Date.parse(right.createdAt ?? '') - Date.parse(left.createdAt ?? '');
+          if (!Number.isNaN(createdAtDiff) && createdAtDiff !== 0) {
+            return createdAtDiff;
+          }
+
+          return right.id - left.id;
+        })
+        .map((project) => ({
+          src: project.heroVideoUrl!.trim(),
+          label: `Video de portada ${project.title}`,
+          projectPath: `/project/${project.id}`,
+        }));
+
+      if (projectVideos.length) {
+        this.videos = projectVideos;
+        this.activeVideoIndex = 0;
+        this.progressValues = this.videos.map(() => 0);
+        this.cdr.detectChanges();
+        this.syncVideoPlayback();
+      }
+    } catch {
+      this.videos = [...this.fallbackVideos];
+      this.progressValues = this.videos.map(() => 0);
+    }
   }
 
   ngAfterViewInit(): void {

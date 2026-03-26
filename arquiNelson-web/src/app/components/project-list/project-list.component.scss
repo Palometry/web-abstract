@@ -69,6 +69,37 @@
   margin: 0;
 }
 
+.projects-timeline {
+  display: grid;
+  gap: 28px;
+}
+
+.year-section {
+  display: grid;
+  gap: 12px;
+}
+
+.year-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 clamp(16px, 4vw, 60px);
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: color-mix(in srgb, var(--color-text) 14%, transparent);
+  }
+
+  span {
+    font-size: clamp(1.3rem, 2vw, 1.8rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+  }
+}
+
 .collage-row {
   display: grid;
   grid-template-columns: minmax(0, 1.618fr) minmax(280px, 1fr);
@@ -239,6 +270,19 @@
     gap: 10px;
     margin-bottom: 20px;
     padding-inline: 12px;
+  }
+
+  .projects-timeline {
+    gap: 22px;
+  }
+
+  .year-heading {
+    padding-inline: 12px;
+    gap: 12px;
+
+    span {
+      font-size: 1.15rem;
+    }
   }
 
   .collage-rows,

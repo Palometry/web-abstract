@@ -18,6 +18,7 @@ export type PublicProject = {
   brochurePdfUrl?: string | null;
   brochureCoverUrl?: string | null;
   masterplanImage?: string | null;
+  heroVideoUrl?: string | null;
   houseModels?: {
     name: string;
     description?: string | null;
@@ -36,7 +37,7 @@ export type PublicProject = {
   status: string;
   type: string;
   landArea: string;
-  units: number;
+  units: number | null;
   amenities: string[];
   startYear: number;
   deliveryYear: number;

@@ -56,6 +56,7 @@ export type AdminProject = {
 export type AdminProjectDetails = {
   shortDesc?: string | null;
   bannerImages?: string[];
+  heroVideoUrl?: string | null;
   promoter?: string | null;
   publicScope?: string | null;
   publicStatus?: string | null;

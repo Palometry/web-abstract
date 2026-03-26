@@ -12,21 +12,6 @@
         }}
       </p>
     </div>
-    <button
-      type="button"
-      (click)="isEditMode ? saveProject() : createProject()"
-      [disabled]="saving"
-    >
-      {{
-        saving
-          ? isEditMode
-            ? 'Guardando...'
-            : 'Creando...'
-          : isEditMode
-            ? 'Guardar proyecto'
-            : 'Crear proyecto'
-      }}
-    </button>
   </div>
 
   <div class="toast" *ngIf="successMessage">{{ successMessage }}</div>
@@ -79,14 +64,12 @@
         <input type="text" [(ngModel)]="detailsDraft.shortDesc" />
       </label>
       <label>
-        <!-- Direccion -->
-        Ubicación (texto) 
-        <input type="text" [(ngModel)]="detailsDraft.location" />
+        Ubicación (texto)
+        <input type="text" [value]="draft.address" readonly />
       </label>
       <label>
-        <!--Cliente -->
         Promotor
-        <input type="text" [(ngModel)]="detailsDraft.promoter" />
+        <input type="text" [value]="draft.clientName" readonly />
       </label>
       <label class="select-wide">
         Tipo de proyecto
@@ -152,20 +135,12 @@
         <input type="text" [(ngModel)]="detailsDraft.landArea" />
       </label>
       <label>
-        Unidades
-        <input type="number" [(ngModel)]="detailsDraft.units" />
+        Area techada
+        <input type="number" step="0.01" [(ngModel)]="detailsDraft.units" />
       </label>
       <label class="wide">
         URL visor AutoCAD 360
         <input type="text" [(ngModel)]="detailsDraft.autocadUrl" placeholder="https://a360.co/..." />
-      </label>
-      <label class="wide">
-        Brochure PDF / Flipbook
-        <input type="text" [(ngModel)]="detailsDraft.brochurePdfUrl" placeholder="https://.../brochure.pdf" />
-      </label>
-      <label class="wide">
-        Subir brochure PDF
-        <input type="file" accept="application/pdf,.pdf" (change)="uploadBrochurePdf($event)" />
       </label>
       <label class="wide">
         URL Mapa (Google Maps)
@@ -175,12 +150,18 @@
         Imagen de lotización o lotes
         <input type="text" [(ngModel)]="detailsDraft.masterplanImage" />
       </label>
-      <div class="image-preview-inline" *ngIf="detailsDraft.masterplanImage">
-        <img [src]="detailsDraft.masterplanImage" alt="Lotización o lotes" />
+      <div
+        class="image-preview-inline"
+        *ngIf="(getPendingSingleImagePreview('masterplanImage') || detailsDraft.masterplanImage) as masterplanPreview"
+      >
+        <img [src]="masterplanPreview" alt="Lotización o lotes" />
         <button type="button" class="danger" (click)="clearDetailImage('masterplanImage')">
           Quitar imagen
         </button>
       </div>
+      <p class="hint wide" *ngIf="getPendingSingleImagePreview('masterplanImage')">
+        Imagen pendiente. Se guardará cuando guardes el proyecto.
+      </p>
       <label class="wide">
         Subir imagen de lotización o lotes
         <input type="file" accept="image/*" (change)="uploadDetailImage($event, 'masterplanImage')" />
@@ -193,33 +174,106 @@
         Banner de imágenes (una URL por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.bannerImagesText"></textarea>
       </label>
-      <div class="preview-grid" *ngIf="previewImages(detailsDraft.bannerImagesText).length">
-        <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.bannerImagesText); let i = index">
-          <img [src]="img" alt="Banner" />
-          <button type="button" class="danger" (click)="removeDetailListImage('bannerImagesText', i)">
-            Quitar
-          </button>
+      <div class="preview-group" *ngIf="previewImages(detailsDraft.bannerImagesText).length">
+        <p class="preview-title">Imágenes actuales del banner</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.bannerImagesText); let i = index">
+            <img [src]="img" alt="Banner" />
+            <button type="button" class="danger" (click)="removeDetailListImage('bannerImagesText', i)">
+              Quitar
+            </button>
+          </div>
         </div>
       </div>
+      <div class="preview-group preview-group--pending" *ngIf="getPendingListImagePreviews('bannerImagesText').length">
+        <p class="preview-title">Imágenes pendientes del banner</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of getPendingListImagePreviews('bannerImagesText'); let i = index">
+            <img [src]="img" alt="Banner pendiente" />
+            <button type="button" class="danger" (click)="removePendingDetailListImage('bannerImagesText', i)">
+              Quitar pendiente
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="hint wide" *ngIf="getPendingListImagePreviews('bannerImagesText').length">
+        Las imágenes pendientes del banner se subirán cuando guardes el proyecto.
+      </p>
       <label class="wide">
         Subir imagen al banner
-        <input type="file" accept="image/*" (change)="appendDetailImage($event, 'bannerImagesText')" />
+        <input type="file" accept="image/*" multiple (change)="appendDetailImage($event, 'bannerImagesText')" />
+      </label>
+      <label class="wide">
+        Video del banner principal
+        <input type="text" [(ngModel)]="detailsDraft.heroVideoUrl" placeholder="Se completará al guardar si subes un archivo" />
+      </label>
+      <div class="image-preview-inline" *ngIf="heroVideoPreviewUrl">
+        <video [src]="heroVideoPreviewUrl" controls muted playsinline preload="metadata"></video>
+        <button type="button" class="danger" (click)="removeHeroVideo()">
+          Quitar video del banner
+        </button>
+      </div>
+      <p class="hint wide" *ngIf="pendingHeroVideoName">
+        Video pendiente: {{ pendingHeroVideoName }}. Se colocará en el banner principal cuando guardes el proyecto.
+      </p>
+      <label class="wide">
+        Subir video para banner principal
+        <input type="file" accept="video/*" (change)="uploadHeroVideo($event)" />
+      </label>
+      <label class="wide">
+        Brochure PDF / Flipbook
+        <input type="text" [(ngModel)]="detailsDraft.brochurePdfUrl" placeholder="https://.../brochure.pdf" />
+      </label>
+      <div class="image-preview-inline" *ngIf="detailsDraft.brochurePdfUrl">
+        <a [href]="detailsDraft.brochurePdfUrl" target="_blank" rel="noopener noreferrer">
+          Abrir brochure actual
+        </a>
+        <button type="button" class="danger" (click)="removeBrochurePdf()">
+          Quitar brochure
+        </button>
+      </div>
+      <p class="hint wide" *ngIf="pendingBrochureName">
+        PDF seleccionado: {{ pendingBrochureName }}. Se aplicará cuando guardes el proyecto.
+      </p>
+      <p class="hint wide">
+        Seleccionar un PDF solo lo deja pendiente en el formulario. El cambio se guarda cuando guardas el proyecto.
+      </p>
+      <label class="wide">
+        Subir brochure PDF
+        <input type="file" accept="application/pdf,.pdf" (change)="uploadBrochurePdf($event)" />
       </label>
       <label class="wide">
         Galería final (una URL por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.galleryText"></textarea>
       </label>
-      <div class="preview-grid" *ngIf="previewImages(detailsDraft.galleryText).length">
-        <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.galleryText); let i = index">
-          <img [src]="img" alt="Galería" />
-          <button type="button" class="danger" (click)="removeDetailListImage('galleryText', i)">
-            Quitar
-          </button>
+      <div class="preview-group" *ngIf="previewImages(detailsDraft.galleryText).length">
+        <p class="preview-title">Imágenes actuales de la galería</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.galleryText); let i = index">
+            <img [src]="img" alt="Galería" />
+            <button type="button" class="danger" (click)="removeDetailListImage('galleryText', i)">
+              Quitar
+            </button>
+          </div>
         </div>
       </div>
+      <div class="preview-group preview-group--pending" *ngIf="getPendingListImagePreviews('galleryText').length">
+        <p class="preview-title">Imágenes pendientes de la galería</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of getPendingListImagePreviews('galleryText'); let i = index">
+            <img [src]="img" alt="Galería pendiente" />
+            <button type="button" class="danger" (click)="removePendingDetailListImage('galleryText', i)">
+              Quitar pendiente
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="hint wide" *ngIf="getPendingListImagePreviews('galleryText').length">
+        Las imágenes pendientes de la galería se subirán cuando guardes el proyecto.
+      </p>
       <label class="wide">
         Subir imagen a galería final
-        <input type="file" accept="image/*" (change)="appendDetailImage($event, 'galleryText')" />
+        <input type="file" accept="image/*" multiple (change)="appendDetailImage($event, 'galleryText')" />
       </label>
       <label class="wide">
         Áreas para disfrutar (una por línea)
@@ -365,40 +419,28 @@
   <div class="panel">
     <h3>Imagen de portada</h3>
     <p class="hint">Se usa como portada principal del proyecto en los listados.</p>
-    <ng-container *ngIf="projectId; else coverDisabled">
-      <div class="form-grid">
-        <label class="wide">
-          URL de la portada
-          <input type="text" [(ngModel)]="imageDraft.fileUrl" />
-        </label>
-        <div class="image-preview-inline" *ngIf="imageDraft.fileUrl">
-          <img [src]="imageDraft.fileUrl" alt="Portada del proyecto" />
-        </div>
-        <label class="wide">
-          Subir imagen de portada
-          <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
-        </label>
+    <div class="form-grid">
+      <label class="wide">
+        URL de la portada
+        <input type="text" [(ngModel)]="imageDraft.fileUrl" />
+      </label>
+      <div class="image-preview-inline" *ngIf="coverPreviewUrl">
+        <img [src]="coverPreviewUrl" alt="Portada del proyecto" />
       </div>
+      <p class="hint wide" *ngIf="pendingCoverName">
+        Portada pendiente: {{ pendingCoverName }}. Se guardará cuando guardes el proyecto.
+      </p>
+      <label class="wide">
+        Subir imagen de portada
+        <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
+      </label>
+    </div>
 
-      <div class="actions">
-        <button type="button" (click)="saveCoverImage()">
-          {{ coverImage ? 'Guardar portada' : 'Agregar portada' }}
-        </button>
-        <button type="button" class="danger" *ngIf="hasCoverImage" (click)="removeCoverImage()">
-          Quitar portada
-        </button>
-      </div>
-    </ng-container>
-    <ng-template #coverDisabled>
-      <p class="hint">Guarda el proyecto para habilitar la carga de la portada.</p>
-      <div class="form-grid">
-        <label class="wide">
-          URL de la portada
-          <input type="text" disabled />
-        </label>
-      </div>
-      <button type="button" disabled>Guardar portada</button>
-    </ng-template>
+    <div class="actions">
+      <button type="button" class="danger" *ngIf="hasCoverImage" (click)="removeCoverImage()">
+        Quitar portada
+      </button>
+    </div>
   </div>
 
   <div class="panel">
@@ -491,6 +533,24 @@
         <button type="button" disabled>Agregar video</button>
       </div>
     </ng-template>
+  </div>
+
+  <div class="form-submit">
+    <button
+      type="button"
+      (click)="isEditMode ? saveProject() : createProject()"
+      [disabled]="saving"
+    >
+      {{
+        saving
+          ? isEditMode
+            ? 'Guardando...'
+            : 'Creando...'
+          : isEditMode
+            ? 'Guardar proyecto'
+            : 'Crear proyecto'
+      }}
+    </button>
   </div>
 
 </section>
