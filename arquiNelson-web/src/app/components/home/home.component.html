@@ -11,7 +11,7 @@
         <figure class="collage-tile collage-feature">
           <a
             class="tile-trigger"
-            [routerLink]="['/project', row.featured.id]"
+            [routerLink]="['/project', getProjectRouteId(row.featured.project)]"
             [attr.aria-label]="'Ver proyecto ' + row.featured.title"
           >
             <img
@@ -31,7 +31,7 @@
           <figure class="collage-tile collage-compact" *ngFor="let item of row.stacked; let stackIndex = index">
             <a
               class="tile-trigger"
-              [routerLink]="['/project', item.id]"
+              [routerLink]="['/project', getProjectRouteId(item.project)]"
               [attr.aria-label]="'Ver proyecto ' + item.title"
             >
               <img

@@ -77,6 +77,13 @@ export class HomeComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  getProjectRouteId(project: CollageProject): string | number {
+    if ('slug' in project && typeof project.slug === 'string' && project.slug.trim()) {
+      return project.slug.trim();
+    }
+    return project.id;
+  }
+
   private async buildCollageItems(): Promise<CollageTile[]> {
     const projects = await this.getMergedProjects();
     return projects.map((project) => {
@@ -119,16 +126,7 @@ export class HomeComponent implements OnInit {
     if (!apiProjects.length) {
       return this.sortProjectsByRecency(legacyProjects).slice(0, this.maxHomeProjects);
     }
-
-    const seen = new Set(apiProjects.map((project) => project.title.trim().toLowerCase()));
-    const merged: CollageProject[] = [...apiProjects];
-    for (const legacy of legacyProjects) {
-      const key = legacy.title.trim().toLowerCase();
-      if (!seen.has(key)) {
-        merged.push(legacy);
-      }
-    }
-    return this.sortProjectsByRecency(merged).slice(0, this.maxHomeProjects);
+    return this.sortProjectsByRecency(apiProjects).slice(0, this.maxHomeProjects);
   }
 
   private collectProjectImages(project: CollageProject): string[] {

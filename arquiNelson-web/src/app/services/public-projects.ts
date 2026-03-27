@@ -7,6 +7,7 @@ import { API_BASE_URL } from './api-config';
 
 export type PublicProject = {
   id: number;
+  slug?: string | null;
   title: string;
   shortDesc: string;
   image: string;
@@ -69,7 +70,7 @@ export class PublicProjectsService {
     return this.safeGet<PublicProject[]>(`${this.apiBaseUrl}/projects/public`, []);
   }
 
-  async getProjectById(id: number): Promise<PublicProject | null> {
+  async getProjectById(id: number | string): Promise<PublicProject | null> {
     if (!this.isBrowser) {
       return null;
     }

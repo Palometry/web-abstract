@@ -194,6 +194,12 @@ export type AdminPortfolioDetail = {
   blocks: AdminPortfolioBlock[];
 };
 
+type UploadMediaOptions = {
+  title?: string;
+  altText?: string;
+  onProgress?: (progress: number) => void;
+};
+
 export type AdminBlogPost = {
   id: number;
   title: string;
@@ -1051,12 +1057,20 @@ export class AdminDataService {
 
   async uploadMedia(
     file: File,
-    options?: { title?: string; altText?: string }
+    options?: UploadMediaOptions
   ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
     if (!this.isBrowser) {
       return { ok: false, error: 'Storage no disponible.' };
     }
+    const prefersChunked = file.type.startsWith('video/') || file.size > 8 * 1024 * 1024;
     const prefersMultipart = file.type.startsWith('video/') || file.size > 5 * 1024 * 1024;
+
+    if (prefersChunked) {
+      const chunked = await this.tryChunkedUpload(file, options);
+      if (chunked.ok || chunked.error?.includes('NO_FALLBACK') === false) {
+        return chunked;
+      }
+    }
 
     if (prefersMultipart) {
       const multipart = await this.tryMultipartUpload(file, options);
@@ -1087,14 +1101,14 @@ export class AdminDataService {
         )
       );
       return { ok: true, id: response.id, fileUrl: response.fileUrl };
-    } catch {
-      return { ok: false, error: 'No se pudo subir el archivo.' };
+    } catch (error: any) {
+      return { ok: false, error: this.resolveUploadError(error) };
     }
   }
 
   private async tryMultipartUpload(
     file: File,
-    options?: { title?: string; altText?: string }
+    options?: UploadMediaOptions
   ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
     try {
       const form = new FormData();
@@ -1122,8 +1136,114 @@ export class AdminDataService {
       if (status === 413) {
         return { ok: false, error: 'El archivo supera el tamaño permitido en el servidor.' };
       }
-      return { ok: false, error: 'No se pudo subir el archivo.' };
+      return { ok: false, error: this.resolveUploadError(error) };
     }
+  }
+
+  private async tryChunkedUpload(
+    file: File,
+    options?: UploadMediaOptions
+  ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
+    try {
+      const initResponse = await firstValueFrom(
+        this.http.post<{ uploadId: string }>(
+          `${this.apiBaseUrl}/media/chunks/init`,
+          {
+            filename: file.name,
+            mimeType: file.type,
+            fileSize: file.size,
+            title: options?.title ?? null,
+            altText: options?.altText ?? null,
+          },
+          { headers: this.authHeaders() }
+        )
+      );
+
+      const chunkSize = 1024 * 1024;
+      const totalChunks = Math.max(1, Math.ceil(file.size / chunkSize));
+
+      for (let index = 0; index < totalChunks; index += 1) {
+        const start = index * chunkSize;
+        const end = Math.min(file.size, start + chunkSize);
+        const chunk = file.slice(start, end);
+        const form = new FormData();
+        form.append('chunk', chunk, `${file.name}.part${index}`);
+        form.append('index', String(index));
+
+        await firstValueFrom(
+          this.http.post(
+            `${this.apiBaseUrl}/media/chunks/${encodeURIComponent(initResponse.uploadId)}`,
+            form,
+            { headers: this.authHeaders() }
+          )
+        );
+
+        if (options?.onProgress) {
+          options.onProgress(Math.round(((index + 1) / totalChunks) * 100));
+        }
+      }
+
+      const completeResponse = await firstValueFrom(
+        this.http.post<{ id: number; fileUrl: string }>(
+          `${this.apiBaseUrl}/media/chunks/${encodeURIComponent(initResponse.uploadId)}/complete`,
+          { totalChunks },
+          { headers: this.authHeaders() }
+        )
+      );
+
+      options?.onProgress?.(100);
+      return { ok: true, id: completeResponse.id, fileUrl: completeResponse.fileUrl };
+    } catch (error: any) {
+      const status = error?.status;
+      if (status === 404 || status === 405) {
+        return { ok: false, error: 'NO_FALLBACK' };
+      }
+      return { ok: false, error: this.resolveUploadError(error) };
+    }
+  }
+
+  private resolveUploadError(error: any): string {
+    const status = error?.status;
+    const validationErrors = error?.error?.errors;
+    const backendError =
+      validationErrors?.file?.[0] ||
+      validationErrors?.chunk?.[0] ||
+      validationErrors?.mimeType?.[0] ||
+      validationErrors?.fileSize?.[0] ||
+      error?.error?.error ||
+      error?.error?.message;
+
+    if (status === 422 && typeof backendError === 'string' && backendError.trim() !== '') {
+      return backendError;
+    }
+
+    if (status === 413) {
+      return 'El archivo supera el tamano permitido en el servidor.';
+    }
+
+    if (status === 524 || status === 504 || status === 0) {
+      return 'La subida tardo demasiado o el tunel se interrumpio. Intenta de nuevo o usa un archivo mas liviano.';
+    }
+
+    if (typeof backendError === 'string' && backendError.trim() !== '') {
+      return backendError;
+    }
+
+    return this.mapUploadError(error);
+  }
+
+  private mapUploadError(error: any): string {
+    const status = error?.status;
+
+    if (status === 413) {
+      return 'El archivo supera el tamaño permitido en el servidor.';
+    }
+
+    if (status === 524 || status === 504 || status === 0) {
+      return 'La subida tardó demasiado o el túnel se interrumpió. Intenta de nuevo o usa un archivo más liviano.';
+    }
+
+    return 'No se pudo subir el archivo.';
   }
 
   async getQuotes(): Promise<AdminQuote[]> {

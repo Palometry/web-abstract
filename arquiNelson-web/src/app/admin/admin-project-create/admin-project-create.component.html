@@ -18,6 +18,17 @@
   <p class="error" *ngIf="error">{{ error }}</p>
   <p class="hint" *ngIf="loading">Cargando proyecto...</p>
 
+  <div class="upload-overlay" *ngIf="uploading">
+    <div class="upload-dialog">
+      <div class="upload-spinner" aria-hidden="true"></div>
+      <h3>{{ uploadStatusTitle || 'Subiendo archivo' }}</h3>
+      <p>{{ uploadStatusDetail || 'Estamos procesando tu archivo. No cierres esta ventana.' }}</p>
+      <div class="upload-progress" *ngIf="uploadProgress > 0">
+        <div class="upload-progress__bar" [style.width.%]="uploadProgress"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="panel">
     <div class="form-grid">
       <label>

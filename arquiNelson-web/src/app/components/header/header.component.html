@@ -22,7 +22,7 @@
           <div class="dropdown" *ngIf="item.dropdown && projects.length">
             <ul class="dropdown-list">
               <li *ngFor="let proj of projects">
-                <a [routerLink]="['/project', proj.id]" (click)="closeMenu()">
+                <a [routerLink]="['/project', getProjectRouteId(proj)]" (click)="closeMenu()">
                   <span class="proj-name">{{ proj.title }}</span>
                 </a>
               </li>

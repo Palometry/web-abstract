@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL =
-  'https://wheat-processes-raymond-template.trycloudflare.com/api';
+  'https://biotechnology-limit-especially-multiple.trycloudflare.com/api';
 
 function readApiBaseUrl(): string {
   if (typeof document !== 'undefined') {

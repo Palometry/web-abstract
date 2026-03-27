@@ -33,6 +33,22 @@ class ProjectsController extends Controller
         return $resolved;
     }
 
+    private function resolvePublicHeroVideoUrl(int $projectId, ?string $url): ?string
+    {
+        $resolved = $this->resolveFileUrl($url);
+        if (!$resolved) {
+            return null;
+        }
+
+        $parts = parse_url($resolved);
+        $path = $parts['path'] ?? '';
+        if ($path !== '' && str_starts_with($path, '/uploads/')) {
+            return $this->requestOrigin() . '/api/projects/public/' . $projectId . '/hero-video';
+        }
+
+        return $resolved;
+    }
+
     private function resolveLocalUploadPath(?string $url): ?string
     {
         $resolved = $this->resolveFileUrl($url);
@@ -189,13 +205,14 @@ class ProjectsController extends Controller
             $bannerImages = $this->resolveUrlList($details['bannerImages'] ?? []);
             $gallery = $this->resolveUrlList($details['gallery'] ?? []);
             $masterplanImage = $this->resolveFileUrl($details['masterplanImage'] ?? null);
-            $heroVideoUrl = $this->resolveFileUrl($details['heroVideoUrl'] ?? null);
+            $heroVideoUrl = $this->resolvePublicHeroVideoUrl($row->id, $details['heroVideoUrl'] ?? null);
             $coverUrl = $this->resolveFileUrl($row->cover_url ?? null);
             $fallbackImage = $coverUrl
                 ?? ($bannerImages[0] ?? ($gallery[0] ?? $masterplanImage));
 
             return [
                 'id' => $row->id,
+                'slug' => $details['slug'] ?? null,
                 'title' => $row->name,
                 'shortDesc' => $details['shortDesc'] ?? '',
                 'image' => $fallbackImage ?? '',
@@ -216,24 +233,30 @@ class ProjectsController extends Controller
 
     public function publicDetail(string $id)
     {
-        $projectId = (int) $id;
-        if ($projectId <= 0) {
-            return response()->json(['error' => 'Invalid project id.'], 400);
+        $slug = trim($id);
+        $projectId = ctype_digit($slug) ? (int) $slug : 0;
+        $query = "SELECT p.id, p.name, p.description, p.status, p.details_json, p.created_at,
+                         (SELECT m.file_url
+                          FROM project_images pi
+                          INNER JOIN media_assets m ON m.id = pi.media_id
+                          WHERE pi.project_id = p.id
+                          ORDER BY pi.is_cover DESC, pi.sort_order ASC, pi.id ASC
+                          LIMIT 1) AS cover_url
+                  FROM projects p
+                  WHERE ";
+        $bindings = [];
+
+        if ($projectId > 0) {
+            $query .= "p.id = ?";
+            $bindings[] = $projectId;
+        } else {
+            $query .= "p.slug = ?";
+            $bindings[] = $slug;
         }
 
-        $rows = DB::select(
-            "SELECT p.id, p.name, p.description, p.status, p.details_json, p.created_at,
-                    (SELECT m.file_url
-                     FROM project_images pi
-                     INNER JOIN media_assets m ON m.id = pi.media_id
-                     WHERE pi.project_id = p.id
-                     ORDER BY pi.is_cover DESC, pi.sort_order ASC, pi.id ASC
-                     LIMIT 1) AS cover_url
-             FROM projects p
-             WHERE p.id = ?
-             LIMIT 1",
-            [$projectId]
-        );
+        $query .= " LIMIT 1";
+
+        $rows = DB::select($query, $bindings);
         $project = !empty($rows) ? $rows[0] : null;
         if (!$project) {
             return response()->json(['error' => 'Project not found.'], 404);
@@ -269,7 +292,7 @@ class ProjectsController extends Controller
         $bannerImages = $this->resolveUrlList($details['bannerImages'] ?? []);
         $gallery = $this->resolveUrlList($details['gallery'] ?? []);
         $masterplanImage = $this->resolveFileUrl($details['masterplanImage'] ?? null);
-        $heroVideoUrl = $this->resolveFileUrl($details['heroVideoUrl'] ?? null);
+        $heroVideoUrl = $this->resolvePublicHeroVideoUrl($project->id, $details['heroVideoUrl'] ?? null);
         $coverUrl = $this->resolveFileUrl($project->cover_url ?? null);
         $fallbackImage = $coverUrl
             ?? ($bannerImages[0] ?? ($gallery[0] ?? $masterplanImage));
@@ -277,6 +300,7 @@ class ProjectsController extends Controller
 
         return response()->json([
             'id' => $project->id,
+            'slug' => $details['slug'] ?? null,
             'title' => $project->name,
             'shortDesc' => $details['shortDesc'] ?? '',
             'image' => $fallbackImage ?? '',
@@ -345,6 +369,47 @@ class ProjectsController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="brochure.pdf"',
             'Cache-Control' => 'public, max-age=3600',
+        ]);
+    }
+
+    public function publicHeroVideo(string $id)
+    {
+        $projectId = (int) $id;
+        if ($projectId <= 0) {
+            return response()->json(['error' => 'Invalid project id.'], 400);
+        }
+
+        $rows = DB::select(
+            "SELECT details_json
+             FROM projects
+             WHERE id = ?
+             LIMIT 1",
+            [$projectId]
+        );
+        $project = !empty($rows) ? $rows[0] : null;
+        if (!$project) {
+            return response()->json(['error' => 'Project not found.'], 404);
+        }
+
+        $details = null;
+        if (!empty($project->details_json)) {
+            $decoded = json_decode($project->details_json, true);
+            $details = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+        }
+
+        $fullPath = $this->resolveLocalUploadPath($details['heroVideoUrl'] ?? null);
+        if (!$fullPath) {
+            return response()->json(['error' => 'Hero video not found.'], 404);
+        }
+
+        $mime = mime_content_type($fullPath) ?: 'video/mp4';
+        $filename = basename($fullPath);
+
+        return response()->file($fullPath, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Cache-Control' => 'public, max-age=3600',
+            'Accept-Ranges' => 'bytes',
         ]);
     }
 

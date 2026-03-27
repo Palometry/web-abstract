@@ -35,11 +35,11 @@
       <div class="collage-rows">
         <div class="collage-row" *ngFor="let row of section.rows; trackBy: trackRow" [class.row-reverse]="row.reverse">
           <figure class="collage-tile collage-feature">
-            <a
-              class="tile-trigger"
-              [routerLink]="['/project', row.featured.id]"
-              [attr.aria-label]="'Ver proyecto ' + row.featured.title"
-            >
+              <a
+                class="tile-trigger"
+                [routerLink]="['/project', getProjectRouteId(row.featured.project)]"
+                [attr.aria-label]="'Ver proyecto ' + row.featured.title"
+              >
               <img
                 [src]="row.featured.src"
                 [alt]="row.featured.alt"
@@ -57,7 +57,7 @@
             <figure class="collage-tile collage-compact" *ngFor="let item of row.stacked; trackBy: trackTile">
               <a
                 class="tile-trigger"
-                [routerLink]="['/project', item.id]"
+                [routerLink]="['/project', getProjectRouteId(item.project)]"
                 [attr.aria-label]="'Ver proyecto ' + item.title"
               >
                 <img

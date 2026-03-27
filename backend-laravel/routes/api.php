@@ -35,6 +35,7 @@ Route::get('/blog/public/{slug}', [BlogController::class, 'publicDetail']);
 Route::get('/services/public', [ServiceController::class, 'publicList']);
 Route::get('/projects/public', [ProjectsController::class, 'publicList']);
 Route::get('/projects/public/{id}/brochure', [ProjectsController::class, 'publicBrochure']);
+Route::get('/projects/public/{id}/hero-video', [ProjectsController::class, 'publicHeroVideo']);
 Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
 Route::get('/quotes/public/options', [QuotesController::class, 'options']);
 Route::post('/chat', [ChatController::class, 'send'])->middleware('throttle:public-chat');
@@ -108,6 +109,9 @@ Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor'])->group(
 
     Route::post('/media', [MediaController::class, 'store']);
     Route::post('/media/file', [MediaController::class, 'storeFile']);
+    Route::post('/media/chunks/init', [MediaController::class, 'initChunkedUpload']);
+    Route::post('/media/chunks/{uploadId}', [MediaController::class, 'appendChunk']);
+    Route::post('/media/chunks/{uploadId}/complete', [MediaController::class, 'completeChunkedUpload']);
 });
 
 Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor_user_manager'])->group(function () {

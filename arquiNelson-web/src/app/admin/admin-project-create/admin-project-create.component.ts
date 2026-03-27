@@ -73,6 +73,9 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
   images: ProjectImageView[] = [];
   videos: ProjectVideoView[] = [];
   successMessage = '';
+  uploadStatusTitle = '';
+  uploadStatusDetail = '';
+  uploadProgress = 0;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingBrochureFile: File | null = null;
   private pendingHeroVideoFile: PendingLocalFile | null = null;
@@ -1291,6 +1294,30 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  private setUploadStatus(title: string, detail = 'Este proceso puede tardar varios segundos. No cierres la ventana.') {
+    this.uploading = true;
+    this.uploadStatusTitle = title;
+    this.uploadStatusDetail = detail;
+    this.uploadProgress = 0;
+    this.cdr.detectChanges();
+  }
+
+  private updateUploadProgress(progress: number, detail?: string) {
+    this.uploadProgress = Math.max(0, Math.min(100, progress));
+    if (detail) {
+      this.uploadStatusDetail = detail;
+    }
+    this.cdr.detectChanges();
+  }
+
+  private clearUploadStatus() {
+    this.uploading = false;
+    this.uploadStatusTitle = '';
+    this.uploadStatusDetail = '';
+    this.uploadProgress = 0;
+    this.cdr.detectChanges();
+  }
+
   canDeactivate(): boolean {
     if (!this.hasPendingLocalChanges) {
       return true;
@@ -1389,15 +1416,20 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    this.uploading = true;
+    this.setUploadStatus('Subiendo brochure PDF', 'Estamos cargando el brochure. Esto puede tardar un poco según el tamaño del archivo.');
     this.error = '';
-    this.cdr.detectChanges();
 
     const file = this.pendingBrochureFile;
-    const result = await this.data.uploadMedia(file, { title: file.name });
+    const result = await this.data.uploadMedia(file, {
+      title: file.name,
+      onProgress: (progress) =>
+        this.ngZone.run(() =>
+          this.updateUploadProgress(progress, `Subiendo video del banner: ${progress}% completado.`)
+        )
+    });
 
     this.ngZone.run(() => {
-      this.uploading = false;
+      this.clearUploadStatus();
       if (!result.ok || !result.fileUrl) {
         this.error = result.error ?? 'No se pudo subir el brochure.';
         this.cdr.detectChanges();
@@ -1417,15 +1449,14 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    this.uploading = true;
+    this.setUploadStatus('Subiendo video del banner', 'El video del banner puede tardar más que una imagen. Mantén esta ventana abierta hasta que termine.');
     this.error = '';
-    this.cdr.detectChanges();
 
     const file = this.pendingHeroVideoFile.file;
     const result = await this.data.uploadMedia(file, { title: this.pendingHeroVideoFile.name });
 
     this.ngZone.run(() => {
-      this.uploading = false;
+      this.clearUploadStatus();
       if (!result.ok || !result.fileUrl) {
         this.error = result.error ?? 'No se pudo subir el video del banner.';
         this.cdr.detectChanges();
@@ -1444,7 +1475,9 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
   private async preparePendingDetailImageUploads(): Promise<boolean> {
     const masterplan = this.pendingSingleImages.masterplanImage;
     if (masterplan) {
+      this.setUploadStatus('Subiendo imagen de lotización', 'Estamos cargando la imagen seleccionada.');
       const result = await this.data.uploadMedia(masterplan.file, { title: masterplan.name });
+      this.clearUploadStatus();
       if (!result.ok || !result.fileUrl) {
         this.error = result.error ?? 'No se pudo subir la imagen.';
         this.cdr.detectChanges();
@@ -1466,7 +1499,12 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
 
       while (this.pendingListImages[field].length) {
         const entry = this.pendingListImages[field][0];
+        this.setUploadStatus(
+          field === 'bannerImagesText' ? 'Subiendo imágenes del banner' : 'Subiendo imágenes de la galería',
+          'Estamos cargando las imágenes pendientes del proyecto.'
+        );
         const result = await this.data.uploadMedia(entry.file, { title: entry.name });
+        this.clearUploadStatus();
         if (!result.ok || !result.fileUrl) {
           this.detailsDraft[field] = [...currentLines, ...uploadedUrls].join('\n') as any;
           this.error = result.error ?? 'No se pudo subir la imagen.';
@@ -1488,9 +1526,11 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
 
   private async commitCoverImageChange(projectId: number): Promise<boolean> {
     if (this.pendingCoverFile) {
+      this.setUploadStatus('Subiendo imagen de portada', 'Estamos cargando la portada del proyecto.');
       const result = await this.data.uploadMedia(this.pendingCoverFile.file, {
         title: this.pendingCoverFile.name
       });
+      this.clearUploadStatus();
       if (!result.ok || !result.fileUrl) {
         this.error = result.error ?? 'No se pudo subir la imagen de portada.';
         this.cdr.detectChanges();

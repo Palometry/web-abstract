@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  HostListener,
   NgZone,
   OnDestroy,
   OnInit,
@@ -47,7 +48,6 @@ type DearFlipWindow = Window & Record<string, unknown>;
 })
 export class ProjectDetailComponent implements OnInit, OnDestroy {
   readonly fallbackImage = '/LOGO.jpg';
-  readonly defaultBrochurePdfUrl = '/flipbook/Popeye.pdf';
   project: PublicProject | ProjectData | undefined;
   bannerImages: string[] = [];
   currentBannerIndex = 0;
@@ -70,16 +70,22 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   flipbookError = '';
   flipbookMounted = false;
   dearFlipBookId = '';
+  galleryLightboxOpen = false;
+  galleryLightboxIndex = 0;
+  galleryZoom = 1;
+  galleryPanX = 0;
+  galleryPanY = 0;
+  galleryDragActive = false;
+  private galleryDragStartX = 0;
+  private galleryDragStartY = 0;
+  private galleryPanStartX = 0;
+  private galleryPanStartY = 0;
   private sub?: Subscription;
   private bannerTimer?: ReturnType<typeof setInterval>;
   private bannerAnimationTimer?: ReturnType<typeof setTimeout>;
   private flipbookInitTimer?: ReturnType<typeof setTimeout>;
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
-  private readonly brochureByProject = new Map<string, { pdf: string }>([
-    ['FUNDO BELLACA', { pdf: this.defaultBrochurePdfUrl }],
-    ['fundo-bellaca', { pdf: this.defaultBrochurePdfUrl }],
-  ]);
   private flipbookRenderToken = 0;
   private activeDearFlipBookId = '';
 
@@ -98,18 +104,15 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       const rawId = params.get('id');
       this.project = undefined;
       if (rawId) {
-        const id = Number(rawId);
-        if (Number.isFinite(id)) {
-          const project = await this.projectService.getProjectById(id);
-          if (project) {
-            if (!project.image) {
-              project.image = this.fallbackImage;
-            }
-            if (!project.thumbImage) {
-              project.thumbImage = project.image || this.fallbackImage;
-            }
+        const project = await this.projectService.getProjectById(rawId);
+        if (project) {
+          if (!project.image) {
+            project.image = this.fallbackImage;
           }
-          this.project = project ?? undefined;
+          if (!project.thumbImage) {
+            project.thumbImage = project.image || this.fallbackImage;
+          }
+          this.project = project;
         } else {
           const legacy = this.legacyProjectService.getProjectById(rawId) ?? undefined;
           if (legacy) {
@@ -145,14 +148,18 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       return null;
     }
     const direct = this.project.brochurePdfUrl?.trim();
-    if (direct) {
-      return direct;
-    }
-    return this.getBrochureOverride()?.pdf ?? null;
+    return direct || null;
   }
 
   get hasFlipbook(): boolean {
     return !!this.brochurePdfUrl;
+  }
+
+  get currentGalleryImage(): string | null {
+    if (!this.project?.gallery?.length) {
+      return null;
+    }
+    return this.project.gallery[this.galleryLightboxIndex] ?? null;
   }
 
   nextBanner() {
@@ -288,8 +295,122 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     return formatProjectTypeLabel(value);
   }
 
+  openGalleryLightbox(index: number) {
+    if (!this.project?.gallery?.length || index < 0 || index >= this.project.gallery.length) {
+      return;
+    }
+    this.galleryLightboxIndex = index;
+    this.resetGalleryZoom();
+    this.galleryLightboxOpen = true;
+    this.setGalleryScrollLock(true);
+  }
+
+  closeGalleryLightbox() {
+    this.galleryLightboxOpen = false;
+    this.resetGalleryZoom();
+    this.setGalleryScrollLock(false);
+  }
+
+  prevGalleryImage() {
+    if (!this.project?.gallery?.length) {
+      return;
+    }
+    this.galleryLightboxIndex =
+      (this.galleryLightboxIndex - 1 + this.project.gallery.length) % this.project.gallery.length;
+    this.resetGalleryZoom();
+  }
+
+  nextGalleryImage() {
+    if (!this.project?.gallery?.length) {
+      return;
+    }
+    this.galleryLightboxIndex = (this.galleryLightboxIndex + 1) % this.project.gallery.length;
+    this.resetGalleryZoom();
+  }
+
+  zoomInGallery() {
+    this.galleryZoom = Math.min(3, Number((this.galleryZoom + 0.25).toFixed(2)));
+  }
+
+  zoomOutGallery() {
+    this.galleryZoom = Math.max(1, Number((this.galleryZoom - 0.25).toFixed(2)));
+    if (this.galleryZoom === 1) {
+      this.resetGalleryZoom();
+    }
+  }
+
+  resetGalleryZoom() {
+    this.galleryZoom = 1;
+    this.galleryPanX = 0;
+    this.galleryPanY = 0;
+    this.galleryDragActive = false;
+  }
+
+  startGalleryDrag(event: MouseEvent) {
+    if (this.galleryZoom <= 1 || event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    this.galleryDragActive = true;
+    this.galleryDragStartX = event.clientX;
+    this.galleryDragStartY = event.clientY;
+    this.galleryPanStartX = this.galleryPanX;
+    this.galleryPanStartY = this.galleryPanY;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleGalleryKeydown(event: KeyboardEvent) {
+    if (!this.galleryLightboxOpen) {
+      return;
+    }
+
+    switch (event.key) {
+      case 'Escape':
+        event.preventDefault();
+        this.closeGalleryLightbox();
+        break;
+      case 'ArrowLeft':
+        event.preventDefault();
+        this.prevGalleryImage();
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        this.nextGalleryImage();
+        break;
+      case '+':
+      case '=':
+        event.preventDefault();
+        this.zoomInGallery();
+        break;
+      case '-':
+        event.preventDefault();
+        this.zoomOutGallery();
+        break;
+      case '0':
+        event.preventDefault();
+        this.resetGalleryZoom();
+        break;
+    }
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  handleGalleryMousemove(event: MouseEvent) {
+    if (!this.galleryLightboxOpen || !this.galleryDragActive) {
+      return;
+    }
+    event.preventDefault();
+    this.galleryPanX = this.galleryPanStartX + (event.clientX - this.galleryDragStartX);
+    this.galleryPanY = this.galleryPanStartY + (event.clientY - this.galleryDragStartY);
+  }
+
+  @HostListener('document:mouseup')
+  handleGalleryMouseup() {
+    this.galleryDragActive = false;
+  }
+
   ngOnDestroy() {
     this.sub?.unsubscribe();
+    this.setGalleryScrollLock(false);
     this.destroyFlipbook();
     if (this.flipbookInitTimer) {
       clearTimeout(this.flipbookInitTimer);
@@ -547,17 +668,6 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     if (resetState) {
       this.resetFlipbookState();
     }
-  }
-
-  private getBrochureOverride() {
-    if (!this.project) {
-      return null;
-    }
-    const titleKey = this.project.title.trim().toUpperCase();
-    const idKey = String(this.project.id).trim();
-    return this.brochureByProject.get(titleKey)
-      ?? this.brochureByProject.get(idKey)
-      ?? null;
   }
 
   private resetFlipbookState() {
@@ -845,5 +955,12 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  private setGalleryScrollLock(locked: boolean) {
+    if (!this.isBrowser) {
+      return;
+    }
+    document.body.style.overflow = locked ? 'hidden' : '';
   }
 }

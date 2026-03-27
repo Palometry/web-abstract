@@ -41,9 +41,13 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     },
     { src: '/videos/video.mp4', label: 'Video de portada VIDEO' },
   ];
-  videos: HeroVideo[] = [...this.fallbackVideos];
+  videos: HeroVideo[] = [];
   activeVideoIndex = 0;
-  progressValues: number[] = this.videos.map(() => 0);
+  progressValues: number[] = [];
+  isHeroReady = false;
+  isVideoReady = false;
+  private hasViewInitialized = false;
+  private playbackRetryHandle: ReturnType<typeof setTimeout> | null = null;
   private readonly isBrowser: boolean;
 
   constructor(
@@ -84,43 +88,56 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
           projectPath: `/project/${project.id}`,
         }));
 
-      if (projectVideos.length) {
-        this.videos = projectVideos;
-        this.activeVideoIndex = 0;
-        this.progressValues = this.videos.map(() => 0);
-        this.cdr.detectChanges();
-        this.syncVideoPlayback();
-      }
+      this.videos = projectVideos.length ? projectVideos : [...this.fallbackVideos];
     } catch {
       this.videos = [...this.fallbackVideos];
-      this.progressValues = this.videos.map(() => 0);
+    }
+
+    this.activeVideoIndex = 0;
+    this.progressValues = this.videos.map(() => 0);
+    this.isHeroReady = this.videos.length > 0;
+    this.isVideoReady = false;
+    this.cdr.detectChanges();
+    if (this.hasViewInitialized) {
+      this.syncVideoPlayback();
     }
   }
 
   ngAfterViewInit(): void {
+    this.hasViewInitialized = true;
     this.syncVideoPlayback();
   }
 
   ngOnDestroy(): void {
+    this.clearPlaybackRetry();
     this.stopVideoPlayback();
   }
 
-  get activeVideo(): HeroVideo {
-    return this.videos[this.activeVideoIndex];
+  get activeVideo(): HeroVideo | null {
+    return this.videos[this.activeVideoIndex] ?? null;
   }
 
   get activeVideoHasProject(): boolean {
-    return !!this.activeVideo.projectPath;
+    return !!this.activeVideo?.projectPath;
   }
 
-  onLoadedMetadata(): void {
+  onVideoCanStart(): void {
+    this.ensureVideoPlayback();
+  }
+
+  onPlaying(): void {
     const video = this.getVideoElement();
     if (!video) {
       return;
     }
 
-    video.currentTime = 0;
-    void video.play().catch(() => undefined);
+    this.isVideoReady = true;
+    this.cdr.detectChanges();
+  }
+
+  onWaiting(): void {
+    this.isVideoReady = false;
+    this.cdr.detectChanges();
   }
 
   onTimeUpdate(): void {
@@ -146,12 +163,14 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.activeVideoIndex = index;
     this.progressValues = this.progressValues.map(() => 0);
+    this.isVideoReady = false;
+    this.clearPlaybackRetry();
     this.cdr.detectChanges();
     this.syncVideoPlayback();
   }
 
   goToActiveProject(): void {
-    if (!this.activeVideo.projectPath) {
+    if (!this.activeVideo?.projectPath) {
       return;
     }
 
@@ -159,7 +178,7 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private syncVideoPlayback(): void {
-    if (!this.isBrowser) {
+    if (!this.isBrowser || !this.isHeroReady) {
       return;
     }
 
@@ -169,10 +188,15 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     requestAnimationFrame(() => {
+      this.clearPlaybackRetry();
       this.stopVideoPlayback();
-      video.load();
-      video.currentTime = 0;
-      void video.play().catch(() => undefined);
+      video.muted = true;
+      video.defaultMuted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      this.isVideoReady = false;
+      this.cdr.detectChanges();
+      this.ensureVideoPlayback();
     });
   }
 
@@ -193,4 +217,37 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
 
     video.pause();
   }
+
+  private ensureVideoPlayback(attempt = 0): void {
+    const video = this.getVideoElement();
+    if (!video) {
+      return;
+    }
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.autoplay = true;
+    video.playsInline = true;
+
+    void video.play()
+      .then(() => {
+        this.clearPlaybackRetry();
+      })
+      .catch(() => {
+        if (attempt >= 8) {
+          return;
+        }
+
+        this.clearPlaybackRetry();
+        this.playbackRetryHandle = setTimeout(() => this.ensureVideoPlayback(attempt + 1), 250);
+      });
+  }
+
+  private clearPlaybackRetry(): void {
+    if (this.playbackRetryHandle !== null) {
+      clearTimeout(this.playbackRetryHandle);
+      this.playbackRetryHandle = null;
+    }
+  }
+
 }

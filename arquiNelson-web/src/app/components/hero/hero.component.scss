@@ -12,10 +12,44 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transition: opacity 0.35s ease;
 
   &.is-clickable {
     cursor: pointer;
   }
+
+  &.is-ready {
+    opacity: 1;
+  }
+}
+
+.hero-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(22, 22, 22, 0.92), rgba(10, 10, 10, 0.98));
+}
+
+.hero-loading__spinner {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.92);
+  animation: hero-spin 0.9s linear infinite;
+}
+
+.hero-video-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(12, 12, 12, 0.2), rgba(12, 12, 12, 0.38)),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 42%);
+  pointer-events: none;
 }
 
 .hero-link-layer {
@@ -90,5 +124,11 @@
 @media (prefers-reduced-motion: reduce) {
   .hero-dot {
     transition: none;
+  }
+}
+
+@keyframes hero-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

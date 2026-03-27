@@ -1,7 +1,7 @@
-import { Component, HostListener, Inject, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ProjectService, ProjectData } from '../../services/project';
+import { PublicProject, PublicProjectsService } from '../../services/public-projects';
 import { filter } from 'rxjs/operators';
 
 type MenuItem = {
@@ -18,9 +18,9 @@ type MenuItem = {
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   isMenuOpen = false;
-  projects: ProjectData[] = [];
+  projects: PublicProject[] = [];
   isOverlayHeader = false;
   isDarkMode = false;
   private readonly isBrowser: boolean;
@@ -32,17 +32,33 @@ export class HeaderComponent {
   ];
 
   constructor(
-    private projectService: ProjectService,
+    private projectService: PublicProjectsService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
-    this.projects = this.projectService.getProjects();
     this.initTheme();
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => this.updateHeaderAppearance());
     this.updateHeaderAppearance();
+  }
+
+  async ngOnInit(): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    this.projects = await this.projectService.getProjects();
+    this.cdr.detectChanges();
+  }
+
+  getProjectRouteId(project: PublicProject): string | number {
+    if (typeof project.slug === 'string' && project.slug.trim()) {
+      return project.slug.trim();
+    }
+    return project.id;
   }
 
   toggleMenu() {

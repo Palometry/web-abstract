@@ -388,11 +388,88 @@
       <section class="project-gallery">
         <h3>Galeria</h3>
         <div class="gallery-grid">
-          @for (image of project.gallery; track image) {
-            <img [src]="image" [alt]="project.title" />
+          @for (image of project.gallery; track image; let i = $index) {
+            <button
+              type="button"
+              class="gallery-tile"
+              style="padding:0;border:0;background:none"
+              (click)="openGalleryLightbox(i)"
+              [attr.aria-label]="'Abrir imagen ' + (i + 1) + ' de la galeria'"
+            >
+              <img [src]="image" [alt]="project.title + ' - imagen ' + (i + 1)" />
+            </button>
           }
         </div>
       </section>
+    }
+
+    @if (galleryLightboxOpen && currentGalleryImage) {
+      <div class="gallery-lightbox" (click)="closeGalleryLightbox()">
+        <div class="gallery-lightbox__dialog" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="gallery-lightbox__close"
+            aria-label="Cerrar galeria"
+            (click)="closeGalleryLightbox()"
+          >
+            ×
+          </button>
+
+          <div class="gallery-lightbox__toolbar">
+            <div class="gallery-lightbox__counter">
+              {{ galleryLightboxIndex + 1 }} / {{ project.gallery.length }}
+            </div>
+            <div class="gallery-lightbox__zoom">
+              <button type="button" (click)="zoomOutGallery()" [disabled]="galleryZoom <= 1">
+                -
+              </button>
+              <span>{{ (galleryZoom * 100) | number:'1.0-0' }}%</span>
+              <button type="button" (click)="zoomInGallery()" [disabled]="galleryZoom >= 3">
+                +
+              </button>
+              <button type="button" (click)="resetGalleryZoom()" [disabled]="galleryZoom === 1">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div class="gallery-lightbox__stage">
+            <button
+              type="button"
+              class="gallery-lightbox__nav prev"
+              aria-label="Imagen anterior"
+              (click)="prevGalleryImage()"
+              *ngIf="project.gallery.length > 1"
+            >
+              ‹
+            </button>
+
+            <div
+              class="gallery-lightbox__image-shell"
+              [class.is-draggable]="galleryZoom > 1"
+              [class.is-dragging]="galleryDragActive"
+            >
+              <img
+                class="gallery-lightbox__image"
+                [src]="currentGalleryImage"
+                [alt]="project.title + ' ampliada'"
+                [style.transform]="'translate(' + galleryPanX + 'px, ' + galleryPanY + 'px) scale(' + galleryZoom + ')'"
+                (mousedown)="startGalleryDrag($event)"
+              />
+            </div>
+
+            <button
+              type="button"
+              class="gallery-lightbox__nav next"
+              aria-label="Imagen siguiente"
+              (click)="nextGalleryImage()"
+              *ngIf="project.gallery.length > 1"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+      </div>
     }
   </div>
 } @else {
@@ -400,4 +477,3 @@
     <p>Proyecto no encontrado.</p>
   </div>
 }
-

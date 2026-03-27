@@ -1,38 +1,52 @@
 <section id="home" class="hero" aria-label="Banner principal de videos">
-  <video
-    #heroVideo
-    class="hero-video"
-    [class.is-clickable]="activeVideoHasProject"
-    [src]="activeVideo.src"
-    [attr.aria-label]="activeVideo.label"
-    autoplay
-    muted
-    playsinline
-    preload="metadata"
-    (loadedmetadata)="onLoadedMetadata()"
-    (timeupdate)="onTimeUpdate()"
-    (ended)="onVideoEnded()"
-  ></video>
+  <ng-container *ngIf="isHeroReady && activeVideo as currentVideo; else heroLoading">
+    <video
+      #heroVideo
+      class="hero-video"
+      [class.is-ready]="isVideoReady"
+      [class.is-clickable]="activeVideoHasProject"
+      [src]="currentVideo.src"
+      [attr.aria-label]="currentVideo.label"
+      autoplay
+      muted
+      playsinline
+      preload="auto"
+      (loadeddata)="onVideoCanStart()"
+      (canplay)="onVideoCanStart()"
+      (playing)="onPlaying()"
+      (waiting)="onWaiting()"
+      (timeupdate)="onTimeUpdate()"
+      (ended)="onVideoEnded()"
+    ></video>
 
-  <button
-    *ngIf="activeVideoHasProject"
-    type="button"
-    class="hero-link-layer"
-    [attr.aria-label]="'Abrir proyecto relacionado con ' + activeVideo.label"
-    (click)="goToActiveProject()"
-  ></button>
+    <div class="hero-video-shade" *ngIf="!isVideoReady" aria-hidden="true"></div>
 
-  <div class="hero-pagination" *ngIf="videos.length > 1" aria-label="Selector de videos">
     <button
+      *ngIf="activeVideoHasProject"
       type="button"
-      class="hero-dot"
-      *ngFor="let video of videos; let i = index"
-      [class.active]="i === activeVideoIndex"
-      [attr.aria-label]="'Reproducir video ' + (i + 1)"
-      [style.--progress]="progressValues[i]"
-      (click)="selectVideo(i)"
-    >
-      <span class="hero-dot-core"></span>
-    </button>
-  </div>
+      class="hero-link-layer"
+      [attr.aria-label]="'Abrir proyecto relacionado con ' + currentVideo.label"
+      (click)="goToActiveProject()"
+    ></button>
+
+    <div class="hero-pagination" *ngIf="videos.length > 1" aria-label="Selector de videos">
+      <button
+        type="button"
+        class="hero-dot"
+        *ngFor="let video of videos; let i = index"
+        [class.active]="i === activeVideoIndex"
+        [attr.aria-label]="'Reproducir video ' + (i + 1)"
+        [style.--progress]="progressValues[i]"
+        (click)="selectVideo(i)"
+      >
+        <span class="hero-dot-core"></span>
+      </button>
+    </div>
+  </ng-container>
+
+  <ng-template #heroLoading>
+    <div class="hero-loading" aria-hidden="true">
+      <div class="hero-loading__spinner"></div>
+    </div>
+  </ng-template>
 </section>

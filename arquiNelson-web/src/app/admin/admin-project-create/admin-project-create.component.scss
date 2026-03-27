@@ -60,6 +60,69 @@
   z-index: 1000;
 }
 
+.upload-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 24, 20, 0.48);
+  display: grid;
+  place-items: center;
+  z-index: 1100;
+  padding: 24px;
+}
+
+.upload-dialog {
+  width: min(460px, 100%);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px 24px;
+  box-shadow: 0 18px 40px rgba(17, 28, 21, 0.24);
+  display: grid;
+  gap: 12px;
+  text-align: center;
+}
+
+.upload-dialog h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.upload-dialog p {
+  margin: 0;
+  color: #617063;
+  line-height: 1.5;
+}
+
+.upload-spinner {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 4px;
+  border-radius: 50%;
+  border: 4px solid rgba(175, 43, 49, 0.16);
+  border-top-color: var(--color-red);
+  animation: upload-spin 0.9s linear infinite;
+}
+
+.upload-progress {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #ece7dc;
+  overflow: hidden;
+}
+
+.upload-progress__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8f2327 0%, #b5393f 100%);
+  transition: width 0.2s ease;
+}
+
+@keyframes upload-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .panel {
   background: #ffffff;
   border-radius: 16px;

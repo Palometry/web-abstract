@@ -30,6 +30,12 @@ class MediaController extends Controller
         return max(1, (int) config('media.max_upload_kb', 51200));
     }
 
+    private function maxUploadMessage(): string
+    {
+        $maxMb = max(1, (int) ceil($this->maxUploadKb() / 1024));
+        return 'El archivo excede el tamano maximo permitido de ' . $maxMb . ' MB.';
+    }
+
     private function extensionForMime(string $mime): ?string
     {
         $map = config('media.mime_extensions', []);
@@ -60,7 +66,7 @@ class MediaController extends Controller
         $maxBytes = $this->maxUploadKb() * 1024;
         if (strlen($buffer) > $maxBytes) {
             throw ValidationException::withMessages([
-                'file' => ['El archivo excede el tamano maximo permitido.'],
+                'file' => [$this->maxUploadMessage()],
             ]);
         }
 
@@ -127,6 +133,69 @@ class MediaController extends Controller
         return $base !== '' ? $base : 'media';
     }
 
+    private function chunkRoot(): string
+    {
+        return storage_path('app/media-chunks');
+    }
+
+    private function chunkDir(string $uploadId): string
+    {
+        return $this->chunkRoot() . DIRECTORY_SEPARATOR . $uploadId;
+    }
+
+    private function chunkMetaPath(string $uploadId): string
+    {
+        return $this->chunkDir($uploadId) . DIRECTORY_SEPARATOR . 'meta.json';
+    }
+
+    private function ensureDirectory(string $path): void
+    {
+        if (!is_dir($path)) {
+            mkdir($path, 0775, true);
+        }
+    }
+
+    private function writeChunkMeta(string $uploadId, array $meta): void
+    {
+        $dir = $this->chunkDir($uploadId);
+        $this->ensureDirectory($dir);
+        file_put_contents($this->chunkMetaPath($uploadId), json_encode($meta, JSON_UNESCAPED_SLASHES));
+    }
+
+    private function readChunkMeta(string $uploadId): ?array
+    {
+        $path = $this->chunkMetaPath($uploadId);
+        if (!is_file($path)) {
+            return null;
+        }
+
+        $decoded = json_decode((string) file_get_contents($path), true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function cleanupChunkUpload(string $uploadId): void
+    {
+        $dir = $this->chunkDir($uploadId);
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $items = scandir($dir) ?: [];
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($path)) {
+                continue;
+            }
+            @unlink($path);
+        }
+
+        @rmdir($dir);
+    }
+
     public function store(Request $request)
     {
         Validator::make($request->all(), [
@@ -186,6 +255,153 @@ class MediaController extends Controller
         ], 201);
     }
 
+    public function initChunkedUpload(Request $request)
+    {
+        Validator::make($request->all(), [
+            'filename' => ['required', 'string', 'max:180'],
+            'mimeType' => ['nullable', 'string', 'max:120'],
+            'fileSize' => ['required', 'integer', 'min:1'],
+            'title' => ['nullable', 'string', 'max:180'],
+            'altText' => ['nullable', 'string', 'max:180'],
+        ])->validate();
+
+        $fileSize = (int) $request->input('fileSize');
+
+        $uploadId = (string) Str::uuid();
+        $this->writeChunkMeta($uploadId, [
+            'filename' => (string) $request->input('filename'),
+            'mimeType' => $request->input('mimeType'),
+            'originalExtension' => strtolower((string) pathinfo((string) $request->input('filename'), PATHINFO_EXTENSION)),
+            'fileSize' => $fileSize,
+            'title' => $request->input('title'),
+            'altText' => $request->input('altText'),
+            'createdAt' => time(),
+        ]);
+
+        return response()->json(['uploadId' => $uploadId], 201);
+    }
+
+    public function appendChunk(Request $request, string $uploadId)
+    {
+        Validator::make($request->all(), [
+            'chunk' => ['required', 'file', 'max:1536'],
+            'index' => ['required', 'integer', 'min:0'],
+        ])->validate();
+
+        $meta = $this->readChunkMeta($uploadId);
+        if (!$meta) {
+            return response()->json(['error' => 'Upload session not found.'], 404);
+        }
+
+        $chunk = $request->file('chunk');
+        if (!$chunk || !$chunk->isValid()) {
+            return response()->json(['error' => 'Chunk invalido.'], 400);
+        }
+
+        $this->ensureDirectory($this->chunkDir($uploadId));
+        $index = (int) $request->input('index');
+        $chunkPath = $this->chunkDir($uploadId) . DIRECTORY_SEPARATOR . sprintf('part_%06d', $index);
+        $chunk->move($this->chunkDir($uploadId), basename($chunkPath));
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function completeChunkedUpload(Request $request, string $uploadId)
+    {
+        Validator::make($request->all(), [
+            'totalChunks' => ['required', 'integer', 'min:1'],
+        ])->validate();
+
+        $meta = $this->readChunkMeta($uploadId);
+        if (!$meta) {
+            return response()->json(['error' => 'Upload session not found.'], 404);
+        }
+
+        $totalChunks = (int) $request->input('totalChunks');
+        $chunkDir = $this->chunkDir($uploadId);
+        $assembledPath = $chunkDir . DIRECTORY_SEPARATOR . 'assembled.bin';
+        $output = fopen($assembledPath, 'wb');
+        if ($output === false) {
+            return response()->json(['error' => 'No se pudo preparar el archivo final.'], 500);
+        }
+
+        try {
+            for ($index = 0; $index < $totalChunks; $index += 1) {
+                $partPath = $chunkDir . DIRECTORY_SEPARATOR . sprintf('part_%06d', $index);
+                if (!is_file($partPath)) {
+                    fclose($output);
+                    @unlink($assembledPath);
+                    return response()->json(['error' => 'Faltan partes del archivo.'], 400);
+                }
+
+                $input = fopen($partPath, 'rb');
+                if ($input === false) {
+                    fclose($output);
+                    @unlink($assembledPath);
+                    return response()->json(['error' => 'No se pudo leer una parte del archivo.'], 500);
+                }
+
+                stream_copy_to_stream($input, $output);
+                fclose($input);
+            }
+            fclose($output);
+
+            $finalSize = (int) filesize($assembledPath);
+            if ($finalSize <= 0 || $finalSize > ($this->maxUploadKb() * 1024)) {
+                @unlink($assembledPath);
+                return response()->json(['error' => $this->maxUploadMessage()], 413);
+            }
+
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mime = $finfo->file($assembledPath) ?: ($meta['mimeType'] ?? null);
+            if (!is_string($mime) || !in_array($mime, $this->allowedMimeTypes(), true)) {
+                @unlink($assembledPath);
+                return response()->json(['error' => 'Tipo de archivo no permitido.'], 422);
+            }
+
+            $extension = $this->extensionForMime($mime);
+            if (!$extension) {
+                $fallbackExtension = strtolower((string) ($meta['originalExtension'] ?? ''));
+                if ($fallbackExtension !== '') {
+                    $extension = $fallbackExtension;
+                } else {
+                    @unlink($assembledPath);
+                    return response()->json(['error' => 'No se pudo determinar una extension segura para el archivo.'], 422);
+                }
+            }
+
+            $base = $this->safeBaseName(pathinfo((string) $meta['filename'], PATHINFO_FILENAME));
+            $unique = Str::random(12);
+            $safeName = $base . '-' . time() . '-' . $unique . '.' . $extension;
+            $relativePath = 'uploads/portfolio/' . $safeName;
+            $fullPath = public_path($relativePath);
+            $this->ensureDirectory(dirname($fullPath));
+            rename($assembledPath, $fullPath);
+
+            $fileUrl = '/' . $relativePath;
+            $id = DB::table('media_assets')->insertGetId([
+                'file_url' => $fileUrl,
+                'file_path' => $fullPath,
+                'mime_type' => $mime,
+                'file_size' => $finalSize,
+                'title' => $meta['title'] ?? null,
+                'alt_text' => $meta['altText'] ?? null,
+            ]);
+
+            $this->cleanupChunkUpload($uploadId);
+
+            return response()->json([
+                'id' => $id,
+                'fileUrl' => $this->requestOrigin() . $fileUrl,
+            ], 201);
+        } catch (\Throwable $exception) {
+            fclose($output);
+            @unlink($assembledPath);
+            $this->cleanupChunkUpload($uploadId);
+            return response()->json(['error' => 'No se pudo completar la subida del archivo.'], 500);
+        }
+    }
+
     public function storeFile(Request $request)
     {
         Validator::make($request->all(), [
@@ -200,10 +416,32 @@ class MediaController extends Controller
         }
 
         $originalName = $file->getClientOriginalName() ?: 'media';
-        $validatedFile = $this->validateBuffer((string) file_get_contents($file->getRealPath()), $file->getMimeType());
+        $size = (int) ($file->getSize() ?? 0);
+        $maxBytes = $this->maxUploadKb() * 1024;
+        if ($size <= 0 || $size > $maxBytes) {
+            throw ValidationException::withMessages([
+                'file' => [$this->maxUploadMessage()],
+            ]);
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file->getRealPath()) ?: $file->getMimeType();
+        if (!is_string($mime) || !in_array($mime, $this->allowedMimeTypes(), true)) {
+            throw ValidationException::withMessages([
+                'file' => ['Tipo de archivo no permitido.'],
+            ]);
+        }
+
+        $extension = $this->extensionForMime($mime);
+        if (!$extension) {
+            throw ValidationException::withMessages([
+                'file' => ['No se pudo determinar una extension segura para el archivo.'],
+            ]);
+        }
+
         $base = $this->safeBaseName(pathinfo($originalName, PATHINFO_FILENAME));
         $unique = Str::random(12);
-        $safeName = $base . '-' . time() . '-' . $unique . '.' . $validatedFile['extension'];
+        $safeName = $base . '-' . time() . '-' . $unique . '.' . $extension;
 
         $relativePath = 'uploads/portfolio/' . $safeName;
         $fullPath = public_path($relativePath);
@@ -213,8 +451,6 @@ class MediaController extends Controller
         $file->move(dirname($fullPath), basename($fullPath));
 
         $fileUrl = '/' . $relativePath;
-        $mime = $validatedFile['mime'];
-        $size = $file->getSize();
 
         $id = DB::table('media_assets')->insertGetId([
             'file_url' => $fileUrl,

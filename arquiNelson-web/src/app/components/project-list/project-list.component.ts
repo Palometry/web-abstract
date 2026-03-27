@@ -102,6 +102,13 @@ export class ProjectListComponent {
     return tile.id;
   }
 
+  getProjectRouteId(project: CollageProject): string | number {
+    if ('slug' in project && typeof project.slug === 'string' && project.slug.trim()) {
+      return project.slug.trim();
+    }
+    return project.id;
+  }
+
   get typeOptions(): string[] {
     const edificaciones = Object.keys(DEFAULT_PROJECT_CATALOG.edificaciones).map((label) => formatProjectTypeLabel(label));
     const habilitaciones = Object.keys(DEFAULT_PROJECT_CATALOG.habilitaciones).map((label) => formatProjectTypeLabel(label));
@@ -167,8 +174,8 @@ export class ProjectListComponent {
         Promise.resolve(this.legacyProjectService.getProjects())
       ]);
 
-      const merged = this.mergeProjects(apiProjects, legacyProjects);
-      const ordered = this.sortProjectsByRecency(merged);
+      const source = apiProjects.length ? apiProjects : legacyProjects;
+      const ordered = this.sortProjectsByRecency(source);
       this.allCollageItems = this.buildCollageItems(ordered);
       this.applyFilters();
       this.cdr.detectChanges();
@@ -178,23 +185,6 @@ export class ProjectListComponent {
       this.applyFilters();
       this.cdr.detectChanges();
     }
-  }
-
-  private mergeProjects(apiProjects: PublicProject[], legacyProjects: ProjectData[]): CollageProject[] {
-    if (!apiProjects.length) {
-      return legacyProjects;
-    }
-
-    const seen = new Set(apiProjects.map((project) => project.title.trim().toLowerCase()));
-    const merged: CollageProject[] = [...apiProjects];
-    for (const legacy of legacyProjects) {
-      const key = legacy.title.trim().toLowerCase();
-      if (!seen.has(key)) {
-        merged.push(legacy);
-      }
-    }
-
-    return merged;
   }
 
   private buildCollageItems(projects: CollageProject[]): CollageTile[] {
