@@ -8,6 +8,130 @@ use Illuminate\Support\Facades\DB;
 
 class ProjectsController extends Controller
 {
+    private function parseByteRange(?string $header, int $fileSize)
+    {
+        $header = is_string($header) ? trim($header) : '';
+        if ($header === '') {
+            return null;
+        }
+
+        if (!preg_match('/^bytes=(\d*)-(\d*)$/i', $header, $matches)) {
+            return false;
+        }
+
+        $startRaw = $matches[1] ?? '';
+        $endRaw = $matches[2] ?? '';
+
+        if ($startRaw === '' && $endRaw === '') {
+            return false;
+        }
+
+        if ($startRaw === '') {
+            $suffixLength = (int) $endRaw;
+            if ($suffixLength <= 0) {
+                return false;
+            }
+
+            $start = max(0, $fileSize - $suffixLength);
+            return ['start' => $start, 'end' => $fileSize - 1];
+        }
+
+        $start = (int) $startRaw;
+        $end = $endRaw === '' ? $fileSize - 1 : (int) $endRaw;
+
+        if ($start < 0 || $end < $start || $start >= $fileSize) {
+            return false;
+        }
+
+        return ['start' => $start, 'end' => min($end, $fileSize - 1)];
+    }
+
+    private function streamLocalFile(string $fullPath, string $mime, string $filename)
+    {
+        $fileSize = filesize($fullPath);
+        if ($fileSize === false || $fileSize <= 0) {
+            return response()->json(['error' => 'File not available.'], 404);
+        }
+
+        $range = $this->parseByteRange(request()->header('Range'), $fileSize);
+        if ($range === false) {
+            return response('', 416, [
+                'Accept-Ranges' => 'bytes',
+                'Content-Range' => 'bytes */' . $fileSize,
+            ]);
+        }
+
+        $start = 0;
+        $end = $fileSize - 1;
+        $status = 200;
+
+        if (is_array($range)) {
+            $start = $range['start'];
+            $end = $range['end'];
+            $status = 206;
+        }
+
+        $length = $end - $start + 1;
+        $safeFilename = str_replace('"', '', $filename);
+        $lastModified = gmdate('D, d M Y H:i:s', filemtime($fullPath) ?: time()) . ' GMT';
+        $headers = [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . $safeFilename . '"',
+            'Accept-Ranges' => 'bytes',
+            'Cache-Control' => 'public, max-age=3600',
+            'Content-Length' => (string) $length,
+            'Last-Modified' => $lastModified,
+            'X-Accel-Buffering' => 'no',
+        ];
+
+        if ($status === 206) {
+            $headers['Content-Range'] = 'bytes ' . $start . '-' . $end . '/' . $fileSize;
+        }
+
+        @ini_set('max_execution_time', '0');
+        @set_time_limit(0);
+
+        return response()->stream(function () use ($fullPath, $start, $length) {
+            $handle = fopen($fullPath, 'rb');
+            if ($handle === false) {
+                return;
+            }
+
+            try {
+                @ignore_user_abort(true);
+                @ini_set('max_execution_time', '0');
+                @set_time_limit(0);
+
+                if ($start > 0) {
+                    fseek($handle, $start);
+                }
+
+                $remaining = $length;
+                $chunkSize = 1024 * 1024;
+
+                while ($remaining > 0 && !feof($handle)) {
+                    if (connection_aborted()) {
+                        break;
+                    }
+
+                    $bytesToRead = (int) min($chunkSize, $remaining);
+                    $buffer = fread($handle, $bytesToRead);
+                    if ($buffer === false || $buffer === '') {
+                        break;
+                    }
+
+                    echo $buffer;
+                    $remaining -= strlen($buffer);
+
+                    @ob_flush();
+                    flush();
+                }
+            } finally {
+                fclose($handle);
+            }
+        }, $status, $headers);
+    }
+
     private function requestOrigin(): string
     {
         $scheme = request()->headers->get('x-forwarded-proto')
@@ -405,12 +529,7 @@ class ProjectsController extends Controller
         $mime = mime_content_type($fullPath) ?: 'video/mp4';
         $filename = basename($fullPath);
 
-        return response()->file($fullPath, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
-            'Cache-Control' => 'public, max-age=3600',
-            'Accept-Ranges' => 'bytes',
-        ]);
+        return $this->streamLocalFile($fullPath, $mime, $filename);
     }
 
     public function catalog()

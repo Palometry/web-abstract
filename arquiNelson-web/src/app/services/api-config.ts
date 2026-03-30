@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL =
-  'https://biotechnology-limit-especially-multiple.trycloudflare.com/api';
+  'https://workforce-sword-toolkit-international.trycloudflare.com/api';
 
 function readApiBaseUrl(): string {
   if (typeof document !== 'undefined') {
