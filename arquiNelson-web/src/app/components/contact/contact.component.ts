@@ -17,6 +17,15 @@ export class ContactComponent {
   readonly phoneLabel = '+51 956 639 199';
   readonly phoneLink = 'tel:+51956639199';
   readonly whatsappLink = 'https://wa.me/51956639199';
+  readonly advisoryQrSrc = 'img/codigo-qr.jpeg';
+  readonly advisoryPaymentName = 'Paolo Daza Tello';
+  readonly advisoryInitialFee = 'S/ 50';
+  readonly advisoryFinalFee = 'S/ 50';
+  readonly advisoryWhatsappLink =
+    'https://wa.me/51956639199?text=' +
+    encodeURIComponent(
+      'Hola, ya realice el primer pago de S/ 50 por Yape y quiero agendar mi asesoria. Les comparto mi comprobante para coordinar fecha y hora por WhatsApp.'
+    );
   readonly placeName = 'Abstract Arquitectura';
   readonly address = 'Jr. Manuel del Aguila, Moyobamba 22001, Peru';
   readonly schedule = 'Lunes a Viernes: 9:00 - 18:00';

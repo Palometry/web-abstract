@@ -74,6 +74,29 @@
   gap: 28px;
 }
 
+.projects-empty {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 60px) 48px;
+  text-align: center;
+  display: grid;
+  gap: 10px;
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+    color: var(--color-text);
+  }
+
+  p {
+    color: var(--color-text-muted);
+  }
+}
+
 .year-section {
   display: grid;
   gap: 12px;

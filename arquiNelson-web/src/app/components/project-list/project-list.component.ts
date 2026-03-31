@@ -53,6 +53,7 @@ type ScopeCatalogMaps = {
   styleUrls: ['./project-list.component.scss']
 })
 export class ProjectListComponent {
+  isLoading = true;
   collageItems: CollageTile[] = [];
   collageRows: CollageRow[] = [];
   collageSections: CollageSection[] = [];
@@ -178,11 +179,12 @@ export class ProjectListComponent {
       const ordered = this.sortProjectsByRecency(source);
       this.allCollageItems = this.buildCollageItems(ordered);
       this.applyFilters();
-      this.cdr.detectChanges();
     } catch {
       const ordered = this.sortProjectsByRecency(this.legacyProjectService.getProjects());
       this.allCollageItems = this.buildCollageItems(ordered);
       this.applyFilters();
+    } finally {
+      this.isLoading = false;
       this.cdr.detectChanges();
     }
   }

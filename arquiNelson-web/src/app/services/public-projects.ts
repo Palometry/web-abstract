@@ -62,12 +62,37 @@ export class PublicProjectsService {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = API_BASE_URL;
+  private readonly requestTimeoutMs = 20000;
+  private projectsCache: PublicProject[] | null = null;
+  private projectsRequest: Promise<PublicProject[]> | null = null;
 
   async getProjects(): Promise<PublicProject[]> {
     if (!this.isBrowser) {
       return [];
     }
-    return this.safeGet<PublicProject[]>(`${this.apiBaseUrl}/projects/public`, []);
+
+    if (this.projectsCache?.length) {
+      return this.projectsCache;
+    }
+
+    if (this.projectsRequest) {
+      return this.projectsRequest;
+    }
+
+    // Header, hero, home and /projects can request the same list at once.
+    this.projectsRequest = this.safeGet<PublicProject[]>(`${this.apiBaseUrl}/projects/public`, [])
+      .then((projects) => {
+        if (projects.length) {
+          this.projectsCache = projects;
+        }
+
+        return projects;
+      })
+      .finally(() => {
+        this.projectsRequest = null;
+      });
+
+    return this.projectsRequest;
   }
 
   async getProjectById(id: number | string): Promise<PublicProject | null> {
@@ -81,7 +106,7 @@ export class PublicProjectsService {
     try {
       return await firstValueFrom(
         this.http.get<T>(url).pipe(
-          timeout(8000),
+          timeout(this.requestTimeoutMs),
           catchError(() => of(fallback))
         )
       );

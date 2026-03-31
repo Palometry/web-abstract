@@ -77,4 +77,9 @@
       </div>
     </div>
   </section>
+
+  <section class="projects-empty" *ngIf="!isLoading && !collageSections.length">
+    <h3>No hay proyectos disponibles en este momento.</h3>
+    <p>Recarga la pagina o intenta nuevamente en unos segundos.</p>
+  </section>
 </div>

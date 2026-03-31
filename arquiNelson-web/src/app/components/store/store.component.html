@@ -1,0 +1,185 @@
+<section class="store-page">
+  <div class="store-shell">
+    <header class="store-hero">
+      <div class="store-copy">
+        <span class="store-eyebrow">Tienda digital</span>
+        <h1>Renders, plantillas y familias BIM listas para vender y producir mejor.</h1>
+        <p>
+          Catalogo inicial con productos digitales para arquitectura: renders sobre base AutoCAD,
+          plantillas Revit, packs de familias y bibliotecas BIM. Todavia no hay checkout online:
+          por ahora la reserva se cierra por WhatsApp o contacto directo. Si necesitas asesoria
+          personalizada para elegir o adaptar un producto, la asesoria cuesta S/ 50.
+        </p>
+
+        <div class="store-badges">
+          <span>Renders comerciales</span>
+          <span>Plantillas Revit</span>
+          <span>Familias BIM listas para usar</span>
+        </div>
+      </div>
+
+      <aside class="store-note" *ngIf="selectedProduct as product">
+        <span class="store-note__label">Producto destacado</span>
+        <strong>{{ product.title }}</strong>
+        <p>{{ product.description }}</p>
+
+        <div class="store-note__meta">
+          <div>
+            <span>Desde</span>
+            <strong>{{ formatPrice(product.priceFrom) }}</strong>
+          </div>
+          <div>
+            <span>Entrega</span>
+            <strong>{{ product.delivery }}</strong>
+          </div>
+        </div>
+      </aside>
+    </header>
+
+    <section class="store-toolbar" aria-label="Filtros de la tienda">
+      <button
+        type="button"
+        class="store-chip"
+        *ngFor="let category of categories"
+        [class.active]="category === selectedCategory"
+        (click)="setCategory(category)"
+      >
+        {{ category }}
+      </button>
+    </section>
+
+    <section class="store-layout" *ngIf="selectedProduct as product">
+      <div class="store-catalog">
+        <article
+          class="store-card"
+          *ngFor="let item of visibleProducts; trackBy: trackByProduct"
+          [class.active]="isSelected(item.id)"
+          (click)="selectProduct(item.id)"
+          [style.--card-accent]="item.accent"
+          [style.--card-surface]="item.surface"
+          [style.--card-glow]="item.glow"
+        >
+          <div class="store-card__preview" aria-hidden="true">
+            <span class="store-card__code">{{ item.code }}</span>
+            <span class="store-card__category">{{ item.category }}</span>
+          </div>
+
+          <div class="store-card__body">
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.idealFor }}</p>
+
+            <div class="store-card__foot">
+              <strong>{{ formatPrice(item.priceFrom) }}</strong>
+              <span>{{ item.software }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <aside class="store-spotlight">
+        <div
+          class="store-spotlight__visual"
+          [style.--card-accent]="product.accent"
+          [style.--card-surface]="product.surface"
+          [style.--card-glow]="product.glow"
+        >
+          <span>{{ product.code }}</span>
+          <strong>{{ product.category }}</strong>
+        </div>
+
+        <div class="store-spotlight__content">
+          <span class="store-spotlight__eyebrow">Seleccionado</span>
+          <h2>{{ product.title }}</h2>
+          <div class="store-description">
+            <h3>Descripcion</h3>
+            <p>{{ product.description }}</p>
+          </div>
+
+          <div class="store-metrics">
+            <article>
+              <span>Precio base</span>
+              <strong>{{ formatPrice(product.priceFrom) }}</strong>
+            </article>
+            <article>
+              <span>Entrega</span>
+              <strong>{{ product.delivery }}</strong>
+            </article>
+            <article>
+              <span>Formato</span>
+              <strong>{{ product.format }}</strong>
+            </article>
+            <article>
+              <span>Soporte</span>
+              <strong>{{ product.support }}</strong>
+            </article>
+            <article>
+              <span>Software</span>
+              <strong>{{ product.software }}</strong>
+            </article>
+          </div>
+
+          <div class="store-more">
+            <button
+              type="button"
+              class="store-more__toggle"
+              (click)="toggleDetails()"
+              [attr.aria-expanded]="isDetailsExpanded"
+            >
+              {{ isDetailsExpanded ? 'Ocultar datos extra' : 'Ver mas datos' }}
+            </button>
+
+            <div class="store-more__panel" *ngIf="isDetailsExpanded">
+              <p class="store-more__summary">{{ product.longDescription }}</p>
+
+              <div class="store-more__grid">
+                <article *ngFor="let detail of product.extraDetails">
+                  <span>{{ detail.label }}</span>
+                  <strong>{{ detail.value }}</strong>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="store-includes">
+            <h3>Incluye</h3>
+            <ul>
+              <li *ngFor="let feature of product.includes">{{ feature }}</li>
+            </ul>
+          </div>
+
+          <div class="store-actions">
+            <a
+              class="store-btn store-btn--primary"
+              [href]="buildWhatsAppHref(product)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Reservar por WhatsApp
+            </a>
+            <a class="store-btn store-btn--ghost" routerLink="/contact">
+              Solicitar asesoria personalizada · S/ 50
+            </a>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="store-process">
+      <article>
+        <span>01</span>
+        <h3>Elige el recurso</h3>
+        <p>Selecciona si necesitas un render, una plantilla Revit o un pack de familias segun tu flujo de trabajo.</p>
+      </article>
+      <article>
+        <span>02</span>
+        <h3>Reserva o solicita ajuste</h3>
+        <p>Si el producto es cerrado, se entrega digitalmente. Si requiere adaptacion o guia, la asesoria personalizada cuesta S/ 50.</p>
+      </article>
+      <article>
+        <span>03</span>
+        <h3>Recibe y produce</h3>
+        <p>Obtienes archivos listos para presentar, documentar, modelar o acelerar el arranque del proyecto.</p>
+      </article>
+    </section>
+  </div>
+</section>

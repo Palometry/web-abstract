@@ -8,8 +8,8 @@ import express from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
-const defaultApiOrigin = 'https://workforce-sword-toolkit-international.trycloudflare.com';
-const defaultFrontendOrigin = 'https://spam-sen-frames-annually.trycloudflare.com';
+const defaultApiOrigin = 'https://comedy-smooth-existed-among.trycloudflare.com';
+const defaultFrontendOrigin = 'https://experienced-editorials-nearest-universal.trycloudflare.com';
 
 function parseEnvList(value: string | undefined): string[] {
   return (value ?? '')

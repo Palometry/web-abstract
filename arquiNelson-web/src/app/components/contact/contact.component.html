@@ -5,9 +5,67 @@
       <h1>Conversemos sobre tu proyecto</h1>
       <p>
         Si necesitas asesoria, cotizacion o una reunion inicial, aqui tienes una via
-        directa para escribirnos y ubicar nuestra oficina.
+        directa para escribirnos y ubicar nuestra oficina. La asesoria personalizada
+        tiene un costo de S/ 50.
       </p>
     </div>
+
+    <div class="contact-fee-note">
+      <span>Asesoria inicial</span>
+      <strong>S/ 50</strong>
+      <p>Si tu consulta requiere revision, orientacion o una recomendacion puntual, este es el valor base de la asesoria.</p>
+    </div>
+
+    <section class="contact-advisory-flow" aria-label="Agendar asesoria">
+      <div class="contact-advisory-flow__copy">
+        <span class="contact-advisory-flow__eyebrow">Agendar cita</span>
+        <h2>Agenda tu asesoria despues del primer pago</h2>
+        <p>
+          El flujo de asesoria se coordinara por WhatsApp. El primer pago se realiza por
+          Yape para habilitar la conversacion y separar la cita. El segundo pago se completa
+          al finalizar la asesoria.
+        </p>
+      </div>
+
+      <div class="contact-advisory-flow__steps">
+        <article>
+          <span>Paso 1</span>
+          <strong>Paga S/ 50 por Yape</strong>
+          <p>Este primer pago habilita la conversacion inicial por WhatsApp para coordinar la asesoria.</p>
+        </article>
+        <article>
+          <span>Paso 2</span>
+          <strong>Envia tu comprobante y agenda</strong>
+          <p>Una vez pagado, nos escribes por WhatsApp y con el comprobante coordinamos fecha y hora.</p>
+        </article>
+        <article>
+          <span>Paso 3</span>
+          <strong>Paga los otros S/ 50 al finalizar</strong>
+          <p>Al terminar la asesoria se completa el segundo pago de S/ 50. Total de la asesoria: S/ 100.</p>
+        </article>
+      </div>
+
+      <div class="contact-advisory-flow__payment">
+        <figure class="contact-qr-card">
+          <img [src]="advisoryQrSrc" [alt]="'QR de Yape de ' + advisoryPaymentName" loading="lazy" />
+          <figcaption>
+            <span>Primer pago</span>
+            <strong>{{ advisoryInitialFee }} por Yape</strong>
+            <p>Titular: {{ advisoryPaymentName }}</p>
+          </figcaption>
+        </figure>
+
+        <div class="contact-advisory-flow__actions">
+          <a [href]="advisoryWhatsappLink" target="_blank" rel="noopener noreferrer">
+            Ya pague {{ advisoryInitialFee }} y quiero agendar
+          </a>
+          <p>
+            Envia tu comprobante por WhatsApp para coordinar fecha y hora. El pago final de
+            {{ advisoryFinalFee }} se realiza al terminar la asesoria.
+          </p>
+        </div>
+      </div>
+    </section>
 
     <div class="contact-layout">
       <div class="contact-map-panel">
@@ -42,13 +100,17 @@
               <span class="label">Horario</span>
               <span>{{ schedule }}</span>
             </li>
+            <li>
+              <span class="label">Asesoria</span>
+              <span>S/ 50 para coordinar + S/ 50 al finalizar</span>
+            </li>
           </ul>
         </div>
 
         <div class="contact-form-card">
           <div class="contact-form-copy">
             <h2>Escribenos</h2>
-            <p>Completa el formulario y enviaremos tu mensaje directamente a nuestro correo.</p>
+            <p>Completa el formulario y enviaremos tu mensaje directamente a nuestro correo. Si solicitas asesoria personalizada, la reunion inicial cuesta S/ 50.</p>
           </div>
 
           <div *ngIf="submitSuccess" class="contact-status-card success" role="status" aria-live="polite">
