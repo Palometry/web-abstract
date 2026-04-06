@@ -125,6 +125,24 @@ Health: GET /api/health -> { ok: true }
   - Body: { titleOverride?,category?,summary?,autocadUrl?,sortOrder?,isVisible?,coverMediaId?,heroMediaIds?,galleryMediaIds?,specs?,tags?,blocks? }
   - 200: { ok:true }
 
+## Blog
+- GET /api/blog/public
+  - 200: [{ id,title,slug,status,contentType,excerpt,coverImageUrl,publishedAt,createdAt,externalUrl?,externalPlatform?,externalAccount?,externalCta? }]
+- GET /api/blog/public/:slug
+  - 200: { id,title,slug,status,contentType,excerpt,content?,coverImageUrl,publishedAt,createdAt,externalUrl?,externalPlatform?,externalAccount?,externalCta? }
+- GET /api/blog (roles: admin, editor)
+  - 200: [{ id,title,slug,status,contentType,publishedAt,createdAt,externalUrl?,externalPlatform? }]
+- POST /api/blog
+  - Body: { title,slug?,status?,contentType?,publishedAt?,excerpt?,content?,coverImageUrl?,externalUrl?,externalPlatform?,externalAccount?,externalCta? }
+  - 201: { id }
+  - 409 slug
+- GET /api/blog/:id
+  - 200: { id,title,slug,status,contentType,publishedAt,excerpt?,content?,coverImageUrl?,externalUrl?,externalPlatform?,externalAccount?,externalCta? }
+- PATCH /api/blog/:id
+  - Body parcial
+  - 200: { ok:true }
+  - 409 slug
+
 ## Quotes (roles: admin, editor)
 - GET /api/quotes/options
   - 200: { pricingRates[], services[] }

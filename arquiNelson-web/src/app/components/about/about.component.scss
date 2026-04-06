@@ -22,16 +22,19 @@
     margin-bottom: 24px;
 
     h2 {
-      font-size: 32px;
-      margin-bottom: 12px;
-      color: rgb(128, 128, 128);
+      margin: 0 0 14px;
+      font-size: clamp(2.4rem, 5vw, 4.2rem);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      color: var(--color-red);
     }
 
     .about-summary {
-      color: var(--color-muted);
+      color: var(--color-text-muted);
       max-width: 900px;
       margin: 0 auto;
-      font-size: 18px;
+      font-size: 1.08rem;
+      line-height: 1.7;
     }
   }
 

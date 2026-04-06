@@ -9,10 +9,15 @@ export type PublicBlogPost = {
   id: number;
   title: string;
   slug: string;
+  contentType?: 'article' | 'external' | string;
   excerpt?: string | null;
   coverImageUrl?: string | null;
   publishedAt?: string | null;
   createdAt?: string | null;
+  externalUrl?: string | null;
+  externalPlatform?: string | null;
+  externalAccount?: string | null;
+  externalCta?: string | null;
 };
 
 export type PublicBlogDetail = PublicBlogPost & {

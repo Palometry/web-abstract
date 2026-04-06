@@ -20,7 +20,7 @@ export class AboutComponent implements OnInit {
 
   defaultTitle = 'Sobre Nosotros';
   defaultSummary =
-    'ArquiNelson es una firma dedicada a ofrecer soluciones inmobiliarias integrales con estándares internacionales, combinando diseño, calidad constructiva y compromiso social y ambiental.';
+    'Abstract Arquitecture es una firma dedicada a ofrecer soluciones inmobiliarias integrales con estándares internacionales, combinando diseño, calidad constructiva y compromiso social y ambiental.';
 
   defaultCards = [
     {

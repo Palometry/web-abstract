@@ -36,6 +36,7 @@ export const routes: Routes = [
       { path: 'projects/new', component: AdminProjectCreateComponent, canDeactivate: [pendingProjectChangesGuard] },
       { path: 'projects/:id', component: AdminProjectCreateComponent, canDeactivate: [pendingProjectChangesGuard] },
       { path: 'blog', component: AdminBlogComponent },
+      { path: 'blog/new', component: AdminBlogDetailComponent },
       { path: 'blog/:id', component: AdminBlogDetailComponent },
       { path: 'quotes', component: AdminQuotesComponent },
       { path: 'quotes/new', component: AdminQuoteCreateComponent },

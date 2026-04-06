@@ -45,10 +45,10 @@ export class BlogDetailComponent implements OnInit, AfterViewInit {
     try {
       this.post = await this.blogService.getPost(slug);
       if (!this.post) {
-        this.error = 'Publicación no encontrada.';
+        this.error = 'Publicacion no encontrada.';
       }
     } catch {
-      this.error = 'No se pudo cargar la publicación.';
+      this.error = 'No se pudo cargar la publicacion.';
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -70,13 +70,6 @@ export class BlogDetailComponent implements OnInit, AfterViewInit {
     });
   }
 
-  splitParagraphs(content?: string | null): string[] {
-    if (!content) {
-      return [];
-    }
-    return content.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
-  }
-
   isVideoUrl(url?: string | null): boolean {
     if (!url) {
       return false;
@@ -90,5 +83,47 @@ export class BlogDetailComponent implements OnInit, AfterViewInit {
       || clean.endsWith('.mov')
       || clean.endsWith('.m4v')
       || clean.endsWith('.avi');
+  }
+
+  isExternalPost(post: PublicBlogDetail): boolean {
+    return post.contentType === 'external' && !!post.externalUrl;
+  }
+
+  formatPlatform(platform?: string | null): string {
+    switch ((platform || '').toLowerCase()) {
+      case 'instagram':
+        return 'Instagram';
+      case 'facebook':
+        return 'Facebook';
+      case 'linkedin':
+        return 'LinkedIn';
+      case 'tiktok':
+        return 'TikTok';
+      case 'youtube':
+        return 'YouTube';
+      default:
+        return 'Red social';
+    }
+  }
+
+  getContentHtml(content?: string | null): string {
+    const value = (content || '').trim();
+    if (!value) {
+      return '<p>Sin contenido.</p>';
+    }
+    if (/<[a-z][\s\S]*>/i.test(value)) {
+      return value;
+    }
+    return value
+      .split(/\n{2,}/)
+      .map((paragraph) => `<p>${this.escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
+      .join('');
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 }

@@ -1,6 +1,7 @@
 <section class="services" [class.services-page]="standalonePage">
   <div class="container">
     <header class="section-header">
+      <span class="section-eyebrow" *ngIf="standalonePage">Servicios</span>
       <h2>{{ title || defaultTitle }}</h2>
       <p>{{ summary || defaultSummary }}</p>
     </header>

@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL =
-  'https://comedy-smooth-existed-among.trycloudflare.com/api';
+  'https://wait-distribute-evening-largely.trycloudflare.com/api';
 
 function readApiBaseUrl(): string {
   if (typeof document !== 'undefined') {

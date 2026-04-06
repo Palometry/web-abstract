@@ -427,6 +427,102 @@
   }
 }
 
+:host-context(body.theme-dark) {
+  .contact-page {
+    background:
+      radial-gradient(circle at top, rgba(159, 50, 50, 0.12), transparent 34%),
+      linear-gradient(180deg, rgba(12, 12, 12, 0.98), rgba(9, 9, 9, 1) 28%);
+  }
+
+  .contact-fee-note {
+    background: rgba(159, 50, 50, 0.12);
+    border-color: rgba(159, 50, 50, 0.24);
+  }
+
+  .contact-advisory-flow,
+  .contact-details-card,
+  .contact-form-card,
+  .contact-map-card {
+    background: rgba(16, 16, 16, 0.88);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.42);
+  }
+
+  .contact-advisory-flow__eyebrow {
+    background: rgba(159, 50, 50, 0.14);
+  }
+
+  .contact-advisory-flow__steps article,
+  .contact-qr-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .contact-qr-card img {
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .contact-map {
+    filter: grayscale(0.45) contrast(0.98) brightness(0.88);
+  }
+
+  .contact-points li {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .contact-points .label,
+  .contact-form-copy p,
+  .contact-advisory-flow__copy p,
+  .contact-advisory-flow__steps p,
+  .contact-advisory-flow__actions p,
+  .contact-qr-card p,
+  .contact-fee-note p,
+  .contact-hero p {
+    color: var(--color-text-muted);
+  }
+
+  .contact-details-card h2,
+  .contact-form-copy h2,
+  .contact-advisory-flow__steps strong,
+  .contact-qr-card strong,
+  .contact-points a,
+  .contact-points span:not(.label),
+  .contact-form span {
+    color: var(--color-text);
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text);
+
+    &::placeholder {
+      color: rgba(243, 243, 241, 0.42);
+    }
+
+    &:focus {
+      background: rgba(255, 255, 255, 0.07);
+      box-shadow: 0 0 0 4px rgba(159, 50, 50, 0.18);
+    }
+  }
+
+  .contact-status-card.success {
+    background: rgba(35, 134, 54, 0.16);
+    border-color: rgba(35, 134, 54, 0.28);
+    color: #8dd59d;
+  }
+
+  .contact-form .contact-feedback.success {
+    background: rgba(35, 134, 54, 0.16);
+    color: #8dd59d;
+  }
+
+  .contact-form .contact-feedback.error {
+    background: rgba(159, 50, 50, 0.16);
+  }
+}
+
 @media (max-width: 1080px) {
   .contact-advisory-flow__steps {
     grid-template-columns: 1fr;

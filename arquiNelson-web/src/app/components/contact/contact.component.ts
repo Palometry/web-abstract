@@ -19,12 +19,12 @@ export class ContactComponent {
   readonly whatsappLink = 'https://wa.me/51956639199';
   readonly advisoryQrSrc = 'img/codigo-qr.jpeg';
   readonly advisoryPaymentName = 'Paolo Daza Tello';
-  readonly advisoryInitialFee = 'S/ 50';
-  readonly advisoryFinalFee = 'S/ 50';
+  readonly advisoryInitialFee = 'S/ 25';
+  readonly advisoryFinalFee = 'S/ 25';
   readonly advisoryWhatsappLink =
-    'https://wa.me/51956639199?text=' +
+      'https://wa.me/51956639199?text=' +
     encodeURIComponent(
-      'Hola, ya realice el primer pago de S/ 50 por Yape y quiero agendar mi asesoria. Les comparto mi comprobante para coordinar fecha y hora por WhatsApp.'
+      'Hola, ya realice el primer pago de S/ 25 por Yape y quiero agendar mi asesoria. Les comparto mi comprobante para coordinar fecha y hora por WhatsApp.'
     );
   readonly placeName = 'Abstract Arquitectura';
   readonly address = 'Jr. Manuel del Aguila, Moyobamba 22001, Peru';

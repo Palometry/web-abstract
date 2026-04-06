@@ -442,12 +442,15 @@
     margin: 0;
     font-size: clamp(2.2rem, 4vw, 3.8rem);
     line-height: 0.95;
+    letter-spacing: -0.04em;
+    color: var(--color-red);
   }
 
   p {
     margin: 0;
     max-width: 42rem;
     font-size: clamp(1rem, 1.5vw, 1.2rem);
+    line-height: 1.7;
     color: var(--color-text-muted);
   }
 }
@@ -456,7 +459,7 @@
   text-transform: uppercase;
   letter-spacing: 0.18em;
   font-size: 0.78rem;
-  color: var(--color-text-muted);
+  color: rgb(128, 128, 128);
 }
 
 .home-contact-cta__button {

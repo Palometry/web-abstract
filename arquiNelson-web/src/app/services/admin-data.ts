@@ -205,8 +205,11 @@ export type AdminBlogPost = {
   title: string;
   slug: string;
   status: 'draft' | 'published' | string;
+  contentType?: 'article' | 'external' | string;
   publishedAt?: string | null;
   createdAt?: string | null;
+  externalUrl?: string | null;
+  externalPlatform?: string | null;
 };
 
 export type AdminBlogDetail = {
@@ -214,10 +217,15 @@ export type AdminBlogDetail = {
   title: string;
   slug: string;
   status: 'draft' | 'published' | string;
+  contentType?: 'article' | 'external' | string;
   publishedAt?: string | null;
   excerpt?: string | null;
   content?: string | null;
   coverImageUrl?: string | null;
+  externalUrl?: string | null;
+  externalPlatform?: string | null;
+  externalAccount?: string | null;
+  externalCta?: string | null;
 };
 
 export type AdminQuote = {
@@ -893,12 +901,17 @@ export class AdminDataService {
 
   async createBlogPost(payload: {
     title: string;
-    slug: string;
+    slug?: string | null;
     status?: string;
+    contentType?: 'article' | 'external' | string;
     publishedAt?: string | null;
     excerpt?: string | null;
     content?: string | null;
     coverImageUrl?: string | null;
+    externalUrl?: string | null;
+    externalPlatform?: string | null;
+    externalAccount?: string | null;
+    externalCta?: string | null;
   }): Promise<{ ok: boolean; id?: number; error?: string }> {
     if (!this.isBrowser) {
       return { ok: false, error: 'Storage no disponible.' };
@@ -931,10 +944,15 @@ export class AdminDataService {
       title: string;
       slug: string;
       status: string;
+      contentType: 'article' | 'external' | string;
       publishedAt: string | null;
       excerpt: string | null;
       content: string | null;
       coverImageUrl: string | null;
+      externalUrl: string | null;
+      externalPlatform: string | null;
+      externalAccount: string | null;
+      externalCta: string | null;
     }>
   ): Promise<{ ok: boolean; error?: string }> {
     if (!this.isBrowser) {

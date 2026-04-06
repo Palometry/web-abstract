@@ -79,4 +79,32 @@ export class BlogComponent implements OnInit, AfterViewInit {
       || clean.endsWith('.m4v')
       || clean.endsWith('.avi');
   }
+
+  isExternalPost(post: PublicBlogPost): boolean {
+    return post.contentType === 'external' && !!post.externalUrl;
+  }
+
+  formatPlatform(platform?: string | null): string {
+    switch ((platform || '').toLowerCase()) {
+      case 'instagram':
+        return 'Instagram';
+      case 'facebook':
+        return 'Facebook';
+      case 'linkedin':
+        return 'LinkedIn';
+      case 'tiktok':
+        return 'TikTok';
+      case 'youtube':
+        return 'YouTube';
+      default:
+        return 'Red social';
+    }
+  }
+
+  getCta(post: PublicBlogPost): string {
+    if (this.isExternalPost(post)) {
+      return post.externalCta || 'Ver publicacion';
+    }
+    return 'Leer mas';
+  }
 }

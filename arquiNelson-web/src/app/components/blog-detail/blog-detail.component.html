@@ -3,11 +3,12 @@
     <a class="back-link" routerLink="/blog">Volver al blog</a>
 
     <p class="error" *ngIf="error">{{ error }}</p>
-    <p class="hint" *ngIf="loading">Cargando publicación...</p>
+    <p class="hint" *ngIf="loading">Cargando publicacion...</p>
 
     <ng-container *ngIf="!loading && post">
       <header class="detail-header">
         <span class="date">{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+        <span class="platform" *ngIf="isExternalPost(post)">{{ formatPlatform(post.externalPlatform) }}</span>
         <h1>{{ post.title }}</h1>
         <p class="excerpt" *ngIf="post.excerpt">{{ post.excerpt }}</p>
       </header>
@@ -23,10 +24,18 @@
         </ng-template>
       </div>
 
-      <article class="content">
-        <p *ngFor="let paragraph of splitParagraphs(post.content)">{{ paragraph }}</p>
-        <p *ngIf="!post.content">Sin contenido.</p>
-      </article>
+      <ng-container *ngIf="isExternalPost(post); else articleContent">
+        <article class="external-preview">
+          <p class="account" *ngIf="post.externalAccount">{{ post.externalAccount }}</p>
+          <a class="external-button" [href]="post.externalUrl" target="_blank" rel="noreferrer">
+            {{ post.externalCta || 'Ver publicacion' }}
+          </a>
+        </article>
+      </ng-container>
+
+      <ng-template #articleContent>
+        <article class="content" [innerHTML]="getContentHtml(post.content)"></article>
+      </ng-template>
     </ng-container>
   </div>
 </section>
