@@ -48,7 +48,7 @@
         <div>
           <span class="quote-eyebrow">Cotizacion web</span>
           <h3>Arma tu cotizacion</h3>
-          <p>Completa los datos del cliente, proyecto y plan. Se enviara al admin como borrador.</p>
+          <p>Completa los datos del cliente y del proyecto. Se enviara al admin como borrador.</p>
         </div>
         <button
           type="button"
@@ -65,193 +65,191 @@
       <p class="feedback error" *ngIf="quoteError">{{ quoteError }}</p>
 
       <form class="quote-form" *ngIf="isQuoteExpanded" (ngSubmit)="submitQuoteLead()">
-        <div class="panel-grid">
-          <section class="panel">
-            <h4>Datos de la cotizacion</h4>
-            <div class="form-grid">
-              <label>
-                N° cotizacion
-                <input name="quoteNumber" value="Se asigna al guardar" readonly />
-              </label>
-              <label>
-                Estado
-                <input name="statusLabel" value="Borrador" readonly />
-              </label>
-              <label>
-                Fecha creacion
-                <input name="createdAt" [value]="todayLabel" readonly />
-              </label>
-              <label>
-                Vigente hasta
-                <input name="expiresAt" type="date" [value]="quoteDraft.expiresAt" readonly />
-              </label>
-            </div>
-          </section>
+        <section class="panel">
+          <h4>Datos del cliente</h4>
+          <div class="form-grid">
+            <label>
+              Tipo documento
+              <select name="documentType" [(ngModel)]="quoteDraft.documentType">
+                <option *ngFor="let doc of docTypes" [value]="doc.value">{{ doc.label }}</option>
+              </select>
+            </label>
+            <label>
+              NÂ° documento
+              <input
+                name="documentNumber"
+                [(ngModel)]="quoteDraft.documentNumber"
+                placeholder="Numero de documento"
+              />
+            </label>
+            <label>
+              Nombre completo
+              <input name="fullName" [(ngModel)]="quoteDraft.fullName" placeholder="Nombre y apellido" />
+            </label>
+            <label>
+              Telefono
+              <input name="phone" [(ngModel)]="quoteDraft.phone" placeholder="999 999 999" />
+            </label>
+            <label class="wide">
+              Correo
+              <input
+                name="email"
+                type="email"
+                [(ngModel)]="quoteDraft.email"
+                placeholder="correo@empresa.com"
+              />
+            </label>
+          </div>
+        </section>
 
-          <section class="panel">
-            <h4>Datos del cliente</h4>
-            <div class="form-grid">
-              <label>
-                Tipo documento
-                <select name="documentType" [(ngModel)]="quoteDraft.documentType">
-                  <option *ngFor="let doc of docTypes" [value]="doc.value">{{ doc.label }}</option>
-                </select>
-              </label>
-              <label>
-                N° documento
-                <input
-                  name="documentNumber"
-                  [(ngModel)]="quoteDraft.documentNumber"
-                  placeholder="Numero de documento"
-                />
-              </label>
-              <label>
-                Nombre completo
-                <input name="fullName" [(ngModel)]="quoteDraft.fullName" placeholder="Nombre y apellido" />
-              </label>
-              <label>
-                Telefono
-                <input name="phone" [(ngModel)]="quoteDraft.phone" placeholder="999 999 999" />
-              </label>
-              <label class="wide">
-                Correo
-                <input
-                  name="email"
-                  type="email"
-                  [(ngModel)]="quoteDraft.email"
-                  placeholder="correo@empresa.com"
-                />
-              </label>
-            </div>
-          </section>
-        </div>
-
-        <div class="panel-grid">
-          <section class="panel">
-            <h4>Datos del proyecto</h4>
-            <div class="form-grid">
-              <label>
-                Nombre del proyecto
-                <input
-                  name="projectName"
-                  [(ngModel)]="quoteDraft.projectName"
-                  placeholder="Nombre provisional"
-                />
-              </label>
-              <label class="wide">
-                Direccion
-                <input
-                  name="projectAddress"
-                  [(ngModel)]="quoteDraft.projectAddress"
-                  placeholder="Direccion del proyecto"
-                />
-              </label>
-              <label>
-                Area total (m2)
-                <input
-                  name="areaM2"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  [(ngModel)]="quoteDraft.areaM2"
-                  (input)="updateAreaCovered()"
-                />
-              </label>
-              <label>
-                Area libre (%)
-                <input
-                  name="areaUncoveredPercent"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  [(ngModel)]="quoteDraft.areaUncoveredPercent"
-                  (input)="updateAreaCovered()"
-                />
-              </label>
-              <label>
-                Area libre (m2)
-                <input name="areaUncoveredM2" type="number" [value]="getAreaUncoveredM2()" readonly />
-              </label>
-              <label>
-                Area techada total (m2)
-                <input name="areaCoveredM2" type="number" [value]="getAreaCoveredTotal()" readonly />
-              </label>
-              <label>
-                N° pisos
-                <input
-                  name="floorCount"
-                  type="number"
-                  min="1"
-                  step="1"
-                  [(ngModel)]="quoteDraft.floorCount"
-                />
-              </label>
-            </div>
-          </section>
-
-          <section class="panel">
-            <h4>Datos del plan</h4>
-            <div class="form-grid">
-              <label>
-                Plan
-                <select
-                  name="pricingRateId"
-                  [(ngModel)]="quoteDraft.pricingRateId"
-                  (change)="onRateChange()"
-                  [disabled]="loadingQuoteOptions || !rates.length"
-                >
-                  <option *ngIf="loadingQuoteOptions" [ngValue]="null">Cargando planes...</option>
-                  <option *ngIf="!loadingQuoteOptions && rates.length" [ngValue]="null">Selecciona un plan</option>
-                  <option *ngIf="!loadingQuoteOptions && !rates.length" [ngValue]="null">Sin planes activos</option>
-                  <option *ngFor="let rate of rates" [ngValue]="rate.id">
-                    {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
-                  </option>
-                </select>
-              </label>
-              <label>
-                Nombre del plan
-                <input name="planName" [(ngModel)]="quoteDraft.planName" readonly placeholder="Nombre del plan" />
-              </label>
-              <label>
-                Costo x m2 ({{ quoteDraft.currency }})
-                <input
-                  name="baseRatePerM2"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  [(ngModel)]="quoteDraft.baseRatePerM2"
-                  readonly
-                />
-              </label>
-              <label>
-                Plazo minimo (dias)
-                <input
-                  name="planMinDays"
-                  type="number"
-                  min="0"
-                  step="1"
-                  [(ngModel)]="quoteDraft.planMinDays"
-                  readonly
-                />
-              </label>
-              <label>
-                Plazo maximo (dias)
-                <input
-                  name="planMaxDays"
-                  type="number"
-                  min="0"
-                  step="1"
-                  [(ngModel)]="quoteDraft.planMaxDays"
-                  readonly
-                />
-              </label>
-            </div>
-          </section>
-        </div>
+        <section class="panel">
+          <h4>Datos del proyecto</h4>
+          <div class="form-grid">
+            <label class="wide">
+              <span class="field-label-with-help">
+                <span>Plan</span>
+                <span class="plan-help" tabindex="0" aria-label="Ver beneficios del plan seleccionado">
+                  ?
+                  <span class="plan-tooltip" role="tooltip">
+                    <ng-container *ngIf="selectedPlanBenefits as selectedBenefits; else noPlanSelected">
+                      <strong>Beneficios del plan</strong>
+                      <span class="plan-tooltip__title">
+                        {{ selectedBenefits.title }}
+                        <small>{{ selectedBenefits.timeline }}</small>
+                      </span>
+                      <span class="plan-tooltip__benefit" *ngFor="let benefit of selectedBenefits.benefits">
+                        {{ benefit.included ? 'Si' : 'No' }} · {{ benefit.label }}
+                      </span>
+                    </ng-container>
+                    <ng-template #noPlanSelected>
+                      <strong>Selecciona un plan</strong>
+                      <span class="plan-tooltip__benefit">
+                        Elige un plan para ver aqui sus beneficios, plazo y alcance.
+                      </span>
+                    </ng-template>
+                  </span>
+                </span>
+              </span>
+              <select
+                name="pricingRateId"
+                [(ngModel)]="quoteDraft.pricingRateId"
+                (change)="onRateChange()"
+                [disabled]="loadingQuoteOptions || !rates.length"
+              >
+                <option *ngIf="loadingQuoteOptions" [ngValue]="null">Cargando planes...</option>
+                <option *ngIf="!loadingQuoteOptions && rates.length" [ngValue]="null">Selecciona un plan</option>
+                <option *ngIf="!loadingQuoteOptions && !rates.length" [ngValue]="null">Sin planes activos</option>
+                <option *ngFor="let rate of rates" [ngValue]="rate.id">
+                  {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
+                </option>
+              </select>
+            </label>
+            <label>
+              Nombre del proyecto
+              <input
+                name="projectName"
+                [(ngModel)]="quoteDraft.projectName"
+                placeholder="Nombre provisional"
+              />
+            </label>
+            <label class="wide">
+              Direccion
+              <input
+                name="projectAddress"
+                [(ngModel)]="quoteDraft.projectAddress"
+                placeholder="Direccion del proyecto"
+              />
+            </label>
+            <label>
+              Area del terreno (m2)
+              <input
+                name="areaM2"
+                type="number"
+                min="0"
+                step="0.01"
+                [(ngModel)]="quoteDraft.areaM2"
+                (input)="updateAreaCovered()"
+              />
+            </label>
+            <label>
+              Area libre (%)
+              <input
+                name="areaUncoveredPercent"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                [(ngModel)]="quoteDraft.areaUncoveredPercent"
+                (input)="updateAreaCovered()"
+              />
+            </label>
+            <label>
+              Area libre (m2)
+              <input name="areaUncoveredM2" type="number" [value]="getAreaUncoveredM2()" readonly />
+            </label>
+            <label>
+              NÂ° pisos
+              <input
+                name="floorCount"
+                type="number"
+                min="1"
+                step="1"
+                [(ngModel)]="quoteDraft.floorCount"
+              />
+            </label>
+            <label>
+              Area techada total (m2)
+              <input name="areaCoveredM2" type="number" [value]="getAreaCoveredTotal()" readonly />
+            </label>
+          </div>
+        </section>
 
         <section class="panel">
           <h4>Resumen</h4>
+          <div class="summary-meta">
+            <div>
+              <span>Fecha de creacion</span>
+              <strong>{{ todayLabel }}</strong>
+            </div>
+            <div>
+              <span>Vigente hasta</span>
+              <strong>{{ quoteDraft.expiresAt || defaultExpiresAt }}</strong>
+            </div>
+            <div>
+              <span>Plan</span>
+              <strong>{{ quoteDraft.planName || 'Sin seleccionar' }}</strong>
+            </div>
+            <div>
+              <span>Costo x m2</span>
+              <strong>{{ formatCurrency(quoteDraft.baseRatePerM2 || 0, quoteDraft.currency) }}</strong>
+            </div>
+            <div>
+              <span>Plazo minimo</span>
+              <strong>{{ quoteDraft.planMinDays ?? 0 }} dias</strong>
+            </div>
+            <div>
+              <span>Plazo maximo</span>
+              <strong>{{ quoteDraft.planMaxDays ?? 0 }} dias</strong>
+            </div>
+          </div>
+          <div class="plan-benefits" *ngIf="selectedPlanBenefits as selectedBenefits">
+            <div class="plan-benefits__header">
+              <span>Beneficios del plan</span>
+              <strong>{{ selectedBenefits.title }}</strong>
+              <small>{{ selectedBenefits.timeline }}</small>
+            </div>
+            <div class="plan-benefits__list" *ngIf="selectedBenefits.benefits.length; else emptyPlanBenefits">
+              <div class="plan-benefits__item" *ngFor="let benefit of selectedBenefits.benefits">
+                <span class="plan-benefits__status" [class.is-included]="benefit.included" [class.is-excluded]="!benefit.included">
+                  {{ benefit.included ? 'Si' : 'No' }}
+                </span>
+                <span>{{ benefit.label }}</span>
+              </div>
+            </div>
+            <ng-template #emptyPlanBenefits>
+              <p class="hint">Este plan no tiene beneficios detallados cargados todavia.</p>
+            </ng-template>
+          </div>
           <div class="summary">
             <div>
               <span>Base</span>
@@ -272,7 +270,7 @@
               name="notes"
               rows="4"
               [(ngModel)]="quoteDraft.notes"
-              placeholder="Cuéntanos el alcance, referencia o necesidad del proyecto."
+              placeholder="CuÃ©ntanos el alcance, referencia o necesidad del proyecto."
             ></textarea>
           </label>
         </section>

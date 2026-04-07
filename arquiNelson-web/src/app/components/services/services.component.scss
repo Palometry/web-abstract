@@ -295,6 +295,94 @@
     color: #607063;
   }
 
+  .field-label-with-help {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .plan-help {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(159, 50, 50, 0.12);
+    color: var(--color-red);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    text-transform: none;
+    letter-spacing: 0;
+
+    &:hover .plan-tooltip,
+    &:focus-visible .plan-tooltip {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+  }
+
+  .plan-tooltip {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    z-index: 5;
+    width: min(420px, calc(100vw - 48px));
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(17, 18, 20, 0.96);
+    color: #f7f3ed;
+    box-shadow: 0 22px 44px rgba(0, 0, 0, 0.24);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+
+    strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      text-transform: none;
+      color: #ffffff;
+    }
+  }
+
+  .plan-tooltip__plan {
+    display: grid;
+    gap: 6px;
+    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .plan-tooltip__title {
+    display: grid;
+    gap: 2px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: none;
+
+    small {
+      color: rgba(247, 243, 237, 0.68);
+      font-size: 12px;
+      font-weight: 500;
+    }
+  }
+
+  .plan-tooltip__benefit {
+    color: rgba(247, 243, 237, 0.8);
+    font-size: 12px;
+    line-height: 1.45;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
   input,
   select,
   textarea {
@@ -354,6 +442,100 @@
     strong {
       font-size: 20px;
       color: var(--color-text);
+    }
+  }
+
+  .summary-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+
+    div {
+      display: grid;
+      gap: 4px;
+      padding: 16px;
+      border-radius: 16px;
+      background: #f4f6f4;
+      border: 1px solid #e8ece7;
+    }
+
+    span {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6b726c;
+    }
+
+    strong {
+      font-size: 16px;
+      color: var(--color-text);
+      line-height: 1.45;
+    }
+  }
+
+  .plan-benefits {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 18px;
+    border-radius: 18px;
+    background: #f9faf9;
+    border: 1px solid #e8ece7;
+  }
+
+  .plan-benefits__header {
+    display: grid;
+    gap: 4px;
+
+    span {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6b726c;
+    }
+
+    strong {
+      font-size: 20px;
+      color: var(--color-red);
+    }
+
+    small {
+      color: #607063;
+      font-size: 14px;
+    }
+  }
+
+  .plan-benefits__list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .plan-benefits__item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+    color: var(--color-text);
+    line-height: 1.55;
+  }
+
+  .plan-benefits__status {
+    min-width: 36px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+
+    &.is-included {
+      background: rgba(35, 134, 54, 0.12);
+      color: #1f6d31;
+    }
+
+    &.is-excluded {
+      background: rgba(159, 50, 50, 0.1);
+      color: var(--color-red);
     }
   }
 

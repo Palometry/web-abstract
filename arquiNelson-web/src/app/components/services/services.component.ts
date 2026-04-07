@@ -26,6 +26,17 @@ type QuoteServiceDraft = {
   unitPrice: number;
 };
 
+type PlanBenefit = {
+  label: string;
+  included: boolean;
+};
+
+type PlanBenefitGroup = {
+  title: string;
+  timeline: string;
+  benefits: PlanBenefit[];
+};
+
 @Component({
   selector: 'app-services',
   standalone: true,
@@ -58,6 +69,47 @@ export class ServicesComponent implements OnInit {
     { value: 'CE', label: 'Carnet de extranjeria' },
     { value: 'PASAPORTE', label: 'Pasaporte' }
   ];
+  readonly planBenefitCatalog: Record<string, PlanBenefitGroup> = {
+    basico: {
+      title: 'Plan Basico',
+      timeline: '15-30 dias',
+      benefits: [
+        { label: 'Planos de Arquitectura (distribucion, plantas, cortes y elevaciones)', included: true },
+        { label: 'Planos de Estructuras', included: true },
+        { label: 'Renders profesionales de fachada 3D y recorrido interior', included: true },
+        { label: 'Planos de Instalaciones Sanitarias', included: false },
+        { label: 'Planos de Instalaciones Electricas y Comunicaciones', included: false },
+        { label: 'Propuesta de Diseno Interior', included: false },
+        { label: 'Presupuesto de Obra', included: false }
+      ]
+    },
+    pro: {
+      title: 'Plan Pro',
+      timeline: '30-45 dias',
+      benefits: [
+        { label: 'Planos de Arquitectura (distribucion, plantas, cortes y elevaciones)', included: true },
+        { label: 'Planos de Estructuras', included: true },
+        { label: 'Planos de Instalaciones Sanitarias', included: true },
+        { label: 'Planos de Instalaciones Electricas y Comunicaciones', included: true },
+        { label: 'Renders profesionales de fachada 3D y recorrido interior', included: true },
+        { label: 'Propuesta de Diseno Interior', included: false },
+        { label: 'Presupuesto de Obra', included: false }
+      ]
+    },
+    premium: {
+      title: 'Plan Premium',
+      timeline: '45-60 dias',
+      benefits: [
+        { label: 'Planos de Arquitectura (distribucion, plantas, cortes y elevaciones)', included: true },
+        { label: 'Planos de Estructuras', included: true },
+        { label: 'Planos de Instalaciones Sanitarias', included: true },
+        { label: 'Planos de Instalaciones Electricas y Comunicaciones', included: true },
+        { label: 'Renders profesionales de fachada 3D y recorrido interior', included: true },
+        { label: 'Propuesta de Diseno Interior', included: true },
+        { label: 'Presupuesto de Obra', included: true }
+      ]
+    }
+  };
   quoteDraft = {
     fullName: '',
     phone: '',
@@ -369,6 +421,54 @@ export class ServicesComponent implements OnInit {
       return 'Por porcentaje';
     }
     return 'Monto fijo';
+  }
+
+  get selectedPlanBenefits() {
+    const selected = this.rates.find((rate) => rate.id === this.quoteDraft.pricingRateId);
+    if (!selected) {
+      return null;
+    }
+
+    return this.resolvePlanBenefits(selected.name, selected.minDays, selected.maxDays);
+  }
+
+  private resolvePlanBenefits(
+    planName: string,
+    minDays?: number | null,
+    maxDays?: number | null
+  ): PlanBenefitGroup {
+    const normalized = this.normalizePlanName(planName);
+    const matchedKey = Object.keys(this.planBenefitCatalog).find((key) => normalized.includes(key));
+    const fallbackTimeline =
+      minDays !== null && minDays !== undefined && maxDays !== null && maxDays !== undefined
+        ? `${minDays}-${maxDays} dias`
+        : 'Plazo por definir';
+
+    if (!matchedKey) {
+      return {
+        title: planName || 'Plan seleccionado',
+        timeline: fallbackTimeline,
+        benefits: []
+      };
+    }
+
+    const source = this.planBenefitCatalog[matchedKey];
+    return {
+      title: planName || source.title,
+      timeline:
+        minDays !== null && minDays !== undefined && maxDays !== null && maxDays !== undefined
+          ? `${minDays}-${maxDays} dias`
+          : source.timeline,
+      benefits: source.benefits
+    };
+  }
+
+  private normalizePlanName(value: string) {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   async submitQuoteLead() {

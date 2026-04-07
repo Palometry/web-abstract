@@ -27,17 +27,19 @@
 
     h2 {
       margin: 0;
-      font-size: clamp(1.6rem, 3.2vw, 2.8rem);
-      color: var(--color-text);
+      font-size: clamp(1rem, 1.9vw, 1.4rem);
+      font-weight: 600;
+      color: #7b7f85;
     }
 
   }
 
   .collage-eyebrow {
     text-transform: uppercase;
-    font-size: 0.78rem;
-    letter-spacing: 0.2em;
-    color: var(--color-text-muted);
+    font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--color-red);
   }
 
   .collage-rows {
@@ -440,10 +442,11 @@
 
   h2 {
     margin: 0;
-    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    font-size: clamp(1rem, 1.9vw, 1.4rem);
+    font-weight: 600;
     line-height: 0.95;
-    letter-spacing: -0.04em;
-    color: var(--color-red);
+    letter-spacing: -0.02em;
+    color: #7b7f85;
   }
 
   p {
@@ -457,9 +460,10 @@
 
 .home-contact-cta__eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.78rem;
-  color: rgb(128, 128, 128);
+  letter-spacing: 0.08em;
+  font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+  font-weight: 700;
+  color: var(--color-red);
 }
 
 .home-contact-cta__button {
