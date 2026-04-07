@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL =
-  'https://wait-distribute-evening-largely.trycloudflare.com/api';
+  'https://essays-functioning-solely-excess.trycloudflare.com/api';
 
 function readApiBaseUrl(): string {
   if (typeof document !== 'undefined') {

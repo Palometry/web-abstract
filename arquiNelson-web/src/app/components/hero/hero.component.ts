@@ -29,23 +29,12 @@ type HeroVideo = {
 export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('heroVideo') private heroVideo?: ElementRef<HTMLVideoElement>;
 
-  private readonly fallbackVideos: HeroVideo[] = [
-    { src: '/videos/gym.mp4', label: 'Video de portada Gym' },
-    { src: '/videos/hd.mp4', label: 'Video de portada HD' },
-    { src: '/videos/kr.mp4', label: 'Video de portada KR' },
-    { src: '/videos/kr2.mp4', label: 'Video de portada KR 2' },
-    {
-      src: '/videos/papa-pelacho.mp4',
-      label: 'Video de portada Papa Pelacho',
-      projectPath: '/project/2',
-    },
-    { src: '/videos/video.mp4', label: 'Video de portada VIDEO' },
-  ];
   videos: HeroVideo[] = [];
   activeVideoIndex = 0;
   progressValues: number[] = [];
   isHeroReady = false;
   isVideoReady = false;
+  hasStaticFallback = false;
   private hasViewInitialized = false;
   private playbackRetryHandle: ReturnType<typeof setTimeout> | null = null;
   private readonly isBrowser: boolean;
@@ -88,14 +77,15 @@ export class HeroComponent implements OnInit, AfterViewInit, OnDestroy {
           projectPath: `/project/${project.id}`,
         }));
 
-      this.videos = projectVideos.length ? projectVideos : [...this.fallbackVideos];
+      this.videos = projectVideos;
     } catch {
-      this.videos = [...this.fallbackVideos];
+      this.videos = [];
     }
 
     this.activeVideoIndex = 0;
     this.progressValues = this.videos.map(() => 0);
     this.isHeroReady = this.videos.length > 0;
+    this.hasStaticFallback = !this.isHeroReady;
     this.isVideoReady = false;
     this.cdr.detectChanges();
     if (this.hasViewInitialized) {

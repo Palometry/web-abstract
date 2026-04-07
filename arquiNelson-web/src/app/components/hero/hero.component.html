@@ -45,8 +45,20 @@
   </ng-container>
 
   <ng-template #heroLoading>
-    <div class="hero-loading" aria-hidden="true">
-      <div class="hero-loading__spinner"></div>
-    </div>
+    <ng-container *ngIf="hasStaticFallback; else heroPending">
+      <div class="hero-static-fallback" aria-hidden="true">
+        <div class="hero-static-fallback__glow"></div>
+        <div class="hero-static-fallback__panel">
+          <span class="hero-static-fallback__eyebrow">Abstract Arquitectura</span>
+          <h2>Portafolio en actualizacion</h2>
+          <p>Estamos preparando nuevos videos destacados para mostrar los proyectos del estudio.</p>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #heroPending>
+      <div class="hero-loading" aria-hidden="true">
+        <div class="hero-loading__spinner"></div>
+      </div>
+    </ng-template>
   </ng-template>
 </section>
