@@ -74,6 +74,12 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "github-pages": {
+              "baseHref": "/web-abstract/",
+              "outputMode": "static",
+              "ssr": false,
+              "outputHashing": "all"
             }
           },
           "defaultConfiguration": "production"
