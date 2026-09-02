@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
+import { ChatWidgetComponent } from './components/chat-widget/chat-widget.component';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +12,8 @@ import { FooterComponent } from './components/footer/footer.component';
     RouterOutlet,
     NgIf,
     HeaderComponent,
-    FooterComponent
+    FooterComponent,
+    ChatWidgetComponent
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.scss']

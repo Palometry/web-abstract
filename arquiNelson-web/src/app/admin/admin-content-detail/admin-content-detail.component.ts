@@ -118,6 +118,7 @@ export class AdminContentDetailComponent implements OnInit, AfterViewInit {
     title: '',
     slug: '',
     status: 'draft',
+    isHome: false,
     metaTitle: '',
     metaDescription: ''
   };
@@ -184,6 +185,7 @@ export class AdminContentDetailComponent implements OnInit, AfterViewInit {
         title: page.title,
         slug: page.slug,
         status: page.status,
+        isHome: page.isHome ?? false,
         metaTitle: page.metaTitle ?? '',
         metaDescription: page.metaDescription ?? ''
       };
@@ -233,6 +235,7 @@ export class AdminContentDetailComponent implements OnInit, AfterViewInit {
       title: this.pageDraft.title.trim(),
       slug: this.pageDraft.slug.trim(),
       status: this.pageDraft.status,
+      isHome: this.pageDraft.isHome,
       metaTitle: this.pageDraft.metaTitle || null,
       metaDescription: this.pageDraft.metaDescription || null
     });
@@ -436,6 +439,10 @@ export class AdminContentDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
+  clearSectionDraftImage() {
+    this.sectionDraft.imageUrl = '';
+  }
+
   async uploadSectionImage(section: SectionView, event: Event) {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
@@ -456,6 +463,10 @@ export class AdminContentDetailComponent implements OnInit, AfterViewInit {
     if (input) {
       input.value = '';
     }
+  }
+
+  clearSectionImage(section: SectionView) {
+    section.imageUrl = '';
   }
 
   private parseContent(value: string): unknown {

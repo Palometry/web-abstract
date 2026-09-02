@@ -1,0 +1,41 @@
+<section class="blog-detail">
+  <div class="container">
+    <a class="back-link" routerLink="/blog">Volver al blog</a>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <p class="hint" *ngIf="loading">Cargando publicacion...</p>
+
+    <ng-container *ngIf="!loading && post">
+      <header class="detail-header">
+        <span class="date">{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+        <span class="platform" *ngIf="isExternalPost(post)">{{ formatPlatform(post.externalPlatform) }}</span>
+        <h1>{{ post.title }}</h1>
+        <p class="excerpt" *ngIf="post.excerpt">{{ post.excerpt }}</p>
+      </header>
+
+      <div class="cover" *ngIf="post.coverImageUrl">
+        <video
+          *ngIf="isVideoUrl(post.coverImageUrl); else coverImage"
+          [src]="post.coverImageUrl"
+          controls
+        ></video>
+        <ng-template #coverImage>
+          <img [src]="post.coverImageUrl" [alt]="post.title" />
+        </ng-template>
+      </div>
+
+      <ng-container *ngIf="isExternalPost(post); else articleContent">
+        <article class="external-preview">
+          <p class="account" *ngIf="post.externalAccount">{{ post.externalAccount }}</p>
+          <a class="external-button" [href]="post.externalUrl" target="_blank" rel="noreferrer">
+            {{ post.externalCta || 'Ver publicacion' }}
+          </a>
+        </article>
+      </ng-container>
+
+      <ng-template #articleContent>
+        <article class="content" [innerHTML]="getContentHtml(post.content)"></article>
+      </ng-template>
+    </ng-container>
+  </div>
+</section>

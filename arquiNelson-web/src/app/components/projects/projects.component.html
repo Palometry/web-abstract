@@ -1,7 +1,7 @@
 <section id="portfolio" class="projects">
   <div class="container">
     <div class="section-header">
-      <h2>Nuestros Proyectos</h2>
+      <h2>Portafolio</h2>
       <p>Proyectos destacados de nuestra cartera inmobiliaria</p>
     </div>
 
@@ -23,7 +23,11 @@
     </div>
 
     <ng-template #loadingState>
-      <p class="projects-loading">{{ loading ? 'Cargando portafolio...' : 'No hay proyectos visibles.' }}</p>
+      <p class="projects-loading" *ngIf="loading">Cargando portafolio...</p>
+      <p class="projects-loading" *ngIf="!loading && error">{{ error }}</p>
+      <p class="projects-loading" *ngIf="!loading && !error && hasLoaded">
+        No hay proyectos visibles.
+      </p>
     </ng-template>
   </div>
 </section>

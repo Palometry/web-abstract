@@ -1,16 +1,85 @@
-<div class="container projects-page">
+<div class="projects-page">
   <section class="projects-hero">
     <h2>Proyectos</h2>
-    <p>Listado de proyectos inmobiliarios destacables.</p>
+    <p>Explora todos nuestros proyectos en una composicion visual continua.</p>
   </section>
 
-  <section class="projects-grid">
-    <article class="project-card" *ngFor="let project of projects">
-      <a [routerLink]="['/project', project.id]">
-        <img [src]="project.thumbImage || project.image" [alt]="project.title" />
-        <h3>{{ project.title }}</h3>
-        <p>{{ project.shortDesc }}</p>
-      </a>
-    </article>
+  <section class="projects-filters" *ngIf="typeOptions.length || classificationOptions.length">
+    <label class="filter-field">
+      <span>Tipo</span>
+      <select [value]="selectedType" (change)="onTypeChange($any($event.target).value)">
+        <option value="">Todos los tipos</option>
+        <option *ngFor="let option of typeOptions" [value]="option">{{ formatTypeLabel(option) }}</option>
+      </select>
+    </label>
+
+    <label class="filter-field">
+      <span>Clasificacion</span>
+      <select
+        [value]="selectedClassification"
+        [disabled]="!selectedType"
+        (change)="onClassificationChange($any($event.target).value)"
+      >
+        <option value="">Todas las clasificaciones</option>
+        <option *ngFor="let option of classificationOptions" [value]="option">{{ formatClassificationLabel(option) }}</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="projects-timeline" *ngIf="collageSections.length">
+    <div class="year-section" *ngFor="let section of collageSections; trackBy: trackSection">
+      <header class="year-heading" *ngIf="section.label">
+        <span>{{ section.label }}</span>
+      </header>
+
+      <div class="collage-rows">
+        <div class="collage-row" *ngFor="let row of section.rows; trackBy: trackRow" [class.row-reverse]="row.reverse">
+          <figure class="collage-tile collage-feature">
+              <a
+                class="tile-trigger"
+                [routerLink]="['/project', getProjectRouteId(row.featured.project)]"
+                [attr.aria-label]="'Ver proyecto ' + row.featured.title"
+              >
+              <img
+                [src]="row.featured.src"
+                [alt]="row.featured.alt"
+                loading="lazy"
+                (error)="onCollageError(row.featured)"
+              />
+              <div class="tile-caption">
+                <strong>{{ row.featured.title }}</strong>
+                <span>{{ formatTypeLabel(row.featured.category) }}</span>
+              </div>
+            </a>
+          </figure>
+
+          <div class="collage-stack" [class.stack-single]="row.stacked.length === 1">
+            <figure class="collage-tile collage-compact" *ngFor="let item of row.stacked; trackBy: trackTile">
+              <a
+                class="tile-trigger"
+                [routerLink]="['/project', getProjectRouteId(item.project)]"
+                [attr.aria-label]="'Ver proyecto ' + item.title"
+              >
+                <img
+                  [src]="item.src"
+                  [alt]="item.alt"
+                  loading="lazy"
+                  (error)="onCollageError(item)"
+                />
+                <div class="tile-caption">
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ formatTypeLabel(item.category) }}</span>
+                </div>
+              </a>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="projects-empty" *ngIf="!isLoading && !collageSections.length">
+    <h3>No hay proyectos disponibles en este momento.</h3>
+    <p>Recarga la pagina o intenta nuevamente en unos segundos.</p>
   </section>
 </div>

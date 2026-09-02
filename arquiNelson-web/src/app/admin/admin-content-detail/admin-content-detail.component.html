@@ -34,6 +34,10 @@
           <option value="published">Publicado</option>
         </select>
       </label>
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="pageDraft.isHome" />
+        Pagina principal
+      </label>
       <label>
         Meta titulo
         <input type="text" [(ngModel)]="pageDraft.metaTitle" />
@@ -67,6 +71,10 @@
         Imagen (URL)
         <input type="text" [(ngModel)]="sectionDraft.imageUrl" />
       </label>
+      <div class="image-preview wide" *ngIf="sectionDraft.imageUrl">
+        <img [src]="sectionDraft.imageUrl" alt="Imagen de sección" />
+        <button type="button" class="ghost" (click)="clearSectionDraftImage()">Quitar</button>
+      </div>
       <label class="wide image-upload">
         Subir imagen (archivo)
         <div class="upload-row">
@@ -111,6 +119,10 @@
             Imagen (URL)
             <input type="text" [(ngModel)]="section.imageUrl" />
           </label>
+          <div class="image-preview wide" *ngIf="section.imageUrl">
+            <img [src]="section.imageUrl" alt="Imagen de sección" />
+            <button type="button" class="ghost" (click)="clearSectionImage(section)">Quitar</button>
+          </div>
           <label class="wide image-upload">
             Subir imagen (archivo)
             <div class="upload-row">

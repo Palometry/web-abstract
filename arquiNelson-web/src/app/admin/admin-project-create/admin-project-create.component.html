@@ -1,36 +1,33 @@
-<section class="project-create">
-  <a routerLink="/admin/projects" class="back-link">← Volver a proyectos</a>
+﻿<section class="project-create">
+  <a routerLink="/admin/projects" class="back-link"><- Volver a proyectos</a>
 
   <div class="header">
     <div>
-      <h2>{{ projectId ? 'Editar proyecto' : 'Crear proyecto' }}</h2>
+      <h2>{{ isEditMode ? 'Editar proyecto' : 'Crear proyecto' }}</h2>
       <p>
         {{
-          projectId
+          isEditMode
             ? 'Actualiza informacion general del proyecto.'
             : 'Completa la informacion principal del proyecto.'
         }}
       </p>
     </div>
-    <button
-      type="button"
-      (click)="projectId ? saveProject() : createProject()"
-      [disabled]="saving"
-    >
-      {{
-        saving
-          ? projectId
-            ? 'Guardando...'
-            : 'Creando...'
-          : projectId
-            ? 'Guardar proyecto'
-            : 'Crear proyecto'
-      }}
-    </button>
   </div>
 
+  <div class="toast" *ngIf="successMessage">{{ successMessage }}</div>
   <p class="error" *ngIf="error">{{ error }}</p>
   <p class="hint" *ngIf="loading">Cargando proyecto...</p>
+
+  <div class="upload-overlay" *ngIf="uploading">
+    <div class="upload-dialog">
+      <div class="upload-spinner" aria-hidden="true"></div>
+      <h3>{{ uploadStatusTitle || 'Subiendo archivo' }}</h3>
+      <p>{{ uploadStatusDetail || 'Estamos procesando tu archivo. No cierres esta ventana.' }}</p>
+      <div class="upload-progress" *ngIf="uploadProgress > 0">
+        <div class="upload-progress__bar" [style.width.%]="uploadProgress"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="panel">
     <div class="form-grid">
@@ -79,84 +76,342 @@
       </label>
       <label>
         Ubicación (texto)
-        <input type="text" [(ngModel)]="detailsDraft.location" />
+        <input type="text" [value]="draft.address" readonly />
       </label>
       <label>
         Promotor
-        <input type="text" [(ngModel)]="detailsDraft.promoter" />
+        <input type="text" [value]="draft.clientName" readonly />
       </label>
-      <label>
-        Estado público
-        <input type="text" [(ngModel)]="detailsDraft.publicStatus" />
+      <label class="select-wide">
+        Tipo de proyecto
+        <select [(ngModel)]="detailsDraft.publicScope" (ngModelChange)="onPublicScopeChange()">
+          <option value="">Selecciona...</option>
+          <option *ngFor="let option of publicScopeOptions" [value]="option" [title]="getFullClassificationLabel(option)">
+            {{ formatClassificationLabel(option) }}
+          </option>
+        </select>
       </label>
-      <label>
-        Tipo público
-        <input type="text" [(ngModel)]="detailsDraft.publicType" />
+      <label class="select-wide">
+        {{
+          detailsDraft.publicScope === 'Habilitaciones'
+            ? 'Tipo de habilitación'
+            : 'Tipo de edificación'
+        }}
+        <select
+          [(ngModel)]="detailsDraft.publicType"
+          (ngModelChange)="onPublicTypeChange()"
+          [disabled]="!detailsDraft.publicScope"
+        >
+          <option value="">Selecciona...</option>
+          <option *ngFor="let option of publicTypeOptions" [value]="option" [title]="getFullTypeLabel(option)">
+            {{ formatTypeLabel(option) }}
+          </option>
+        </select>
+      </label>
+      <label class="select-wide">
+        Clasificación
+        <select
+          [(ngModel)]="detailsDraft.publicClassification"
+          (ngModelChange)="onPublicClassificationChange()"
+          [disabled]="!detailsDraft.publicType"
+        >
+          <option value="">Selecciona...</option>
+          <option
+            *ngFor="let option of publicClassificationOptions"
+            [value]="option"
+            [title]="getFullClassificationLabel(option)"
+          >
+            {{ formatClassificationLabel(option) }}
+          </option>
+        </select>
+      </label>
+      <label *ngIf="detailsDraft.publicScope === 'Edificaciones'" class="select-wide">
+        {{ publicCategoryLabel }}
+        <select
+          [(ngModel)]="detailsDraft.publicCategory"
+          [disabled]="!detailsDraft.publicClassification"
+        >
+          <option value="">Selecciona...</option>
+          <option
+            *ngFor="let option of publicCategoryOptions"
+            [value]="option"
+            [title]="getFullClassificationLabel(option)"
+          >
+            {{ formatCategoryOptionLabel(option) }}
+          </option>
+        </select>
       </label>
       <label>
         Area del terreno
         <input type="text" [(ngModel)]="detailsDraft.landArea" />
       </label>
       <label>
-        Unidades
-        <input type="number" [(ngModel)]="detailsDraft.units" />
+        Area techada
+        <input type="number" step="0.01" [(ngModel)]="detailsDraft.units" />
       </label>
-      <label>
-        Año inicio
-        <input type="number" [(ngModel)]="detailsDraft.startYear" />
-      </label>
-      <label>
-        Año entrega
-        <input type="number" [(ngModel)]="detailsDraft.deliveryYear" />
+      <label class="wide">
+        URL visor AutoCAD 360
+        <input type="text" [(ngModel)]="detailsDraft.autocadUrl" placeholder="https://a360.co/..." />
       </label>
       <label class="wide">
         URL Mapa (Google Maps)
-        <input type="text" [(ngModel)]="detailsDraft.mapUrl" />
+        <input type="text" [(ngModel)]="detailsDraft.mapUrl" (blur)="syncMapEmbedUrl()" />
       </label>
       <label class="wide">
-        URL Mapa embed
-        <input type="text" [(ngModel)]="detailsDraft.mapEmbedUrl" />
-      </label>
-      <label class="wide">
-        Imagen masterplan / lotización
+        Imagen de lotización o lotes
         <input type="text" [(ngModel)]="detailsDraft.masterplanImage" />
       </label>
+      <div
+        class="image-preview-inline"
+        *ngIf="(getPendingSingleImagePreview('masterplanImage') || detailsDraft.masterplanImage) as masterplanPreview"
+      >
+        <img [src]="masterplanPreview" alt="Lotización o lotes" />
+        <button type="button" class="danger" (click)="clearDetailImage('masterplanImage')">
+          Quitar imagen
+        </button>
+      </div>
+      <p class="hint wide" *ngIf="getPendingSingleImagePreview('masterplanImage')">
+        Imagen pendiente. Se guardará cuando guardes el proyecto.
+      </p>
       <label class="wide">
-        Subir imagen masterplan
+        Subir imagen de lotización o lotes
         <input type="file" accept="image/*" (change)="uploadDetailImage($event, 'masterplanImage')" />
       </label>
       <label class="wide">
-        Amenities / Áreas comunes (una por lí­nea)
+        Amenities / Áreas comunes (una por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.amenitiesText"></textarea>
       </label>
       <label class="wide">
-        Banner de imagenes (una URL por lí­nea)
+        Banner de imágenes (una URL por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.bannerImagesText"></textarea>
       </label>
+      <div class="preview-group" *ngIf="previewImages(detailsDraft.bannerImagesText).length">
+        <p class="preview-title">Imágenes actuales del banner</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.bannerImagesText); let i = index">
+            <img [src]="img" alt="Banner" />
+            <button type="button" class="danger" (click)="removeDetailListImage('bannerImagesText', i)">
+              Quitar
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="preview-group preview-group--pending" *ngIf="getPendingListImagePreviews('bannerImagesText').length">
+        <p class="preview-title">Imágenes pendientes del banner</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of getPendingListImagePreviews('bannerImagesText'); let i = index">
+            <img [src]="img" alt="Banner pendiente" />
+            <button type="button" class="danger" (click)="removePendingDetailListImage('bannerImagesText', i)">
+              Quitar pendiente
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="hint wide" *ngIf="getPendingListImagePreviews('bannerImagesText').length">
+        Las imágenes pendientes del banner se subirán cuando guardes el proyecto.
+      </p>
       <label class="wide">
         Subir imagen al banner
-        <input type="file" accept="image/*" (change)="appendDetailImage($event, 'bannerImagesText')" />
+        <input type="file" accept="image/*" multiple (change)="appendDetailImage($event, 'bannerImagesText')" />
       </label>
       <label class="wide">
-        Galerí­a final (una URL por linea)
+        Video del banner principal
+        <input type="text" [(ngModel)]="detailsDraft.heroVideoUrl" placeholder="Se completará al guardar si subes un archivo" />
+      </label>
+      <div class="image-preview-inline" *ngIf="heroVideoPreviewUrl">
+        <video [src]="heroVideoPreviewUrl" controls muted playsinline preload="metadata"></video>
+        <button type="button" class="danger" (click)="removeHeroVideo()">
+          Quitar video del banner
+        </button>
+      </div>
+      <p class="hint wide" *ngIf="pendingHeroVideoName">
+        Video pendiente: {{ pendingHeroVideoName }}. Se colocará en el banner principal cuando guardes el proyecto.
+      </p>
+      <label class="wide">
+        Subir video para banner principal
+        <input type="file" accept="video/*" (change)="uploadHeroVideo($event)" />
+      </label>
+      <label class="wide">
+        Brochure PDF / Flipbook
+        <input type="text" [(ngModel)]="detailsDraft.brochurePdfUrl" placeholder="https://.../brochure.pdf" />
+      </label>
+      <div class="image-preview-inline" *ngIf="detailsDraft.brochurePdfUrl">
+        <a [href]="detailsDraft.brochurePdfUrl" target="_blank" rel="noopener noreferrer">
+          Abrir brochure actual
+        </a>
+        <button type="button" class="danger" (click)="removeBrochurePdf()">
+          Quitar brochure
+        </button>
+      </div>
+      <p class="hint wide" *ngIf="pendingBrochureName">
+        PDF seleccionado: {{ pendingBrochureName }}. Se aplicará cuando guardes el proyecto.
+      </p>
+      <p class="hint wide">
+        Seleccionar un PDF solo lo deja pendiente en el formulario. El cambio se guarda cuando guardas el proyecto.
+      </p>
+      <label class="wide">
+        Subir brochure PDF
+        <input type="file" accept="application/pdf,.pdf" (change)="uploadBrochurePdf($event)" />
+      </label>
+      <label class="wide">
+        Galería final (una URL por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.galleryText"></textarea>
       </label>
+      <div class="preview-group" *ngIf="previewImages(detailsDraft.galleryText).length">
+        <p class="preview-title">Imágenes actuales de la galería</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of previewImages(detailsDraft.galleryText); let i = index">
+            <img [src]="img" alt="Galería" />
+            <button type="button" class="danger" (click)="removeDetailListImage('galleryText', i)">
+              Quitar
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="preview-group preview-group--pending" *ngIf="getPendingListImagePreviews('galleryText').length">
+        <p class="preview-title">Imágenes pendientes de la galería</p>
+        <div class="preview-grid">
+          <div class="preview-item" *ngFor="let img of getPendingListImagePreviews('galleryText'); let i = index">
+            <img [src]="img" alt="Galería pendiente" />
+            <button type="button" class="danger" (click)="removePendingDetailListImage('galleryText', i)">
+              Quitar pendiente
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="hint wide" *ngIf="getPendingListImagePreviews('galleryText').length">
+        Las imágenes pendientes de la galería se subirán cuando guardes el proyecto.
+      </p>
       <label class="wide">
         Subir imagen a galería final
-        <input type="file" accept="image/*" (change)="appendDetailImage($event, 'galleryText')" />
+        <input type="file" accept="image/*" multiple (change)="appendDetailImage($event, 'galleryText')" />
       </label>
       <label class="wide">
-        Areas para disfrutar (una por li­nea)
+        Áreas para disfrutar (una por línea)
         <textarea rows="4" [(ngModel)]="detailsDraft.enjoyAreasText"></textarea>
       </label>
-      <label class="wide">
-        Modelos de casas (Nombre | Descripción | URL)
-        <textarea rows="4" [(ngModel)]="detailsDraft.houseModelsText"></textarea>
-      </label>
-      <label class="wide">
-        Subir imagen para modelo de casa
-        <input type="file" accept="image/*" (change)="appendHouseModelImage($event)" />
-      </label>
+            <div class="house-models wide">
+        <div class="house-header">
+          <h4>Modelos de casas</h4>
+          <button type="button" class="ghost" (click)="addHouseModel()">
+            Agregar modelo
+          </button>
+        </div>
+        <div class="house-tabs" *ngIf="houseModels.length; else emptyHouseModels">
+          <button
+            type="button"
+            *ngFor="let model of houseModels; let i = index"
+            [class.active]="i === activeHouseModelIndex"
+            (click)="selectHouseModel(i)"
+          >
+            <span class="tab-title">{{ model.name || ('Modelo ' + (i + 1)) }}</span>
+            <span class="tab-sub" *ngIf="model.rooms">{{ model.rooms }} hab.</span>
+            <span class="tab-remove" (click)="removeHouseModel(i); $event.stopPropagation()">
+              x
+            </span>
+          </button>
+        </div>
+        <ng-template #emptyHouseModels>
+          <p class="hint">Agrega los modelos que deseas mostrar.</p>
+        </ng-template>
+
+        <div class="house-editor" *ngIf="activeHouseModel as model">
+          <div class="form-grid">
+            <label>
+              Nombre del modelo
+              <input type="text" [(ngModel)]="model.name" />
+            </label>
+            <label>
+              Habitaciones
+              <input type="number" min="0" [(ngModel)]="model.rooms" />
+            </label>
+            <label class="wide">
+              Descripción
+              <textarea rows="3" [(ngModel)]="model.description"></textarea>
+            </label>
+            <label class="wide">
+              Características (una por línea)
+              <textarea rows="4" [(ngModel)]="model.featuresText"></textarea>
+            </label>
+          </div>
+
+          <div class="house-images">
+            <div class="house-images-header">
+              <label class="wide">
+                Agregar imagen (URL)
+                <div class="inline-input">
+                  <input type="text" [(ngModel)]="model.newImageUrl" placeholder="https://..." />
+                  <button type="button" (click)="addHouseModelImageUrl(model)">Agregar</button>
+                </div>
+              </label>
+              <label class="wide">
+                Subir imagen (archivo)
+                <input type="file" accept="image/*" (change)="uploadHouseModelImage(model, $event)" />
+              </label>
+            </div>
+
+            <div class="house-gallery" *ngIf="model.images.length; else emptyHouseImages">
+              <div class="gallery-frame">
+                <img [src]="activeHouseImage" [alt]="model.name" />
+                <button
+                  class="gallery-nav prev"
+                  type="button"
+                  aria-label="Imagen anterior"
+                  (click)="prevHouseImage()"
+                  *ngIf="model.images.length > 1"
+                >
+                  &lt;
+                </button>
+                <button
+                  class="gallery-nav next"
+                  type="button"
+                  aria-label="Imagen siguiente"
+                  (click)="nextHouseImage()"
+                  *ngIf="model.images.length > 1"
+                >
+                  &gt;
+                </button>
+              </div>
+              <div class="gallery-dots" *ngIf="model.images.length > 1">
+                <button
+                  type="button"
+                  *ngFor="let img of model.images; let i = index"
+                  [class.active]="i === activeHouseImageIndex"
+                  (click)="goToHouseImage(i)"
+                  aria-label="Ir a imagen {{ i + 1 }}"
+                ></button>
+              </div>
+              <div class="gallery-list">
+                <div class="gallery-item" *ngFor="let img of model.images; let i = index">
+                  <span>{{ i + 1 }}.</span>
+                  <input type="text" [(ngModel)]="model.images[i]" />
+                  <button type="button" class="danger" (click)="removeHouseModelImage(model, i)">
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <ng-template #emptyHouseImages>
+              <p class="hint">Agrega imágenes para este modelo.</p>
+            </ng-template>
+          </div>
+
+          <div class="house-preview" *ngIf="model.name || model.description || getHouseModelFeatures(model).length">
+            <div class="preview-card">
+              <div class="preview-meta">
+                <div class="preview-rooms" *ngIf="model.rooms">
+                  Habitaciones <span>{{ model.rooms }}</span>
+                </div>
+                <h5>{{ model.name || 'Modelo' }}</h5>
+                <p>{{ model.description || 'Agrega una descripción para este modelo.' }}</p>
+              </div>
+              <ul class="preview-features" *ngIf="getHouseModelFeatures(model).length">
+                <li *ngFor="let feature of getHouseModelFeatures(model)">{{ feature }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
       <label class="wide">
         Planos de casas (Nombre | Ambientes | Area total | Area techada | URL)
         <textarea rows="4" [(ngModel)]="detailsDraft.housePlansText"></textarea>
@@ -173,144 +428,147 @@
   </div>
 
   <div class="panel">
-    <h3>Imagenes</h3>
-    <ng-container *ngIf="projectId; else imagesDisabled">
+    <h3>Imagen de portada</h3>
+    <p class="hint">Se usa como portada principal del proyecto en los listados.</p>
+    <div class="form-grid">
+      <label class="wide">
+        URL de la portada
+        <input type="text" [(ngModel)]="imageDraft.fileUrl" />
+      </label>
+      <div class="image-preview-inline" *ngIf="coverPreviewUrl">
+        <img [src]="coverPreviewUrl" alt="Portada del proyecto" />
+      </div>
+      <p class="hint wide" *ngIf="pendingCoverName">
+        Portada pendiente: {{ pendingCoverName }}. Se guardará cuando guardes el proyecto.
+      </p>
+      <label class="wide">
+        Subir imagen de portada
+        <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="danger" *ngIf="hasCoverImage" (click)="removeCoverImage()">
+        Quitar portada
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Videos</h3>
+    <ng-container *ngIf="projectId; else videosDisabled">
       <div class="form-grid">
         <label class="wide">
-          URL de imagen
-          <input type="text" [(ngModel)]="imageDraft.fileUrl" />
-        </label>
-        <label class="wide">
-          Subir imagen (archivo)
-          <input type="file" accept="image/*" (change)="uploadImageDraft($event)" />
+          URL del video
+          <input type="text" [(ngModel)]="videoDraft.fileUrl" />
         </label>
         <label>
           Titulo
-          <input type="text" [(ngModel)]="imageDraft.title" />
+          <input type="text" [(ngModel)]="videoDraft.title" />
         </label>
-        <label>
-          Alt
-          <input type="text" [(ngModel)]="imageDraft.altText" />
+        <label class="wide">
+          Descripcion
+          <textarea rows="3" [(ngModel)]="videoDraft.description"></textarea>
         </label>
         <label>
           Orden
-          <input type="number" [(ngModel)]="imageDraft.sortOrder" />
+          <input type="number" [(ngModel)]="videoDraft.sortOrder" />
         </label>
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="imageDraft.isCover" />
-          Portada
-        </label>
-        <button type="button" (click)="addImage()">Agregar imagen</button>
+        <button type="button" (click)="addVideo()">Agregar video</button>
       </div>
 
-      <div class="image-grid" *ngIf="images.length">
-        <div class="image-card" *ngFor="let image of images">
-          <img [src]="image.fileUrl" [alt]="image.altText || ''" />
+      <div class="image-grid" *ngIf="videos.length">
+        <div class="image-card" *ngFor="let video of videos">
+          <ng-container *ngIf="video.fileUrl as rawUrl">
+            <ng-container *ngIf="getVideoEmbedUrl(rawUrl) as embedUrl; else directVideo">
+              <iframe
+                class="video-frame"
+                [src]="embedUrl"
+                title="Video"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </ng-container>
+            <ng-template #directVideo>
+              <video *ngIf="isDirectVideoUrl(rawUrl); else videoLink" [src]="rawUrl" controls></video>
+            </ng-template>
+            <ng-template #videoLink>
+              <a class="video-link" [href]="rawUrl" target="_blank" rel="noopener noreferrer">Abrir video</a>
+            </ng-template>
+          </ng-container>
           <div class="form-grid compact">
             <label class="wide">
               URL
-              <input type="text" [(ngModel)]="image.draft.fileUrl" />
-            </label>
-            <label class="wide">
-              Subir imagen (archivo)
-              <input type="file" accept="image/*" (change)="uploadImageForExisting(image, $event)" />
+              <input type="text" [(ngModel)]="video.draft.fileUrl" />
             </label>
             <label>
               Titulo
-              <input type="text" [(ngModel)]="image.draft.title" />
+              <input type="text" [(ngModel)]="video.draft.title" />
             </label>
-            <label>
-              Alt
-              <input type="text" [(ngModel)]="image.draft.altText" />
+            <label class="wide">
+              Descripcion
+              <textarea rows="2" [(ngModel)]="video.draft.description"></textarea>
             </label>
             <label>
               Orden
-              <input type="number" [(ngModel)]="image.draft.sortOrder" />
-            </label>
-            <label class="toggle">
-              <input type="checkbox" [(ngModel)]="image.draft.isCover" />
-              Portada
+              <input type="number" [(ngModel)]="video.draft.sortOrder" />
             </label>
           </div>
           <div class="actions">
-            <button type="button" (click)="saveImage(image)">Guardar</button>
-            <button type="button" class="danger" (click)="deleteImage(image)">Eliminar</button>
+            <button type="button" (click)="saveVideo(video)">Guardar</button>
+            <button type="button" class="danger" (click)="deleteVideo(video)">Eliminar</button>
           </div>
         </div>
       </div>
     </ng-container>
-    <ng-template #imagesDisabled>
-      <p class="hint">Guarda el proyecto para habilitar la carga de imagenes.</p>
+    <ng-template #videosDisabled>
+      <p class="hint">Guarda el proyecto para habilitar la carga de videos.</p>
       <div class="form-grid">
         <label class="wide">
-          URL de imagen
+          URL del video
           <input type="text" disabled />
         </label>
         <label>
           Titulo
           <input type="text" disabled />
         </label>
-        <label>
-          Alt
-          <input type="text" disabled />
+        <label class="wide">
+          Descripcion
+          <textarea rows="2" disabled></textarea>
         </label>
         <label>
           Orden
           <input type="number" disabled />
         </label>
-        <label class="toggle">
-          <input type="checkbox" disabled />
-          Portada
-        </label>
-        <button type="button" disabled>Agregar imagen</button>
+        <button type="button" disabled>Agregar video</button>
       </div>
     </ng-template>
   </div>
 
-  <div class="panel">
-    <h3>Portafolio</h3>
-    <ng-container *ngIf="projectId; else portfolioDisabled">
-      <div class="form-grid">
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="portfolioDraft.enabled" />
-          Mostrar en portafolio
-        </label>
-        <label>
-          Orden
-          <input type="number" [(ngModel)]="portfolioDraft.sortOrder" />
-        </label>
-        <label class="wide">
-          Titulo alternativo
-          <input type="text" [(ngModel)]="portfolioDraft.titleOverride" />
-        </label>
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="portfolioDraft.isVisible" />
-          Visible
-        </label>
-        <button type="button" (click)="savePortfolio()">Guardar portafolio</button>
-      </div>
-    </ng-container>
-    <ng-template #portfolioDisabled>
-      <p class="hint">Guarda el proyecto para habilitar el portafolio.</p>
-      <div class="form-grid">
-        <label class="toggle">
-          <input type="checkbox" disabled />
-          Mostrar en portafolio
-        </label>
-        <label>
-          Orden
-          <input type="number" disabled />
-        </label>
-        <label class="wide">
-          Titulo alternativo
-          <input type="text" disabled />
-        </label>
-        <label class="toggle">
-          <input type="checkbox" disabled />
-          Visible
-        </label>
-        <button type="button" disabled>Guardar portafolio</button>
-      </div>
-    </ng-template>
+  <div class="form-submit">
+    <button
+      type="button"
+      (click)="isEditMode ? saveProject() : createProject()"
+      [disabled]="saving"
+    >
+      {{
+        saving
+          ? isEditMode
+            ? 'Guardando...'
+            : 'Creando...'
+          : isEditMode
+            ? 'Guardar proyecto'
+            : 'Crear proyecto'
+      }}
+    </button>
   </div>
+
 </section>
+
+
+
+
+
+
+

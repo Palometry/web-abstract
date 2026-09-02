@@ -24,6 +24,10 @@
           <option value="published">Publicado</option>
         </select>
       </label>
+      <label class="toggle">
+        <input type="checkbox" [(ngModel)]="newPage.isHome" />
+        Pagina principal
+      </label>
       <button type="button" (click)="createPage()" [disabled]="creating">
         {{ creating ? 'Creando...' : 'Crear pagina' }}
       </button>
@@ -35,6 +39,7 @@
     <div class="table-row table-header">
       <span>Pagina</span>
       <span>Slug</span>
+      <span>Principal</span>
       <span>Secciones</span>
       <span>Estado</span>
       <span>Acciones</span>
@@ -45,10 +50,12 @@
       <span></span>
       <span></span>
       <span></span>
+      <span></span>
     </div>
     <div class="table-row" *ngFor="let page of pages">
       <span>{{ page.title }}</span>
       <span>{{ page.slug }}</span>
+      <span>{{ page.isHome ? 'Si' : '-' }}</span>
       <span>{{ page.sections }}</span>
       <span class="status" [class.draft]="page.status === 'draft'">
         {{ formatStatus(page.status) }}

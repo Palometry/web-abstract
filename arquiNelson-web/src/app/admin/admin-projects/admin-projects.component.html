@@ -15,12 +15,10 @@
       <span>Cliente</span>
       <span>Direccion</span>
       <span>Estado</span>
-      <span>Portafolio</span>
       <span>Acciones</span>
     </div>
     <div class="table-row" *ngIf="loading">
       <span>Cargando...</span>
-      <span></span>
       <span></span>
       <span></span>
       <span></span>
@@ -33,7 +31,6 @@
       <span class="status" [class.suspended]="project.status === 'suspended'">
         {{ formatStatus(project.status) }}
       </span>
-      <span>{{ project.portfolio ? 'Visible' : 'Oculto' }}</span>
       <div class="actions">
         <a [routerLink]="['/admin/projects', project.id]">Editar</a>
         <button type="button" class="danger" (click)="deleteProject(project)">Eliminar</button>

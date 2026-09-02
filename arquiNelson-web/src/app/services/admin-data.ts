@@ -1,6 +1,7 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom, of } from 'rxjs';
+import { API_BASE_URL } from './api-config';
 import { isPlatformBrowser } from '@angular/common';
 import { catchError, timeout } from 'rxjs/operators';
 
@@ -9,6 +10,7 @@ export type AdminPage = {
   title: string;
   slug: string;
   status: 'draft' | 'published' | string;
+  isHome?: boolean;
   sections: number;
 };
 
@@ -17,6 +19,7 @@ export type AdminPageDetail = {
   title: string;
   slug: string;
   status: 'draft' | 'published' | string;
+  isHome?: boolean;
   metaTitle?: string | null;
   metaDescription?: string | null;
   sections: AdminPageSection[];
@@ -53,21 +56,34 @@ export type AdminProject = {
 export type AdminProjectDetails = {
   shortDesc?: string | null;
   bannerImages?: string[];
+  heroVideoUrl?: string | null;
   promoter?: string | null;
+  publicScope?: string | null;
   publicStatus?: string | null;
   publicType?: string | null;
+  publicClassification?: string | null;
+  publicCategory?: string | null;
   location?: string | null;
   landArea?: string | null;
   units?: number | null;
   amenities?: string[];
   startYear?: number | null;
   deliveryYear?: number | null;
+  autocadUrl?: string | null;
+  brochurePdfUrl?: string | null;
   mapUrl?: string | null;
   mapEmbedUrl?: string | null;
   masterplanImage?: string | null;
   gallery?: string[];
   enjoyAreas?: string[];
-  houseModels?: { name: string; description: string; image: string }[];
+  houseModels?: {
+    name: string;
+    description?: string | null;
+    rooms?: number | null;
+    features?: string[];
+    images?: string[];
+    image?: string | null;
+  }[];
   housePlans?: {
     name: string;
     ambientes: number;
@@ -78,6 +94,12 @@ export type AdminProjectDetails = {
   lots?: { id: string; area: string; status: 'Disponible' | 'Reservado' | 'Vendido' }[];
 };
 
+export type AdminProjectCatalog = {
+  scopes: string[];
+  edificaciones: Record<string, Record<string, string[]>>;
+  habilitaciones: Record<string, string[]>;
+};
+
 export type AdminProjectDetail = AdminProject & {
   description: string | null;
   startDate: string | null;
@@ -85,6 +107,7 @@ export type AdminProjectDetail = AdminProject & {
   slug?: string | null;
   details?: AdminProjectDetails | null;
   images: AdminProjectImage[];
+  videos: AdminProjectVideo[];
   portfolioEntry: AdminPortfolioEntryDetail | null;
 };
 
@@ -97,6 +120,15 @@ export type AdminProjectImage = {
   sortOrder: number;
 };
 
+export type AdminProjectVideo = {
+  id: number;
+  fileUrl: string;
+  title: string | null;
+  description: string | null;
+  mimeType?: string | null;
+  sortOrder: number;
+};
+
 export type AdminPortfolioEntryDetail = {
   id: number;
   titleOverride: string | null;
@@ -106,7 +138,7 @@ export type AdminPortfolioEntryDetail = {
 
 export type AdminPortfolioEntry = {
   id: number;
-  projectId: number;
+  projectId: number | null;
   order: number;
   project: string;
   visible: boolean;
@@ -132,7 +164,7 @@ export type AdminPortfolioSpec = {
 
 export type AdminPortfolioBlock = {
   id: number;
-  blockType: 'text' | 'image';
+  blockType: 'text' | 'image' | 'video';
   textContent?: string | null;
   mediaId?: number | null;
   fileUrl?: string | null;
@@ -144,7 +176,7 @@ export type AdminPortfolioBlock = {
 
 export type AdminPortfolioDetail = {
   id: number;
-  projectId: number;
+  projectId: number | null;
   projectName: string | null;
   titleOverride: string | null;
   category: string | null;
@@ -160,6 +192,40 @@ export type AdminPortfolioDetail = {
   specs: AdminPortfolioSpec[];
   tags: { id: number; tag: string; sortOrder: number }[];
   blocks: AdminPortfolioBlock[];
+};
+
+type UploadMediaOptions = {
+  title?: string;
+  altText?: string;
+  onProgress?: (progress: number) => void;
+};
+
+export type AdminBlogPost = {
+  id: number;
+  title: string;
+  slug: string;
+  status: 'draft' | 'published' | string;
+  contentType?: 'article' | 'external' | string;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  externalUrl?: string | null;
+  externalPlatform?: string | null;
+};
+
+export type AdminBlogDetail = {
+  id: number;
+  title: string;
+  slug: string;
+  status: 'draft' | 'published' | string;
+  contentType?: 'article' | 'external' | string;
+  publishedAt?: string | null;
+  excerpt?: string | null;
+  content?: string | null;
+  coverImageUrl?: string | null;
+  externalUrl?: string | null;
+  externalPlatform?: string | null;
+  externalAccount?: string | null;
+  externalCta?: string | null;
 };
 
 export type AdminQuote = {
@@ -247,6 +313,16 @@ export type AdminService = {
   isActive: boolean;
 };
 
+export type AdminServiceListItem = {
+  id: number;
+  name: string;
+  description: string;
+  public: boolean;
+  isActive: boolean;
+};
+
+export type AdminServiceDetail = AdminService;
+
 export type AdminDashboardActivity = {
   type: string;
   message: string;
@@ -275,8 +351,7 @@ export class AdminDataService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly http = inject(HttpClient);
-  private readonly apiBaseUrl = 'http://localhost:4001/api';
-  private readonly tokenKey = 'arqui_admin_token';
+  private readonly apiBaseUrl = API_BASE_URL;
 
   async getPages(): Promise<AdminPage[]> {
     if (!this.isBrowser) {
@@ -296,6 +371,7 @@ export class AdminDataService {
     title: string;
     slug: string;
     status: string;
+    isHome?: boolean;
     metaTitle?: string;
     metaDescription?: string;
   }): Promise<{ ok: boolean; id?: number; error?: string }> {
@@ -323,6 +399,7 @@ export class AdminDataService {
       title: string;
       slug: string;
       status: string;
+      isHome: boolean;
       metaTitle: string | null;
       metaDescription: string | null;
     }>
@@ -508,6 +585,13 @@ export class AdminDataService {
     return this.safeGet<AdminProject[]>(`${this.apiBaseUrl}/projects`, []);
   }
 
+  async getProjectCatalog(): Promise<AdminProjectCatalog | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    return this.safeGet<AdminProjectCatalog | null>(`${this.apiBaseUrl}/projects/catalog`, null);
+  }
+
   async getProjectDetail(projectId: number): Promise<AdminProjectDetail | null> {
     if (!this.isBrowser) {
       return null;
@@ -534,9 +618,16 @@ export class AdminDataService {
     }
     try {
       const response = await firstValueFrom(
-        this.http.post<{ id: number }>(`${this.apiBaseUrl}/projects`, payload, {
-          headers: this.authHeaders()
-        })
+        this.http
+          .post<{ id: number }>(`${this.apiBaseUrl}/projects`, payload, {
+            headers: this.authHeaders()
+          })
+          .pipe(
+            timeout(8000),
+            catchError(() => {
+              throw new Error('timeout');
+            })
+          )
       );
       return { ok: true, id: response.id };
     } catch {
@@ -563,9 +654,16 @@ export class AdminDataService {
     }
     try {
       await firstValueFrom(
-        this.http.patch(`${this.apiBaseUrl}/projects/${projectId}`, payload, {
-          headers: this.authHeaders()
-        })
+        this.http
+          .patch(`${this.apiBaseUrl}/projects/${projectId}`, payload, {
+            headers: this.authHeaders()
+          })
+          .pipe(
+            timeout(8000),
+            catchError(() => {
+              throw new Error('timeout');
+            })
+          )
       );
       return { ok: true };
     } catch {
@@ -658,6 +756,73 @@ export class AdminDataService {
     }
   }
 
+  async createProjectVideo(
+    projectId: number,
+    payload: {
+      fileUrl: string;
+      title?: string | null;
+      description?: string | null;
+      sortOrder?: number;
+    }
+  ): Promise<{ ok: boolean; id?: number; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ id: number }>(`${this.apiBaseUrl}/projects/${projectId}/videos`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true, id: response.id };
+    } catch {
+      return { ok: false, error: 'No se pudo agregar el video.' };
+    }
+  }
+
+  async updateProjectVideo(
+    projectId: number,
+    videoId: number,
+    payload: Partial<{
+      fileUrl: string | null;
+      title: string | null;
+      description: string | null;
+      sortOrder: number;
+    }>
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.apiBaseUrl}/projects/${projectId}/videos/${videoId}`,
+          payload,
+          { headers: this.authHeaders() }
+        )
+      );
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'No se pudo actualizar el video.' };
+    }
+  }
+
+  async deleteProjectVideo(projectId: number, videoId: number): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiBaseUrl}/projects/${projectId}/videos/${videoId}`, {
+          headers: this.authHeaders()
+        })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async updateProjectPortfolio(
     projectId: number,
     payload: {
@@ -720,6 +885,139 @@ export class AdminDataService {
     );
   }
 
+  async getBlogPosts(): Promise<AdminBlogPost[]> {
+    if (!this.isBrowser) {
+      return [];
+    }
+    return this.safeGet<AdminBlogPost[]>(`${this.apiBaseUrl}/blog`, []);
+  }
+
+  async getBlogDetail(postId: number): Promise<AdminBlogDetail | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    return this.safeGet<AdminBlogDetail | null>(`${this.apiBaseUrl}/blog/${postId}`, null);
+  }
+
+  async createBlogPost(payload: {
+    title: string;
+    slug?: string | null;
+    status?: string;
+    contentType?: 'article' | 'external' | string;
+    publishedAt?: string | null;
+    excerpt?: string | null;
+    content?: string | null;
+    coverImageUrl?: string | null;
+    externalUrl?: string | null;
+    externalPlatform?: string | null;
+    externalAccount?: string | null;
+    externalCta?: string | null;
+  }): Promise<{ ok: boolean; id?: number; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http
+          .post<{ id: number }>(`${this.apiBaseUrl}/blog`, payload, {
+            headers: this.authHeaders()
+          })
+          .pipe(
+            timeout(8000),
+            catchError((error) => {
+              throw error;
+            })
+          )
+      );
+      return { ok: true, id: response.id };
+    } catch (error: any) {
+      if (error?.status === 409) {
+        return { ok: false, error: 'El slug ya existe.' };
+      }
+      return { ok: false, error: 'No se pudo crear la publicacion.' };
+    }
+  }
+
+  async updateBlogPost(
+    postId: number,
+    payload: Partial<{
+      title: string;
+      slug: string;
+      status: string;
+      contentType: 'article' | 'external' | string;
+      publishedAt: string | null;
+      excerpt: string | null;
+      content: string | null;
+      coverImageUrl: string | null;
+      externalUrl: string | null;
+      externalPlatform: string | null;
+      externalAccount: string | null;
+      externalCta: string | null;
+    }>
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.apiBaseUrl}/blog/${postId}`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true };
+    } catch (error: any) {
+      if (error?.status === 409) {
+        return { ok: false, error: 'El slug ya existe.' };
+      }
+      return { ok: false, error: 'No se pudo actualizar la publicacion.' };
+    }
+  }
+
+  async deleteBlogPost(postId: number): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiBaseUrl}/blog/${postId}`, {
+          headers: this.authHeaders()
+        })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async createPortfolioEntry(payload: {
+    projectId?: number | null;
+    titleOverride: string;
+    category?: string | null;
+    summary?: string | null;
+    sortOrder?: number;
+    isVisible?: boolean;
+  }): Promise<{ ok: boolean; id?: number; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ id: number }>(`${this.apiBaseUrl}/portfolio`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true, id: response.id };
+    } catch (error: any) {
+      if (error?.status === 422) {
+        return { ok: false, error: 'El titulo es obligatorio.' };
+      }
+      if (error?.status === 404) {
+        return { ok: false, error: 'Proyecto no encontrado.' };
+      }
+      return { ok: false, error: 'No se pudo crear el portafolio.' };
+    }
+  }
+
   async updatePortfolioEntry(
     entryId: number,
     payload: {
@@ -735,7 +1033,7 @@ export class AdminDataService {
       specs?: { label: string; value: string }[];
       tags?: string[];
       blocks?: {
-        blockType: 'text' | 'image';
+        blockType: 'text' | 'image' | 'video';
         textContent?: string | null;
         mediaId?: number | null;
         caption?: string | null;
@@ -759,13 +1057,46 @@ export class AdminDataService {
     }
   }
 
+  async deletePortfolioEntry(entryId: number): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiBaseUrl}/portfolio/${entryId}`, {
+          headers: this.authHeaders()
+        })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async uploadMedia(
     file: File,
-    options?: { title?: string; altText?: string }
+    options?: UploadMediaOptions
   ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
     if (!this.isBrowser) {
       return { ok: false, error: 'Storage no disponible.' };
     }
+    const prefersChunked = file.type.startsWith('video/') || file.size > 8 * 1024 * 1024;
+    const prefersMultipart = file.type.startsWith('video/') || file.size > 5 * 1024 * 1024;
+
+    if (prefersChunked) {
+      const chunked = await this.tryChunkedUpload(file, options);
+      if (chunked.ok || chunked.error?.includes('NO_FALLBACK') === false) {
+        return chunked;
+      }
+    }
+
+    if (prefersMultipart) {
+      const multipart = await this.tryMultipartUpload(file, options);
+      if (multipart.ok || multipart.error?.includes('NO_FALLBACK') === false) {
+        return multipart;
+      }
+    }
+
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -788,9 +1119,149 @@ export class AdminDataService {
         )
       );
       return { ok: true, id: response.id, fileUrl: response.fileUrl };
-    } catch {
-      return { ok: false, error: 'No se pudo subir la imagen.' };
+    } catch (error: any) {
+      return { ok: false, error: this.resolveUploadError(error) };
     }
+  }
+
+  private async tryMultipartUpload(
+    file: File,
+    options?: UploadMediaOptions
+  ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
+    try {
+      const form = new FormData();
+      form.append('file', file, file.name);
+      if (options?.title) {
+        form.append('title', options.title);
+      }
+      if (options?.altText) {
+        form.append('altText', options.altText);
+      }
+
+      const response = await firstValueFrom(
+        this.http.post<{ id: number; fileUrl: string }>(
+          `${this.apiBaseUrl}/media/file`,
+          form,
+          { headers: this.authHeaders() }
+        )
+      );
+      return { ok: true, id: response.id, fileUrl: response.fileUrl };
+    } catch (error: any) {
+      const status = error?.status;
+      if (status === 404 || status === 405) {
+        return { ok: false, error: 'NO_FALLBACK' };
+      }
+      if (status === 413) {
+        return { ok: false, error: 'El archivo supera el tamaño permitido en el servidor.' };
+      }
+      return { ok: false, error: this.resolveUploadError(error) };
+    }
+  }
+
+  private async tryChunkedUpload(
+    file: File,
+    options?: UploadMediaOptions
+  ): Promise<{ ok: boolean; id?: number; fileUrl?: string; error?: string }> {
+    try {
+      const initResponse = await firstValueFrom(
+        this.http.post<{ uploadId: string }>(
+          `${this.apiBaseUrl}/media/chunks/init`,
+          {
+            filename: file.name,
+            mimeType: file.type,
+            fileSize: file.size,
+            title: options?.title ?? null,
+            altText: options?.altText ?? null,
+          },
+          { headers: this.authHeaders() }
+        )
+      );
+
+      const chunkSize = 1024 * 1024;
+      const totalChunks = Math.max(1, Math.ceil(file.size / chunkSize));
+
+      for (let index = 0; index < totalChunks; index += 1) {
+        const start = index * chunkSize;
+        const end = Math.min(file.size, start + chunkSize);
+        const chunk = file.slice(start, end);
+        const form = new FormData();
+        form.append('chunk', chunk, `${file.name}.part${index}`);
+        form.append('index', String(index));
+
+        await firstValueFrom(
+          this.http.post(
+            `${this.apiBaseUrl}/media/chunks/${encodeURIComponent(initResponse.uploadId)}`,
+            form,
+            { headers: this.authHeaders() }
+          )
+        );
+
+        if (options?.onProgress) {
+          options.onProgress(Math.round(((index + 1) / totalChunks) * 100));
+        }
+      }
+
+      const completeResponse = await firstValueFrom(
+        this.http.post<{ id: number; fileUrl: string }>(
+          `${this.apiBaseUrl}/media/chunks/${encodeURIComponent(initResponse.uploadId)}/complete`,
+          { totalChunks },
+          { headers: this.authHeaders() }
+        )
+      );
+
+      options?.onProgress?.(100);
+      return { ok: true, id: completeResponse.id, fileUrl: completeResponse.fileUrl };
+    } catch (error: any) {
+      const status = error?.status;
+      if (status === 404 || status === 405) {
+        return { ok: false, error: 'NO_FALLBACK' };
+      }
+      return { ok: false, error: this.resolveUploadError(error) };
+    }
+  }
+
+  private resolveUploadError(error: any): string {
+    const status = error?.status;
+    const validationErrors = error?.error?.errors;
+    const backendError =
+      validationErrors?.file?.[0] ||
+      validationErrors?.chunk?.[0] ||
+      validationErrors?.mimeType?.[0] ||
+      validationErrors?.fileSize?.[0] ||
+      error?.error?.error ||
+      error?.error?.message;
+
+    if (status === 422 && typeof backendError === 'string' && backendError.trim() !== '') {
+      return backendError;
+    }
+
+    if (status === 413) {
+      return 'El archivo supera el tamano permitido en el servidor.';
+    }
+
+    if (status === 524 || status === 504 || status === 0) {
+      return 'La subida tardo demasiado o el tunel se interrumpio. Intenta de nuevo o usa un archivo mas liviano.';
+    }
+
+    if (typeof backendError === 'string' && backendError.trim() !== '') {
+      return backendError;
+    }
+
+    return this.mapUploadError(error);
+  }
+
+  private mapUploadError(error: any): string {
+    const status = error?.status;
+
+    if (status === 413) {
+      return 'El archivo supera el tamaño permitido en el servidor.';
+    }
+
+    if (status === 524 || status === 504 || status === 0) {
+      return 'La subida tardó demasiado o el túnel se interrumpió. Intenta de nuevo o usa un archivo más liviano.';
+    }
+
+    return 'No se pudo subir el archivo.';
   }
 
   async getQuotes(): Promise<AdminQuote[]> {
@@ -841,6 +1312,11 @@ export class AdminDataService {
     status?: string;
     expiresAt?: string | null;
     notes?: string | null;
+    services?: {
+      serviceId: number;
+      quantity?: number;
+      unitPrice?: number;
+    }[];
   }): Promise<{ ok: boolean; id?: number; error?: string }> {
     if (!this.isBrowser) {
       return { ok: false, error: 'Storage no disponible.' };
@@ -894,6 +1370,22 @@ export class AdminDataService {
       return { ok: true };
     } catch {
       return { ok: false, error: 'No se pudo actualizar la cotizacion.' };
+    }
+  }
+
+  async sendQuote(quoteId: number): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.post(`${this.apiBaseUrl}/quotes/${quoteId}/send`, {}, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'No se pudo enviar la cotizacion.' };
     }
   }
 
@@ -959,11 +1451,18 @@ export class AdminDataService {
     }
   }
 
-  async getServices(): Promise<AdminService[]> {
+  async getServices(): Promise<AdminServiceListItem[]> {
     if (!this.isBrowser) {
       return [];
     }
-    return this.safeGet<AdminService[]>(`${this.apiBaseUrl}/services`, []);
+    return this.safeGet<AdminServiceListItem[]>(`${this.apiBaseUrl}/services`, []);
+  }
+
+  async getServiceDetail(serviceId: number): Promise<AdminServiceDetail | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    return this.safeGet<AdminServiceDetail | null>(`${this.apiBaseUrl}/services/${serviceId}`, null);
   }
 
   async getDashboard(): Promise<AdminDashboardData> {
@@ -1095,12 +1594,6 @@ export class AdminDataService {
   }
 
   private authHeaders(): HttpHeaders {
-    if (!this.isBrowser) {
-      return new HttpHeaders();
-    }
-    const token = localStorage.getItem(this.tokenKey);
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : ''
-    });
+    return new HttpHeaders();
   }
 }

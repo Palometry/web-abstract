@@ -1,8 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AdminDataService, AdminPricingRateOption } from '../../services/admin-data';
+import {
+  AdminDataService,
+  AdminPricingRateOption,
+  AdminQuoteServiceOption
+} from '../../services/admin-data';
+
+type QuoteServiceDraft = {
+  serviceId: number;
+  name: string;
+  pricingType: 'flat' | 'per_m2' | 'percent';
+  quantity: number;
+  unitPrice: number;
+};
 
 @Component({
   selector: 'app-admin-quote-create',
@@ -11,12 +23,17 @@ import { AdminDataService, AdminPricingRateOption } from '../../services/admin-d
   templateUrl: './admin-quote-create.component.html',
   styleUrls: ['./admin-quote-create.component.scss']
 })
-export class AdminQuoteCreateComponent implements OnInit {
+export class AdminQuoteCreateComponent implements OnInit, AfterViewInit {
   saving = false;
   loading = false;
   error = '';
   rates: AdminPricingRateOption[] = [];
+  serviceOptions: AdminQuoteServiceOption[] = [];
+  services: QuoteServiceDraft[] = [];
+  private loaded = false;
+  private readonly isBrowser: boolean;
   readonly todayLabel = new Date().toLocaleDateString('es-PE');
+  readonly defaultExpiresAt = this.buildDefaultExpiresAt();
   readonly docTypes = [
     { value: 'DNI', label: 'DNI' },
     { value: 'RUC', label: 'RUC' },
@@ -47,10 +64,52 @@ export class AdminQuoteCreateComponent implements OnInit {
     notes: ''
   };
 
-  constructor(private data: AdminDataService, private router: Router) {}
+  serviceDraft = {
+    serviceId: 0,
+    quantity: 1,
+    unitPrice: 0
+  };
+
+  constructor(
+    private data: AdminDataService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) platformId: object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit() {
-    this.loadOptions();
+    if (!this.draft.expiresAt) {
+      this.draft.expiresAt = this.defaultExpiresAt;
+    }
+    this.tryLoad();
+  }
+
+  ngAfterViewInit() {
+    this.tryLoad();
+  }
+
+  private buildDefaultExpiresAt() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const day = today.getDate();
+    const lastDay = new Date(year, month + 2, 0).getDate();
+    const targetDay = Math.min(day, lastDay);
+    const nextMonth = new Date(year, month + 1, targetDay);
+    const yyyy = nextMonth.getFullYear();
+    const mm = String(nextMonth.getMonth() + 1).padStart(2, '0');
+    const dd = String(nextMonth.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private async tryLoad() {
+    if (!this.isBrowser || this.loaded) {
+      return;
+    }
+    this.loaded = true;
+    await this.loadOptions();
   }
 
   private async loadOptions() {
@@ -59,14 +118,16 @@ export class AdminQuoteCreateComponent implements OnInit {
     try {
       const options = await this.data.getQuoteOptions();
       this.rates = options.pricingRates.filter((rate) => rate.isActive);
-      if (this.rates.length && !this.draft.pricingRateId) {
-        this.draft.pricingRateId = this.rates[0].id;
+      this.serviceOptions = options.services.filter((service) => service.isActive);
+      if (!this.draft.pricingRateId) {
+        this.draft.pricingRateId = null;
         this.onRateChange();
       }
     } catch {
       this.error = 'No se pudieron cargar las opciones. Verifica el backend.';
     } finally {
       this.loading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -78,6 +139,18 @@ export class AdminQuoteCreateComponent implements OnInit {
       this.draft.planName = selected.name;
       this.draft.planMinDays = selected.minDays ?? null;
       this.draft.planMaxDays = selected.maxDays ?? null;
+      return;
+    }
+    this.draft.baseRatePerM2 = 0;
+    this.draft.planName = '';
+    this.draft.planMinDays = null;
+    this.draft.planMaxDays = null;
+  }
+
+  onServiceChange() {
+    const selected = this.serviceOptions.find((service) => service.id === this.serviceDraft.serviceId);
+    if (selected) {
+      this.serviceDraft.unitPrice = selected.price;
     }
   }
 
@@ -103,6 +176,16 @@ export class AdminQuoteCreateComponent implements OnInit {
     return Number((areaTotal * (safePercent / 100)).toFixed(2));
   }
 
+  getAreaCoveredTotal() {
+    const covered = Number(this.draft.areaCoveredM2);
+    if (!Number.isFinite(covered) || covered <= 0) {
+      return 0;
+    }
+    const floors = Number(this.draft.floorCount);
+    const safeFloors = Number.isFinite(floors) && floors > 0 ? floors : 1;
+    return Number((covered * safeFloors).toFixed(2));
+  }
+
   get baseCost() {
     const area = Number(this.draft.areaCoveredM2);
     const floors = Number(this.draft.floorCount || 1);
@@ -111,6 +194,70 @@ export class AdminQuoteCreateComponent implements OnInit {
       return 0;
     }
     return Number((area * floors * rate).toFixed(2));
+  }
+
+  computeServiceLineTotal(service: QuoteServiceDraft) {
+    const quantity = Number(service.quantity);
+    const unitPrice = Number(service.unitPrice);
+    const areaM2 = Number(this.draft.areaM2);
+    const baseCost = this.baseCost;
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      return 0;
+    }
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      return 0;
+    }
+    if (service.pricingType === 'per_m2') {
+      return Number((unitPrice * areaM2 * quantity).toFixed(2));
+    }
+    if (service.pricingType === 'percent') {
+      return Number((baseCost * (unitPrice / 100) * quantity).toFixed(2));
+    }
+    return Number((unitPrice * quantity).toFixed(2));
+  }
+
+  get extrasCost() {
+    if (!this.services.length) {
+      return 0;
+    }
+    const total = this.services.reduce((sum, service) => sum + this.computeServiceLineTotal(service), 0);
+    return Number(total.toFixed(2));
+  }
+
+  get totalCost() {
+    return Number((this.baseCost + this.extrasCost).toFixed(2));
+  }
+
+  addService() {
+    if (!this.serviceDraft.serviceId) {
+      this.error = 'Selecciona un servicio.';
+      return;
+    }
+    const selected = this.serviceOptions.find((service) => service.id === this.serviceDraft.serviceId);
+    if (!selected) {
+      this.error = 'Servicio invalido.';
+      return;
+    }
+    const exists = this.services.some((service) => service.serviceId === selected.id);
+    if (exists) {
+      this.error = 'Este servicio ya esta agregado.';
+      return;
+    }
+    const quantity = Number(this.serviceDraft.quantity);
+    const unitPrice = Number(this.serviceDraft.unitPrice);
+    this.services.push({
+      serviceId: selected.id,
+      name: selected.name,
+      pricingType: selected.pricingType,
+      quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+      unitPrice: Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : selected.price
+    });
+    this.serviceDraft = { serviceId: 0, quantity: 1, unitPrice: 0 };
+    this.error = '';
+  }
+
+  removeService(serviceId: number) {
+    this.services = this.services.filter((service) => service.serviceId !== serviceId);
   }
 
   formatCurrency(value: number, currency: string) {
@@ -175,7 +322,12 @@ export class AdminQuoteCreateComponent implements OnInit {
       planMaxDays: this.draft.planMaxDays,
       status: this.draft.status,
       expiresAt: this.draft.expiresAt || null,
-      notes: this.draft.notes.trim() || null
+      notes: this.draft.notes.trim() || null,
+      services: this.services.map((service) => ({
+        serviceId: service.serviceId,
+        quantity: service.quantity,
+        unitPrice: service.unitPrice
+      }))
     });
     this.saving = false;
     if (!result.ok || !result.id) {

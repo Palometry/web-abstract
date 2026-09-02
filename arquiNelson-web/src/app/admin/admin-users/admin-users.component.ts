@@ -33,6 +33,14 @@ export class AdminUsersComponent {
     roles: ['client'] as string[]
   };
 
+  editingUserId: number | null = null;
+  editUser = {
+    fullName: '',
+    email: '',
+    password: '',
+    roles: ['client'] as string[]
+  };
+
   constructor(
     private auth: AdminAuthService,
     private cdr: ChangeDetectorRef,
@@ -61,8 +69,23 @@ export class AdminUsersComponent {
     this.newUser.roles = [...this.newUser.roles, roleKey];
   }
 
+  toggleEditRole(roleKey: string) {
+    if (!this.canCreate) {
+      return;
+    }
+    if (this.editUser.roles.includes(roleKey)) {
+      this.editUser.roles = this.editUser.roles.filter((role) => role !== roleKey);
+      return;
+    }
+    this.editUser.roles = [...this.editUser.roles, roleKey];
+  }
+
   isRoleSelected(roleKey: string) {
     return this.newUser.roles.includes(roleKey);
+  }
+
+  isEditRoleSelected(roleKey: string) {
+    return this.editUser.roles.includes(roleKey);
   }
 
   async createUser() {
@@ -88,6 +111,57 @@ export class AdminUsersComponent {
       return;
     }
     await this.auth.setUserActive(user.id, active);
+    this.refreshUsers();
+  }
+
+  startEdit(user: AdminUser) {
+    if (!this.canCreate) {
+      return;
+    }
+    this.error = '';
+    this.editingUserId = user.id;
+    this.editUser = {
+      fullName: user.fullName,
+      email: user.email,
+      password: '',
+      roles: [...user.roles]
+    };
+  }
+
+  cancelEdit() {
+    this.editingUserId = null;
+    this.editUser = {
+      fullName: '',
+      email: '',
+      password: '',
+      roles: ['client']
+    };
+  }
+
+  async saveUser() {
+    if (!this.canCreate || this.editingUserId === null) {
+      return;
+    }
+
+    const currentUser = this.users.find((user) => user.id === this.editingUserId);
+    if (
+      currentUser &&
+      currentUser.active &&
+      currentUser.roles.includes('admin') &&
+      !this.editUser.roles.includes('admin') &&
+      this.isLastAdmin(currentUser)
+    ) {
+      this.error = 'Debes asignar otro admin antes de quitar este rol.';
+      return;
+    }
+
+    this.error = '';
+    const result = await this.auth.updateUser(this.editingUserId, this.editUser);
+    if (!result.ok) {
+      this.error = result.error ?? 'No se pudo actualizar el usuario.';
+      return;
+    }
+    this.cancelEdit();
     this.refreshUsers();
   }
 

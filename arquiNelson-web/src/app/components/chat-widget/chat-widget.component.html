@@ -1,0 +1,36 @@
+<div class="chat-widget" [class.open]="isOpen">
+  <button type="button" class="chat-toggle" (click)="toggle()">
+    <span *ngIf="!isOpen">Chat IA</span>
+    <span *ngIf="isOpen">Cerrar</span>
+  </button>
+
+  <div class="chat-panel" *ngIf="isOpen">
+    <header>
+      <div>
+        <h4>Asistente virtual</h4>
+        <p>Resuelve dudas y solicita tu cotización.</p>
+      </div>
+    </header>
+
+    <div class="chat-body">
+      <div class="chat-message" *ngFor="let message of messages" [class.user]="message.role === 'user'">
+        <div class="bubble">{{ message.text }}</div>
+      </div>
+    </div>
+
+    <div class="chat-error" *ngIf="error">{{ error }}</div>
+
+    <form class="chat-input" (submit)="$event.preventDefault(); send();">
+      <textarea
+        rows="1"
+        placeholder="Escribe tu mensaje..."
+        [(ngModel)]="input"
+        name="chatInput"
+        (keydown)="handleKeydown($event)"
+      ></textarea>
+      <button type="submit" [disabled]="isSending || !input.trim()">
+        {{ isSending ? 'Enviando...' : 'Enviar' }}
+      </button>
+    </form>
+  </div>
+</div>

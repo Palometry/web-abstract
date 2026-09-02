@@ -1,0 +1,41 @@
+<section class="admin-blog">
+  <header class="page-header">
+    <div>
+      <h2>Blog</h2>
+      <p>Gestiona articulos, borradores y publicaciones externas desde un solo lugar.</p>
+    </div>
+    <a class="primary" routerLink="/admin/blog/new">Crear publicacion</a>
+  </header>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="panel">
+    <h3>Publicaciones</h3>
+    <p class="hint" *ngIf="loading">Cargando publicaciones...</p>
+
+    <div class="table" *ngIf="!loading">
+      <div class="table-header">
+        <span>Titulo</span>
+        <span>Tipo</span>
+        <span>Slug o destino</span>
+        <span>Estado</span>
+        <span>Fecha</span>
+        <span>Acciones</span>
+      </div>
+
+      <div class="table-row" *ngFor="let post of posts">
+        <span class="title">{{ post.title }}</span>
+        <span>{{ formatType(post.contentType) }}</span>
+        <span class="slug">{{ post.contentType === 'external' ? (post.externalPlatform || post.externalUrl || 'Sin enlace') : post.slug }}</span>
+        <span>{{ formatStatus(post.status) }}</span>
+        <span>{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+        <span class="actions">
+          <a [routerLink]="['/admin/blog', post.id]">Editar</a>
+          <button type="button" class="danger" (click)="deletePost(post)">Eliminar</button>
+        </span>
+      </div>
+
+      <p class="hint" *ngIf="!posts.length">No hay publicaciones aun.</p>
+    </div>
+  </div>
+</section>

@@ -1,7 +1,8 @@
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from './api-config';
 
 type StoredUser = {
   id: number;
@@ -14,9 +15,14 @@ type StoredUser = {
 
 export type AdminUser = StoredUser;
 
-const STORAGE_KEYS = {
-  token: 'arqui_admin_token'
-};
+export const ADMIN_AUTH_STORAGE_KEYS = {
+  token: 'arqui_admin_token',
+  expiresAt: 'arqui_admin_expires_at',
+} as const;
+
+export type AdminLoginResult =
+  | { ok: true }
+  | { ok: false; reason: 'invalid_credentials' | 'server_error' | 'network_error' };
 
 @Injectable({ providedIn: 'root' })
 export class AdminAuthService {
@@ -24,10 +30,13 @@ export class AdminAuthService {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly userSignal = signal<AdminUser | null>(null);
   private readonly http = inject(HttpClient);
-  private readonly apiBaseUrl = 'http://localhost:4001/api';
+  private readonly apiBaseUrl = API_BASE_URL;
+  private sessionRestorePromise: Promise<boolean> | null = null;
 
   constructor() {
-    this.restoreSession();
+    if (this.hasValidStoredSession()) {
+      this.sessionRestorePromise = this.restoreSession();
+    }
   }
 
   get user() {
@@ -35,7 +44,7 @@ export class AdminAuthService {
   }
 
   isLoggedIn(): boolean {
-    return this.userSignal() !== null || this.hasToken();
+    return this.userSignal() !== null;
   }
 
   canManageUsers(): boolean {
@@ -46,32 +55,51 @@ export class AdminAuthService {
     return user.roles.includes('admin') || user.roles.includes('editor_user_manager');
   }
 
-  async login(email: string, password: string): Promise<boolean> {
+  async login(email: string, password: string, remember = false): Promise<AdminLoginResult> {
     if (!this.isBrowser) {
-      return false;
+      return { ok: false, reason: 'network_error' };
     }
     try {
       const normalizedEmail = email.trim().toLowerCase();
       const response = await firstValueFrom(
-        this.http.post<{ token: string; user: AdminUser }>(`${this.apiBaseUrl}/auth/login`, {
+        this.http.post<{ user: AdminUser; token: string; expiresAt: string }>(`${this.apiBaseUrl}/auth/login`, {
           email: normalizedEmail,
-          password
+          password,
+          remember
         })
       );
-      this.setToken(response.token);
       this.userSignal.set(response.user);
-      return true;
-    } catch {
-      return false;
+      if (remember) {
+        this.persistSession(response.token, response.expiresAt);
+      } else {
+        this.clearPersistedSession();
+      }
+      this.sessionRestorePromise = Promise.resolve(true);
+      return { ok: true };
+    } catch (error) {
+      const httpError = error as HttpErrorResponse;
+      if (httpError.status === 401) {
+        return { ok: false, reason: 'invalid_credentials' };
+      }
+      if (httpError.status >= 500) {
+        return { ok: false, reason: 'server_error' };
+      }
+      return { ok: false, reason: 'network_error' };
     }
   }
 
-  logout() {
+  async logout(): Promise<void> {
     if (!this.isBrowser) {
       return;
     }
-    localStorage.removeItem(STORAGE_KEYS.token);
+    try {
+      await firstValueFrom(this.http.post(`${this.apiBaseUrl}/auth/logout`, {}));
+    } catch {
+      // Clear the local session state even when the backend cookie is already gone.
+    }
     this.userSignal.set(null);
+    this.clearPersistedSession();
+    this.sessionRestorePromise = null;
   }
 
   async listUsers(): Promise<AdminUser[]> {
@@ -127,6 +155,45 @@ export class AdminAuthService {
     }
   }
 
+  async updateUser(
+    userId: number,
+    payload: {
+      fullName: string;
+      email: string;
+      password?: string;
+      roles: string[];
+    }
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    const fullName = payload.fullName.trim();
+    const email = payload.email.trim().toLowerCase();
+    if (!fullName || !email) {
+      return { ok: false, error: 'Completa los campos requeridos.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.apiBaseUrl}/users/${userId}`,
+          {
+            fullName,
+            email,
+            password: payload.password?.trim() ? payload.password.trim() : null,
+            roles: payload.roles.length ? payload.roles : ['client']
+          },
+          { headers: this.authHeaders() }
+        )
+      );
+      return { ok: true };
+    } catch (error: any) {
+      if (error?.status === 409) {
+        return { ok: false, error: error?.error?.error ?? 'El correo ya existe.' };
+      }
+      return { ok: false, error: 'No se pudo actualizar el usuario.' };
+    }
+  }
+
   async setUserActive(userId: number, active: boolean) {
     if (!this.isBrowser) {
       return;
@@ -140,19 +207,33 @@ export class AdminAuthService {
     );
   }
 
-  private async restoreSession() {
+  async ensureSession(): Promise<boolean> {
     if (!this.isBrowser) {
-      return;
+      return false;
     }
-    const token = this.getToken();
-    if (!token) {
-      return;
+    if (this.userSignal()) {
+      return true;
     }
+    if (!this.hasValidStoredSession()) {
+      return false;
+    }
+    if (this.sessionRestorePromise) {
+      return this.sessionRestorePromise;
+    }
+
+    this.sessionRestorePromise = this.restoreSession();
+
+    return this.sessionRestorePromise;
+  }
+
+  private async restoreSession(): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+
     try {
       const response = await firstValueFrom(
-        this.http.get<AdminUser & { isActive?: boolean }>(`${this.apiBaseUrl}/auth/me`, {
-          headers: this.authHeaders()
-        })
+        this.http.get<AdminUser & { isActive?: boolean }>(`${this.apiBaseUrl}/auth/me`)
       );
       const user: AdminUser = {
         id: response.id,
@@ -163,41 +244,55 @@ export class AdminAuthService {
         active: typeof response.isActive === 'boolean' ? response.isActive : response.active
       };
       this.userSignal.set(user);
+      return true;
     } catch {
-      this.clearToken();
       this.userSignal.set(null);
+      this.clearPersistedSession();
+      return false;
+    } finally {
+      this.sessionRestorePromise = null;
     }
   }
 
-  private hasToken(): boolean {
-    return !!this.getToken();
-  }
-
-  private getToken(): string | null {
+  private hasValidStoredSession(): boolean {
     if (!this.isBrowser) {
-      return null;
+      return false;
     }
-    return localStorage.getItem(STORAGE_KEYS.token);
+
+    const token = localStorage.getItem(ADMIN_AUTH_STORAGE_KEYS.token);
+    const expiresAt = localStorage.getItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt);
+
+    if (!token || !expiresAt) {
+      this.clearPersistedSession();
+      return false;
+    }
+
+    const expiresAtMs = Date.parse(expiresAt);
+    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
+      this.clearPersistedSession();
+      return false;
+    }
+
+    return true;
   }
 
-  private setToken(token: string) {
+  private persistSession(token: string, expiresAt: string): void {
     if (!this.isBrowser) {
       return;
     }
-    localStorage.setItem(STORAGE_KEYS.token, token);
+    localStorage.setItem(ADMIN_AUTH_STORAGE_KEYS.token, token);
+    localStorage.setItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt, expiresAt);
   }
 
-  private clearToken() {
+  private clearPersistedSession(): void {
     if (!this.isBrowser) {
       return;
     }
-    localStorage.removeItem(STORAGE_KEYS.token);
+    localStorage.removeItem(ADMIN_AUTH_STORAGE_KEYS.token);
+    localStorage.removeItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt);
   }
 
-  private authHeaders(): HttpHeaders {
-    const token = this.getToken();
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : ''
-    });
+  private authHeaders(): Record<string, string> {
+    return {};
   }
 }

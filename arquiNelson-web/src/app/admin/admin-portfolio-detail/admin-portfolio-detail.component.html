@@ -6,7 +6,7 @@
       <p>Administra el articulo y los elementos visibles en la web.</p>
       <p class="project-name" *ngIf="!isCreate && entry?.projectName">Proyecto base: {{ entry?.projectName }}</p>
     </div>
-    <button type="button" (click)="save()" [disabled]="saving || loading || (isCreate && !selectedProjectId)">
+    <button type="button" (click)="save()" [disabled]="saving || loading">
       {{ saving ? 'Guardando...' : (isCreate ? 'Crear' : 'Guardar cambios') }}
     </button>
   </header>
@@ -21,18 +21,6 @@
     <div class="panel">
       <h3>Informacion principal</h3>
       <div class="form-grid">
-        <label class="full" *ngIf="isCreate">
-          Proyecto base
-          <select [(ngModel)]="selectedProjectId">
-            <option [ngValue]="0">Selecciona un proyecto</option>
-            <option *ngFor="let project of availableProjects" [ngValue]="project.id">
-              {{ project.name }}
-            </option>
-          </select>
-        </label>
-        <p class="hint" *ngIf="isCreate && !availableProjects.length">
-          No hay proyectos disponibles para agregar al portafolio.
-        </p>
         <label>
           Titulo
           <input [(ngModel)]="form.titleOverride" placeholder="Titulo en portafolio" />
@@ -67,7 +55,7 @@
       <h3>Imagen de portada</h3>
       <div class="image-uploader">
         <div class="image-preview" *ngIf="form.coverImage">
-          <img [src]="form.coverImage.fileUrl" alt="Portada" />
+          <img [src]="form.coverImage.previewUrl || form.coverImage.fileUrl" alt="Portada" />
           <button type="button" class="ghost" (click)="removeCover()">Quitar</button>
         </div>
         <label class="upload">
@@ -81,7 +69,7 @@
       <h3>Imagenes principales</h3>
       <div class="image-list">
         <div class="image-card" *ngFor="let img of form.heroImages; let i = index">
-          <img [src]="img.fileUrl" alt="Hero" />
+          <img [src]="img.previewUrl || img.fileUrl" alt="Hero" />
           <div class="image-actions">
             <button type="button" (click)="moveHero(i, -1)">Arriba</button>
             <button type="button" (click)="moveHero(i, 1)">Abajo</button>
@@ -126,7 +114,15 @@
       <div class="blocks">
         <div class="block-card" *ngFor="let block of form.blocks; let i = index">
           <div class="block-header">
-            <strong>{{ block.blockType === 'text' ? 'Texto' : 'Imagen' }}</strong>
+            <strong>
+              {{
+                block.blockType === 'text'
+                  ? 'Texto'
+                  : block.blockType === 'image'
+                    ? 'Imagen'
+                    : 'Video'
+              }}
+            </strong>
             <div class="block-actions">
               <button type="button" (click)="moveBlock(i, -1)">Arriba</button>
               <button type="button" (click)="moveBlock(i, 1)">Abajo</button>
@@ -137,12 +133,44 @@
             <textarea rows="4" [(ngModel)]="block.textContent" placeholder="Texto del articulo"></textarea>
           </div>
           <div *ngIf="block.blockType === 'image'" class="block-image">
-            <img *ngIf="block.fileUrl" [src]="block.fileUrl" alt="Bloque" />
+            <img *ngIf="block.fileUrl || block.previewUrl" [src]="block.previewUrl || block.fileUrl" alt="Bloque" />
             <label class="upload">
               Subir imagen
-              <input type="file" accept="image/*" (change)="uploadBlockImage(block, $event)" />
+              <input type="file" accept="image/*" (change)="uploadBlockMedia(block, $event)" />
             </label>
+            <button
+              type="button"
+              class="ghost"
+              *ngIf="block.fileUrl"
+              (click)="clearBlockMedia(block)"
+            >
+              Quitar imagen
+            </button>
             <input [(ngModel)]="block.caption" placeholder="Caption" />
+            <select [(ngModel)]="block.layout">
+              <option [ngValue]="'inline'">Inline</option>
+              <option [ngValue]="'wide'">Wide</option>
+            </select>
+            <label class="toggle">
+              Visible
+              <input type="checkbox" [(ngModel)]="block.isVisible" />
+            </label>
+          </div>
+          <div *ngIf="block.blockType === 'video'" class="block-video">
+            <video *ngIf="block.fileUrl || block.previewUrl" [src]="block.previewUrl || block.fileUrl" controls></video>
+            <label class="upload">
+              Subir video
+              <input type="file" accept="video/*" (change)="uploadBlockMedia(block, $event)" />
+            </label>
+            <button
+              type="button"
+              class="ghost"
+              *ngIf="block.fileUrl"
+              (click)="clearBlockMedia(block)"
+            >
+              Quitar video
+            </button>
+            <input [(ngModel)]="block.caption" placeholder="Descripcion o caption" />
             <select [(ngModel)]="block.layout">
               <option [ngValue]="'inline'">Inline</option>
               <option [ngValue]="'wide'">Wide</option>
@@ -157,6 +185,7 @@
       <div class="block-actions">
         <button type="button" class="ghost" (click)="addTextBlock()">Agregar texto</button>
         <button type="button" class="ghost" (click)="addImageBlock()">Agregar imagen</button>
+        <button type="button" class="ghost" (click)="addVideoBlock()">Agregar video</button>
       </div>
     </div>
 
@@ -164,7 +193,7 @@
       <h3>Galeria</h3>
       <div class="image-list">
         <div class="image-card" *ngFor="let img of form.galleryImages; let i = index">
-          <img [src]="img.fileUrl" alt="Galeria" />
+          <img [src]="img.previewUrl || img.fileUrl" alt="Galeria" />
           <div class="image-actions">
             <button type="button" (click)="moveGallery(i, -1)">Arriba</button>
             <button type="button" (click)="moveGallery(i, 1)">Abajo</button>

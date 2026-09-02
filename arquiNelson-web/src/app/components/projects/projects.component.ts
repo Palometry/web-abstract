@@ -13,7 +13,9 @@ import { PortfolioListItem, PortfolioService } from '../../services/portfolio';
 export class ProjectsComponent implements OnInit, AfterViewInit {
   items: PortfolioListItem[] = [];
   loading = false;
+  error = '';
   private loaded = false;
+  hasLoaded = false;
   private readonly isBrowser: boolean;
 
   constructor(
@@ -38,8 +40,16 @@ export class ProjectsComponent implements OnInit, AfterViewInit {
     }
     this.loaded = true;
     this.loading = true;
-    this.items = await this.portfolioService.getItems();
-    this.loading = false;
-    this.cdr.detectChanges();
+    this.error = '';
+    try {
+      this.items = await this.portfolioService.getItems();
+    } catch {
+      this.items = [];
+      this.error = 'No se pudo cargar el portafolio.';
+    } finally {
+      this.loading = false;
+      this.hasLoaded = true;
+      this.cdr.detectChanges();
+    }
   }
 }

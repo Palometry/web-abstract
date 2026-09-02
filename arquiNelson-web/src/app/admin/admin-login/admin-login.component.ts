@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,6 +15,8 @@ import { AdminDataService, AdminPublicDashboardStats } from '../../services/admi
 export class AdminLoginComponent implements OnInit {
   email = '';
   password = '';
+  rememberSession = false;
+  showPassword = false;
   error = '';
   loading = false;
   statsLoading = false;
@@ -23,10 +25,11 @@ export class AdminLoginComponent implements OnInit {
   constructor(
     private auth: AdminAuthService,
     private data: AdminDataService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/admin']);
       return;
@@ -37,18 +40,31 @@ export class AdminLoginComponent implements OnInit {
   async submit() {
     this.error = '';
     this.loading = true;
-    const success = await this.auth.login(this.email, this.password);
+    this.cdr.detectChanges();
+    const result = await this.auth.login(this.email, this.password, this.rememberSession);
     this.loading = false;
-    if (!success) {
-      this.error = 'Credenciales invalidas.';
+    if (!result.ok) {
+      this.error =
+        result.reason === 'invalid_credentials'
+          ? 'Credenciales invalidas.'
+          : result.reason === 'server_error'
+            ? 'El servidor no pudo iniciar sesion. Revisa la configuracion del backend.'
+            : 'No se pudo conectar con el servidor.';
+      this.cdr.detectChanges();
       return;
     }
+    this.cdr.detectChanges();
     this.router.navigate(['/admin']);
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 
   private async loadStats() {
     this.statsLoading = true;
     this.stats = await this.data.getPublicDashboardStats();
     this.statsLoading = false;
+    this.cdr.detectChanges();
   }
 }

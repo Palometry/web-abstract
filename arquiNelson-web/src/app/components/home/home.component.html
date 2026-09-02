@@ -1,70 +1,67 @@
 <app-hero></app-hero>
-<app-about></app-about>
-<app-services></app-services>
-<app-projects></app-projects>
-
-<section
-  class="dynamic-content"
-  *ngFor="let section of extraSections"
-  [attr.id]="section.sectionKey"
->
-  <div class="container">
-    <div class="section-header" *ngIf="section.title || section.description">
-      <h2 *ngIf="section.title">{{ section.title }}</h2>
-      <p *ngIf="section.description">{{ section.description }}</p>
+<app-about [previewMode]="true" ctaLabel="Conocer mas" [ctaLink]="['/blog']"></app-about>
+<section class="portfolio-collage" aria-label="Collage de portafolio">
+  <div class="collage-shell">
+    <div class="collage-heading">
+      <span class="collage-eyebrow">Portafolio</span>
+      <h2>Una mirada a nuestros proyectos recientes</h2>
     </div>
-
-    <div class="block-list">
-      <div class="block-card" *ngFor="let block of section.blocks">
-        <ng-container [ngSwitch]="block.blockType">
-          <div *ngSwitchCase="'hero'">
-            <h3>{{ block.content?.title }}</h3>
-            <p>{{ block.content?.subtitle }}</p>
-          </div>
-          <div *ngSwitchCase="'about_intro'">
-            <h3>{{ block.content?.title }}</h3>
-            <p>{{ block.content?.summary }}</p>
-          </div>
-          <div *ngSwitchCase="'about_card'">
-            <h4>{{ block.content?.title }}</h4>
-            <p>{{ block.content?.body }}</p>
-          </div>
-          <div *ngSwitchCase="'services_intro'">
-            <h3>{{ block.content?.title }}</h3>
-            <p>{{ block.content?.summary }}</p>
-          </div>
-          <div *ngSwitchCase="'services_item'">
-            <div class="service-item">
-              <span class="service-icon">{{ block.content?.icon }}</span>
-              <div>
-                <h4>{{ block.content?.title }}</h4>
-                <p>{{ block.content?.description }}</p>
-              </div>
-              <a
-                *ngIf="block.content?.url"
-                [href]="block.content?.url"
-                [attr.target]="block.content?.openInNewTab ? '_blank' : null"
-                [attr.rel]="block.content?.openInNewTab ? 'noopener noreferrer' : null"
-              >
-                Ver
-              </a>
+    <div class="collage-rows">
+      <div class="collage-row" *ngFor="let row of collageRows; let rowIndex = index" [class.row-reverse]="row.reverse">
+        <figure class="collage-tile collage-feature">
+          <a
+            class="tile-trigger"
+            [routerLink]="['/project', getProjectRouteId(row.featured.project)]"
+            [attr.aria-label]="'Ver proyecto ' + row.featured.title"
+          >
+            <img
+              [src]="row.featured.src"
+              [alt]="row.featured.alt"
+              loading="lazy"
+              (error)="onCollageError(rowIndex * 3 + (row.reverse ? row.stacked.length : 0))"
+            />
+            <div class="tile-caption">
+              <strong>{{ row.featured.title }}</strong>
+              <span>{{ row.featured.category }}</span>
             </div>
-          </div>
-          <div *ngSwitchCase="'tag_link'">
+          </a>
+        </figure>
+
+        <div class="collage-stack" [class.stack-single]="row.stacked.length === 1">
+          <figure class="collage-tile collage-compact" *ngFor="let item of row.stacked; let stackIndex = index">
             <a
-              class="tag-link"
-              [href]="block.content?.url"
-              [attr.target]="block.content?.openInNewTab ? '_blank' : null"
-              [attr.rel]="block.content?.openInNewTab ? 'noopener noreferrer' : null"
+              class="tile-trigger"
+              [routerLink]="['/project', getProjectRouteId(item.project)]"
+              [attr.aria-label]="'Ver proyecto ' + item.title"
             >
-              {{ block.content?.label }}
+              <img
+                [src]="item.src"
+                [alt]="item.alt"
+                loading="lazy"
+                (error)="onCollageError(rowIndex * 3 + (row.reverse ? stackIndex : stackIndex + 1))"
+              />
+              <div class="tile-caption">
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.category }}</span>
+              </div>
             </a>
-          </div>
-          <div *ngSwitchDefault>
-            <p>{{ block.content?.text || block.content }}</p>
-          </div>
-        </ng-container>
+          </figure>
+        </div>
       </div>
+    </div>
+    <div class="collage-footer" *ngIf="collageItems.length">
+      <a class="collage-cta" [routerLink]="['/projects']">Ver mas proyectos</a>
+    </div>
+  </div>
+</section>
+
+<section class="home-contact-cta" aria-label="Llamado final a contacto">
+  <div class="home-contact-cta__backdrop">
+    <div class="home-contact-cta__content">
+      <span class="home-contact-cta__eyebrow">Contacto</span>
+      <h2>Contactanos para tu proyecto</h2>
+      <p>Hablemos sobre tu proximo proyecto y/o brindarle una asesoria</p>
+      <a class="home-contact-cta__button" [routerLink]="['/contact']">Contactanos</a>
     </div>
   </div>
 </section>

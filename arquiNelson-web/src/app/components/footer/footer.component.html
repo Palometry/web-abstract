@@ -1,5 +1,5 @@
 <footer id="contact" class="footer">
-  <div class="footer-content">
+  <div *ngIf="!isContactPage" class="footer-content">
     <div class="container">
       <div class="footer-grid">
         <!-- Columna 1: Información de la Empresa -->
@@ -53,7 +53,7 @@
   <!-- Footer inferior -->
   <div class="footer-bottom">
     <div class="container">
-      <p>&copy; {{ currentYear }} Nelson Daza. Todos los derechos reservados.</p>
+      <p>&copy; {{ currentYear }} Abstract Arquitecture. Todos los derechos reservados.</p>
     </div>
   </div>
 </footer>

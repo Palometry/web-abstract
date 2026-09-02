@@ -21,8 +21,7 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
   stats = [
     { label: 'Proyectos activos', value: 0 },
     { label: 'Solicitudes nuevas', value: 0 },
-    { label: 'Cotizaciones enviadas', value: 0 },
-    { label: 'Paginas publicadas', value: 0 }
+    { label: 'Cotizaciones enviadas', value: 0 }
   ];
 
   activity: AdminDashboardActivity[] = [];
@@ -38,13 +37,8 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     },
     {
       title: 'Publicar proyecto',
-      description: 'Sube imagenes y activa portafolio.',
+      description: 'Crea y actualiza proyectos publicados.',
       link: '/admin/projects'
-    },
-    {
-      title: 'Actualizar portada',
-      description: 'Edita textos e imagenes del home.',
-      link: '/admin/content'
     }
   ];
 
@@ -79,8 +73,7 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
       this.stats = [
         { label: 'Proyectos activos', value: dashboard.stats.activeProjects },
         { label: 'Solicitudes nuevas', value: dashboard.stats.newQuotes },
-        { label: 'Cotizaciones enviadas', value: dashboard.stats.sentQuotes },
-        { label: 'Paginas publicadas', value: dashboard.stats.publishedPages }
+        { label: 'Cotizaciones enviadas', value: dashboard.stats.sentQuotes }
       ];
       this.activity = dashboard.activity;
     } finally {

@@ -2,11 +2,12 @@ import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AdminDataService, AdminPortfolioDetail, AdminProject } from '../../services/admin-data';
+import { AdminDataService, AdminPortfolioDetail } from '../../services/admin-data';
 
 type ImageDraft = {
   mediaId: number;
   fileUrl: string;
+  previewUrl?: string;
 };
 
 type SpecDraft = {
@@ -15,10 +16,11 @@ type SpecDraft = {
 };
 
 type BlockDraft = {
-  blockType: 'text' | 'image';
+  blockType: 'text' | 'image' | 'video';
   textContent: string;
   mediaId: number | null;
   fileUrl: string | null;
+  previewUrl?: string | null;
   caption: string;
   layout: 'wide' | 'inline';
   isVisible: boolean;
@@ -38,7 +40,6 @@ export class AdminPortfolioDetailComponent implements OnInit {
   entryId = 0;
   isCreate = false;
   selectedProjectId = 0;
-  availableProjects: AdminProject[] = [];
   entry?: AdminPortfolioDetail | null;
   private readonly isBrowser: boolean;
 
@@ -75,7 +76,8 @@ export class AdminPortfolioDetailComponent implements OnInit {
     }
     this.route.paramMap.subscribe((params) => {
       const rawId = params.get('id');
-      if (rawId === 'new') {
+      const isNewRoute = rawId === 'new' || (!rawId && this.router.url.endsWith('/portfolio/new'));
+      if (isNewRoute) {
         this.isCreate = true;
         this.entryId = 0;
         this.loadCreateData();
@@ -141,11 +143,7 @@ export class AdminPortfolioDetailComponent implements OnInit {
   private async loadCreateData() {
     this.loading = true;
     this.error = '';
-    const [projects, entries] = await Promise.all([
-      this.data.getProjects(),
-      this.data.getPortfolioEntries()
-    ]);
-    this.availableProjects = projects.filter((project) => !project.portfolio);
+    const entries = await this.data.getPortfolioEntries();
     const maxOrder = entries.reduce((max, entry) => Math.max(max, entry.order), 0);
     this.form = {
       titleOverride: '',
@@ -161,11 +159,8 @@ export class AdminPortfolioDetailComponent implements OnInit {
       tags: [],
       blocks: []
     };
-    this.selectedProjectId = this.availableProjects[0]?.id ?? 0;
+    this.selectedProjectId = 0;
     this.loading = false;
-    if (!this.availableProjects.length) {
-      this.error = 'No hay proyectos disponibles para agregar.';
-    }
     this.cdr.detectChanges();
   }
 
@@ -174,11 +169,13 @@ export class AdminPortfolioDetailComponent implements OnInit {
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
-      this.form.coverImage = { mediaId: result.id, fileUrl: result.fileUrl };
+      this.form.coverImage = { mediaId: result.id, fileUrl: result.fileUrl, previewUrl };
     } else {
       this.error = result.error ?? 'No se pudo subir la imagen.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
@@ -188,11 +185,13 @@ export class AdminPortfolioDetailComponent implements OnInit {
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
-      this.form.heroImages.push({ mediaId: result.id, fileUrl: result.fileUrl });
+      this.form.heroImages.push({ mediaId: result.id, fileUrl: result.fileUrl, previewUrl });
     } else {
       this.error = result.error ?? 'No se pudo subir la imagen.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
@@ -202,35 +201,56 @@ export class AdminPortfolioDetailComponent implements OnInit {
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
-      this.form.galleryImages.push({ mediaId: result.id, fileUrl: result.fileUrl });
+      this.form.galleryImages.push({ mediaId: result.id, fileUrl: result.fileUrl, previewUrl });
     } else {
       this.error = result.error ?? 'No se pudo subir la imagen.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
 
-  async uploadBlockImage(block: BlockDraft, event: Event) {
+  async uploadBlockMedia(block: BlockDraft, event: Event) {
     const file = this.extractFile(event);
     if (!file) {
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
     const result = await this.data.uploadMedia(file);
     if (result.ok && result.id && result.fileUrl) {
       block.mediaId = result.id;
       block.fileUrl = result.fileUrl;
+      block.previewUrl = previewUrl;
     } else {
-      this.error = result.error ?? 'No se pudo subir la imagen.';
+      this.error = result.error ?? 'No se pudo subir el archivo.';
+      URL.revokeObjectURL(previewUrl);
     }
     this.clearFileInput(event);
   }
 
+  clearBlockMedia(block: BlockDraft) {
+    if (block.previewUrl) {
+      URL.revokeObjectURL(block.previewUrl);
+      block.previewUrl = null;
+    }
+    block.mediaId = null;
+    block.fileUrl = null;
+  }
+
   removeCover() {
+    if (this.form.coverImage?.previewUrl) {
+      URL.revokeObjectURL(this.form.coverImage.previewUrl);
+    }
     this.form.coverImage = null;
   }
 
   removeHero(index: number) {
+    const img = this.form.heroImages[index];
+    if (img?.previewUrl) {
+      URL.revokeObjectURL(img.previewUrl);
+    }
     this.form.heroImages.splice(index, 1);
   }
 
@@ -244,6 +264,10 @@ export class AdminPortfolioDetailComponent implements OnInit {
   }
 
   removeGallery(index: number) {
+    const img = this.form.galleryImages[index];
+    if (img?.previewUrl) {
+      URL.revokeObjectURL(img.previewUrl);
+    }
     this.form.galleryImages.splice(index, 1);
   }
 
@@ -301,6 +325,18 @@ export class AdminPortfolioDetailComponent implements OnInit {
     });
   }
 
+  addVideoBlock() {
+    this.form.blocks.push({
+      blockType: 'video',
+      textContent: '',
+      mediaId: null,
+      fileUrl: null,
+      caption: '',
+      layout: 'inline',
+      isVisible: true
+    });
+  }
+
   removeBlock(index: number) {
     this.form.blocks.splice(index, 1);
   }
@@ -337,7 +373,7 @@ export class AdminPortfolioDetailComponent implements OnInit {
       blocks: this.form.blocks.map((block) => ({
         blockType: block.blockType,
         textContent: block.blockType === 'text' ? block.textContent.trim() : null,
-        mediaId: block.blockType === 'image' ? block.mediaId : null,
+        mediaId: block.blockType === 'image' || block.blockType === 'video' ? block.mediaId : null,
         caption: block.caption.trim() || null,
         layout: block.layout,
         isVisible: block.isVisible
@@ -345,16 +381,16 @@ export class AdminPortfolioDetailComponent implements OnInit {
     };
 
     if (this.isCreate) {
-      if (!this.selectedProjectId) {
+      if (!payload.titleOverride) {
         this.saving = false;
-        this.error = 'Selecciona un proyecto.';
+        this.error = 'El titulo es obligatorio para crear el portafolio.';
         return;
       }
-      const createResult = await this.data.updateProjectPortfolio(this.selectedProjectId, {
+      const createResult = await this.data.createPortfolioEntry({
+        projectId: this.selectedProjectId || null,
         titleOverride: payload.titleOverride,
         category: payload.category,
         summary: payload.summary,
-        autocadUrl: payload.autocadUrl,
         sortOrder: payload.sortOrder,
         isVisible: payload.isVisible
       });

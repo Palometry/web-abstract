@@ -1,0 +1,82 @@
+<section class="blog">
+  <div class="container">
+    <app-about></app-about>
+
+    <header class="blog-header">
+      <span class="blog-eyebrow">Blog</span>
+      <h1>Publicaciones</h1>
+      <p>Articulos propios y referencias externas para seguir el trabajo del estudio en distintos formatos.</p>
+    </header>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <p class="hint" *ngIf="loading">Cargando publicaciones...</p>
+
+    <div class="blog-grid" *ngIf="!loading">
+      <article class="blog-card" *ngFor="let post of posts" [class.external-card]="isExternalPost(post)">
+        <ng-container *ngIf="isExternalPost(post); else articleCard">
+          <a class="card-image external-link" [href]="post.externalUrl" target="_blank" rel="noreferrer">
+            <video
+              *ngIf="post.coverImageUrl && isVideoUrl(post.coverImageUrl); else externalCoverImage"
+              [src]="post.coverImageUrl"
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+            <ng-template #externalCoverImage>
+              <img
+                *ngIf="post.coverImageUrl"
+                [src]="post.coverImageUrl"
+                [alt]="post.title"
+                loading="lazy"
+              />
+            </ng-template>
+            <div class="placeholder" *ngIf="!post.coverImageUrl"></div>
+            <span class="platform-chip">{{ formatPlatform(post.externalPlatform) }}</span>
+            <span class="launch-icon">↗</span>
+          </a>
+
+          <div class="card-body">
+            <span class="date">{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+            <h2>
+              <a [href]="post.externalUrl" target="_blank" rel="noreferrer">{{ post.title }}</a>
+            </h2>
+            <p class="account" *ngIf="post.externalAccount">{{ post.externalAccount }}</p>
+            <p class="excerpt" *ngIf="post.excerpt">{{ post.excerpt }}</p>
+            <a class="read-more" [href]="post.externalUrl" target="_blank" rel="noreferrer">
+              {{ getCta(post) }}
+            </a>
+          </div>
+        </ng-container>
+
+        <ng-template #articleCard>
+          <a class="card-image" [routerLink]="['/blog', post.slug || post.id]">
+            <video
+              *ngIf="post.coverImageUrl && isVideoUrl(post.coverImageUrl); else articleCoverImage"
+              [src]="post.coverImageUrl"
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
+            <ng-template #articleCoverImage>
+              <img
+                *ngIf="post.coverImageUrl"
+                [src]="post.coverImageUrl"
+                [alt]="post.title"
+                loading="lazy"
+              />
+            </ng-template>
+            <div class="placeholder" *ngIf="!post.coverImageUrl"></div>
+          </a>
+          <div class="card-body">
+            <span class="date">{{ formatDate(post.publishedAt || post.createdAt) }}</span>
+            <h2>
+              <a [routerLink]="['/blog', post.slug || post.id]">{{ post.title }}</a>
+            </h2>
+            <p class="excerpt" *ngIf="post.excerpt">{{ post.excerpt }}</p>
+            <a class="read-more" [routerLink]="['/blog', post.slug || post.id]">{{ getCta(post) }}</a>
+          </div>
+        </ng-template>
+      </article>
+    </div>
+  </div>
+</section>

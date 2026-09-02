@@ -37,6 +37,7 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
   ];
   loading = false;
   saving = false;
+  sending = false;
   error = '';
   private loaded = false;
   private readonly isBrowser: boolean;
@@ -59,7 +60,7 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     planName: '',
     planMinDays: null as number | null,
     planMaxDays: null as number | null,
-    status: 'new',
+    status: 'draft',
     expiresAt: '',
     notes: ''
   };
@@ -135,7 +136,7 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
         planMinDays: quote.planMinDays ?? null,
         planMaxDays: quote.planMaxDays ?? null,
         status: quote.status,
-        expiresAt: quote.expiresAt ?? '',
+        expiresAt: '',
         notes: quote.notes ?? ''
       };
       this.services = quote.services.map((service) => ({
@@ -147,11 +148,41 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
       }));
       this.rates = options.pricingRates.filter((rate) => rate.isActive);
       this.serviceOptions = options.services.filter((service) => service.isActive);
+      this.draft.expiresAt = this.buildExpiresAt(quote.createdAt ?? null);
       this.updateAreaCovered();
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  private parseDateInput(value?: string | null) {
+    if (!value) {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const datePart = trimmed.includes('T') ? trimmed.split('T')[0] : trimmed.split(' ')[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+      return null;
+    }
+    return new Date(`${datePart}T00:00:00`);
+  }
+
+  private buildExpiresAt(baseDate?: string | null) {
+    const base = this.parseDateInput(baseDate) ?? new Date();
+    const year = base.getFullYear();
+    const month = base.getMonth();
+    const day = base.getDate();
+    const lastDay = new Date(year, month + 2, 0).getDate();
+    const targetDay = Math.min(day, lastDay);
+    const nextMonth = new Date(year, month + 1, targetDay);
+    const yyyy = nextMonth.getFullYear();
+    const mm = String(nextMonth.getMonth() + 1).padStart(2, '0');
+    const dd = String(nextMonth.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   formatCurrency(value: number, currency: string) {
@@ -164,6 +195,8 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
 
   formatStatus(status: string) {
     switch (status) {
+      case 'draft':
+        return 'Borrador';
       case 'new':
         return 'Nueva';
       case 'reviewed':
@@ -217,6 +250,16 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     const freePercent = Number(this.draft.areaUncoveredPercent);
     const safePercent = Number.isFinite(freePercent) ? Math.min(Math.max(freePercent, 0), 100) : 30;
     return Number((areaTotal * (safePercent / 100)).toFixed(2));
+  }
+
+  getAreaCoveredTotal() {
+    const covered = Number(this.draft.areaCoveredM2);
+    if (!Number.isFinite(covered) || covered <= 0) {
+      return 0;
+    }
+    const floors = Number(this.draft.floorCount);
+    const safeFloors = Number.isFinite(floors) && floors > 0 ? floors : 1;
+    return Number((covered * safeFloors).toFixed(2));
   }
 
   async saveQuote() {
@@ -281,6 +324,25 @@ export class AdminQuoteDetailComponent implements OnInit, AfterViewInit {
     this.saving = false;
     if (!result.ok) {
       this.error = result.error ?? 'No se pudo guardar la cotizacion.';
+      return;
+    }
+    await this.loadData();
+  }
+
+  async sendQuote() {
+    if (!this.quote) {
+      return;
+    }
+    const confirmed = confirm('Enviar esta cotización por correo al cliente?');
+    if (!confirmed) {
+      return;
+    }
+    this.sending = true;
+    this.error = '';
+    const result = await this.data.sendQuote(this.quote.id);
+    this.sending = false;
+    if (!result.ok) {
+      this.error = result.error ?? 'No se pudo enviar la cotizacion.';
       return;
     }
     await this.loadData();

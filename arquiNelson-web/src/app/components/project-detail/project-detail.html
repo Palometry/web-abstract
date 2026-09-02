@@ -1,8 +1,24 @@
 @if (project) {
-  <div class="container project-page">
+  <div class="project-page">
     <section class="project-hero">
       <div class="hero-slider" *ngIf="currentBannerImage">
-        <img class="hero-img" [src]="currentBannerImage" [alt]="project.title" />
+        <div
+          class="hero-stage"
+          [class.is-animating]="bannerAnimating"
+          [class.turn-next]="bannerDirection === 'next'"
+          [class.turn-prev]="bannerDirection === 'prev'"
+          [class.turn-variant]="bannerAnimationVariant"
+        >
+          <div class="hero-page hero-page-base">
+            <img class="hero-img" [src]="currentBannerImage" [alt]="project.title" />
+          </div>
+          <div class="hero-page hero-page-underlay" *ngIf="bannerAnimating && pendingBannerImage">
+            <img class="hero-img" [src]="pendingBannerImage" [alt]="project.title" />
+          </div>
+          <div class="hero-page hero-page-turn" *ngIf="bannerAnimating && currentBannerImage">
+            <img class="hero-img" [src]="currentBannerImage" [alt]="project.title" />
+          </div>
+        </div>
         <button
           class="hero-nav prev"
           type="button"
@@ -34,28 +50,37 @@
       </div>
       <div class="hero-text">
         <h2>{{ project.title }}</h2>
-        <p class="location">Ubicacion: {{ project.location }}</p>
+        <p class="location">Ubicacion: {{ project.location || 'Por definir' }}</p>
       </div>
     </section>
 
     <section class="project-ficha">
-      <h3>Ficha de datos</h3>
-      <table class="ficha-table">
-        <tr><th>Promotor</th><td>{{ project.promoter }}</td></tr>
-        <tr><th>Estado</th><td>{{ project.status }}</td></tr>
-        <tr><th>Tipo</th><td>{{ project.type }}</td></tr>
-        <tr><th>Ubicacion</th><td>{{ project.location }}</td></tr>
-        <tr><th>Area del terreno</th><td>{{ project.landArea }}</td></tr>
-        <tr><th>Unidades</th><td>{{ project.units }}</td></tr>
-        <tr><th>Areas comunes</th><td>{{ project.amenities.join(', ') }}</td></tr>
-        <tr><th>Inicio de obra</th><td>{{ project.startYear }}</td></tr>
-        <tr><th>Entrega estimada</th><td>{{ project.deliveryYear }}</td></tr>
+      <div class="ficha-header">
+        <h3>Ficha de datos</h3>
+        <button type="button" class="ficha-toggle" (click)="toggleFicha()">
+          {{ fichaExpanded ? 'Ver menos' : 'Ver mas' }}
+        </button>
+      </div>
+      <table class="ficha-table" [class.expanded]="fichaExpanded">
+        <tbody>
+          <tr><th>Promotor</th><td>{{ project.promoter || 'Por definir' }}</td></tr>
+          <tr><th>Tipo de proyecto</th><td>{{ formatFichaLabel(project.scope) || 'Por definir' }}</td></tr>
+          <tr><th>Tipo de edificacion</th><td>{{ formatFichaType(project.type) || 'Por definir' }}</td></tr>
+          <tr><th>Clasificacion</th><td>{{ formatFichaLabel(project.classification) || 'Por definir' }}</td></tr>
+          <tr><th>Categoria</th><td>{{ formatFichaLabel(project.category) || 'Por definir' }}</td></tr>
+          <tr><th>Ubicacion</th><td>{{ project.location || 'Por definir' }}</td></tr>
+          <tr><th>Area del terreno</th><td>{{ project.landArea || '-' }}</td></tr>
+          <tr><th>Area techada</th><td>{{ project.units ?? '-' }}</td></tr>
+          <tr><th>Areas comunes</th><td>{{ project.amenities.length ? project.amenities.join(', ') : 'Por definir' }}</td></tr>
+          <tr><th>Inicio de obra</th><td>{{ project.startYear || '-' }}</td></tr>
+          <tr><th>Entrega estimada</th><td>{{ project.deliveryYear || '-' }}</td></tr>
+        </tbody>
       </table>
     </section>
 
     <section class="project-description">
       <h3>Descripcion</h3>
-      <p>{{ project.description }}</p>
+      <p>{{ project.description || 'Sin descripcion.' }}</p>
     </section>
 
     @if (project.mapUrl || mapEmbedSafeUrl) {
@@ -74,25 +99,82 @@
           <p class="map-hint">Abre el punto exacto en Google Maps.</p>
         }
         @if (project.mapUrl) {
-          <a class="map-link" [href]="project.mapUrl" target="_blank" rel="noopener">
+          <a class="map-link" [href]="project.mapUrl" target="_blank" rel="noopener noreferrer">
             Ver ubicacion en Google Maps
           </a>
         }
       </section>
     }
 
-    @if (project.houseModels?.length) {
+    @if (houseModels.length) {
       <section class="project-models">
         <h3>Modelos de casas</h3>
-        <div class="models-grid">
-          @for (model of project.houseModels; track model.name) {
-            <article class="model-card">
-              <img [src]="model.image" [alt]="model.name" />
-              <h4>{{ model.name }}</h4>
-              <p>{{ model.description }}</p>
-            </article>
+        <div class="model-tabs">
+          @for (model of houseModels; track model.name; let i = $index) {
+            <button
+              type="button"
+              [class.active]="i === activeHouseModelIndex"
+              (click)="selectHouseModel(i)"
+            >
+              <span class="tab-title">{{ model.name }}</span>
+              @if (model.rooms) {
+                <span class="tab-sub">{{ model.rooms }} hab.</span>
+              }
+            </button>
           }
         </div>
+
+        @if (activeHouseModel) {
+          <div class="model-showcase">
+            <div class="model-gallery">
+              <div class="gallery-frame">
+                <img [src]="activeHouseImage" [alt]="activeHouseModel.name" />
+                <button
+                  class="gallery-nav prev"
+                  type="button"
+                  aria-label="Imagen anterior"
+                  (click)="prevHouseImage()"
+                  *ngIf="activeHouseModel.images.length > 1"
+                >
+                  &lt;
+                </button>
+                <button
+                  class="gallery-nav next"
+                  type="button"
+                  aria-label="Imagen siguiente"
+                  (click)="nextHouseImage()"
+                  *ngIf="activeHouseModel.images.length > 1"
+                >
+                  &gt;
+                </button>
+              </div>
+              <div class="gallery-dots" *ngIf="activeHouseModel.images.length > 1">
+                @for (img of activeHouseModel.images; track img; let i = $index) {
+                  <button
+                    type="button"
+                    [class.active]="i === activeHouseImageIndex"
+                    (click)="goToHouseImage(i)"
+                    aria-label="Ir a imagen {{ i + 1 }}"
+                  ></button>
+                }
+              </div>
+            </div>
+            <div class="model-card">
+              <div class="model-rooms" *ngIf="activeHouseModel.rooms">
+                Habitaciones <span>{{ activeHouseModel.rooms }}</span>
+              </div>
+              <h4>{{ activeHouseModel.name }}</h4>
+              <p>{{ activeHouseModel.description || 'Sin descripcion.' }}</p>
+              @if (activeHouseModel.features.length) {
+                <ul class="model-features">
+                  @for (feature of activeHouseModel.features; track feature) {
+                    <li>{{ feature }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        }
       </section>
     }
 
@@ -192,25 +274,206 @@
       </section>
     }
 
-    @if (project.gallery && project.gallery.length > 0) {
-      <section class="project-gallery">
-        <h3>Galeria</h3>
-        <div class="gallery-grid">
-          @for (image of project.gallery; track image) {
-            <img [src]="image" [alt]="project.title" />
+    @if (project.videos && project.videos.length > 0) {
+      <section class="project-videos">
+        <h3>Videos</h3>
+        <div class="video-grid">
+          @for (video of project.videos; track video.id) {
+            <div class="video-card">
+              @if (getVideoEmbedUrl(video.fileUrl)) {
+                <iframe
+                  [src]="getVideoEmbedUrl(video.fileUrl)"
+                  title="{{ video.title || project.title }}"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                ></iframe>
+              } @else if (isDirectVideoUrl(video.fileUrl)) {
+                <video [src]="video.fileUrl" controls></video>
+              } @else {
+                <a class="video-link" [href]="video.fileUrl" target="_blank" rel="noopener noreferrer">
+                  Ver video
+                </a>
+              }
+              <div class="video-meta">
+                <h4>{{ video.title || 'Video' }}</h4>
+                <p *ngIf="video.description">{{ video.description }}</p>
+              </div>
+            </div>
           }
         </div>
       </section>
     }
 
-    <aside class="project-contact">
-      <h4>Contacto</h4>
-      <p>Para mas informacion sobre este proyecto: info@funbellata.example</p>
-      <a [routerLink]="['/projects']" class="btn-back">Volver al listado</a>
-    </aside>
+    @if (hasFlipbook) {
+      <section class="project-brochure">
+        <div class="brochure-header">
+          <div>
+            <h3>Brochure del proyecto</h3>
+            <p>Brochure interactivo integrado en la misma pagina.</p>
+          </div>
+          <div class="brochure-actions">
+            <button type="button" class="brochure-launch" (click)="reloadFlipbook()">
+              Recargar flipbook
+            </button>
+            @if (brochurePdfUrl) {
+              <a class="brochure-open" [href]="brochurePdfUrl" target="_blank" rel="noopener noreferrer">
+                Abrir PDF
+              </a>
+            }
+          </div>
+        </div>
+
+        <div class="brochure-inline">
+          <div class="brochure-inline-shell">
+            <div class="brochure-inline-loading" *ngIf="flipbookLoading">
+              <p>Cargando brochure interactivo...</p>
+            </div>
+
+            <div class="brochure-inline-error" *ngIf="flipbookError">
+              <p>{{ flipbookError }}</p>
+              <button type="button" class="brochure-inline-retry" (click)="reloadFlipbook()">
+                Reintentar
+              </button>
+            </div>
+
+            @if (flipbookMounted) {
+              <div class="dflip-books brochure-dearflip-stage">
+                <div
+                  class="_df_book brochure-dearflip-book"
+                  [attr.id]="dearFlipBookId"
+                  [attr.source]="brochurePdfUrl"
+                  [attr.data-title]="project.title"
+                ></div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="brochure-inline-footer">
+          <p class="brochure-inline-hint">Pasa las paginas como revista desde el visor integrado.</p>
+        </div>
+      </section>
+    }
+
+    @if (project.autocad360Url && autocadEmbedSafeUrl) {
+      <section class="project-viewer">
+        <div class="viewer-header">
+          <div>
+            <h3>Demostracion del Proyecto</h3>
+            <p>Explora el modelo o plano interactivo del proyecto en Autodesk Viewer.</p>
+          </div>
+          <a
+            class="viewer-open"
+            [href]="project.autocad360Url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir A360
+          </a>
+        </div>
+        <div class="viewer-frame">
+          <iframe
+            [src]="autocadEmbedSafeUrl"
+            title="Visor Autodesk A360"
+            loading="lazy"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+      </section>
+    }
+
+    @if (project.gallery && project.gallery.length > 0) {
+      <section class="project-gallery">
+        <h3>Galeria</h3>
+        <div class="gallery-grid">
+          @for (image of project.gallery; track image; let i = $index) {
+            <button
+              type="button"
+              class="gallery-tile"
+              style="padding:0;border:0;background:none"
+              (click)="openGalleryLightbox(i)"
+              [attr.aria-label]="'Abrir imagen ' + (i + 1) + ' de la galeria'"
+            >
+              <img [src]="image" [alt]="project.title + ' - imagen ' + (i + 1)" />
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    @if (galleryLightboxOpen && currentGalleryImage) {
+      <div class="gallery-lightbox" (click)="closeGalleryLightbox()">
+        <div class="gallery-lightbox__dialog" (click)="$event.stopPropagation()">
+          <button
+            type="button"
+            class="gallery-lightbox__close"
+            aria-label="Cerrar galeria"
+            (click)="closeGalleryLightbox()"
+          >
+            ×
+          </button>
+
+          <div class="gallery-lightbox__toolbar">
+            <div class="gallery-lightbox__counter">
+              {{ galleryLightboxIndex + 1 }} / {{ project.gallery.length }}
+            </div>
+            <div class="gallery-lightbox__zoom">
+              <button type="button" (click)="zoomOutGallery()" [disabled]="galleryZoom <= 1">
+                -
+              </button>
+              <span>{{ (galleryZoom * 100) | number:'1.0-0' }}%</span>
+              <button type="button" (click)="zoomInGallery()" [disabled]="galleryZoom >= 3">
+                +
+              </button>
+              <button type="button" (click)="resetGalleryZoom()" [disabled]="galleryZoom === 1">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div class="gallery-lightbox__stage">
+            <button
+              type="button"
+              class="gallery-lightbox__nav prev"
+              aria-label="Imagen anterior"
+              (click)="prevGalleryImage()"
+              *ngIf="project.gallery.length > 1"
+            >
+              ‹
+            </button>
+
+            <div
+              class="gallery-lightbox__image-shell"
+              [class.is-draggable]="galleryZoom > 1"
+              [class.is-dragging]="galleryDragActive"
+            >
+              <img
+                class="gallery-lightbox__image"
+                [src]="currentGalleryImage"
+                [alt]="project.title + ' ampliada'"
+                [style.transform]="'translate(' + galleryPanX + 'px, ' + galleryPanY + 'px) scale(' + galleryZoom + ')'"
+                (mousedown)="startGalleryDrag($event)"
+              />
+            </div>
+
+            <button
+              type="button"
+              class="gallery-lightbox__nav next"
+              aria-label="Imagen siguiente"
+              (click)="nextGalleryImage()"
+              *ngIf="project.gallery.length > 1"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   </div>
 } @else {
-  <div class="container">
+  <div class="project-page project-page--empty">
     <p>Proyecto no encontrado.</p>
   </div>
 }

@@ -4,7 +4,7 @@
       <h2>Portafolio</h2>
       <p>Define el orden de los proyectos visibles en el portafolio.</p>
     </div>
-    <a class="primary-link" routerLink="/admin/portfolio/new">Crear proyecto</a>
+    <a class="primary-link" [routerLink]="['/admin/portfolio/new']">Crear portafolio</a>
   </header>
 
   <p class="error" *ngIf="error">{{ error }}</p>
@@ -36,12 +36,12 @@
         <a class="secondary" [routerLink]="['/admin/portfolio', entry.id]">Editar</a>
         <button type="button" (click)="saveEntry(entry)" [disabled]="saving">Guardar</button>
         <button type="button" class="danger" (click)="removeEntry(entry)" [disabled]="saving">
-          Quitar
+          {{ entry.projectId ? 'Quitar' : 'Eliminar' }}
         </button>
       </div>
     </div>
     <div class="table-row" *ngIf="!loading && !entries.length">
-      <span>Sin proyectos en portafolio.</span>
+      <span>Sin portafolios.</span>
       <span></span>
       <span></span>
       <span></span>

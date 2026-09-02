@@ -1,0 +1,192 @@
+<section class="admin-blog-detail">
+  <a routerLink="/admin/blog" class="back-link"><- Volver al blog</a>
+
+  <div class="header">
+    <div>
+      <h2>{{ isCreateMode ? 'Nueva publicacion' : 'Editar publicacion' }}</h2>
+      <p>
+        {{ isCreateMode
+          ? 'Completa el formulario en blanco y define si sera un articulo o una publicacion externa.'
+          : 'Actualiza el contenido, el tipo de publicacion y su fecha de salida.' }}
+      </p>
+    </div>
+    <button type="button" (click)="savePost()" [disabled]="saving || loading">
+      {{ saving ? 'Guardando...' : (isCreateMode ? 'Crear publicacion' : 'Guardar cambios') }}
+    </button>
+  </div>
+
+  <div class="toast" *ngIf="successMessage">{{ successMessage }}</div>
+  <p class="error" *ngIf="error">{{ error }}</p>
+  <p class="hint" *ngIf="loading">Cargando publicacion...</p>
+
+  <div class="panel" *ngIf="!loading && !error">
+    <div class="form-grid">
+      <label>
+        Titulo
+        <input
+          type="text"
+          [ngModel]="draft.title"
+          (ngModelChange)="handleTitleChange($event)"
+          placeholder="Titulo de la publicacion"
+        />
+      </label>
+
+      <label>
+        Estado
+        <select [(ngModel)]="draft.status">
+          <option value="draft">Borrador</option>
+          <option value="published">Publicado</option>
+        </select>
+      </label>
+
+      <label>
+        Fecha publicacion
+        <input type="date" [(ngModel)]="draft.publishedAt" />
+      </label>
+
+      <label>
+        Tipo de contenido
+        <select [ngModel]="draft.contentType" (ngModelChange)="handleContentTypeChange($event)">
+          <option *ngFor="let option of contentTypeOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+
+      <label class="wide">
+        Extracto
+        <textarea
+          rows="3"
+          [(ngModel)]="draft.excerpt"
+          placeholder="Breve descripcion para la tarjeta o la cabecera."
+        ></textarea>
+      </label>
+
+      <ng-container *ngIf="draft.contentType === 'article'; else externalFields">
+        <div class="wide editor-section">
+          <div class="section-head">
+            <h3>Contenido</h3>
+            <p>Editor enriquecido para redactar la publicacion como si fuera un documento.</p>
+          </div>
+
+          <div class="editor-toolbar">
+            <div class="toolbar-group">
+              <div class="toolbar-controls compact">
+                <button type="button" class="wide-label" (click)="applyBlock('p')">Parrafo</button>
+                <button type="button" (click)="applyBlock('h2')">H2</button>
+                <button type="button" (click)="applyBlock('h3')">H3</button>
+                <button type="button" class="wide-label" (click)="applyBlock('blockquote')">Cita</button>
+              </div>
+              <span class="toolbar-caption">Estilo</span>
+            </div>
+
+            <div class="toolbar-group">
+              <div class="toolbar-controls">
+                <button type="button" title="Negrita" (click)="applyInlineCommand('bold')"><strong>N</strong></button>
+                <button type="button" title="Cursiva" (click)="applyInlineCommand('italic')"><em>K</em></button>
+                <button type="button" title="Subrayado" (click)="applyInlineCommand('underline')"><u>S</u></button>
+                <button type="button" title="Enlace" class="wide-label" (click)="insertLink()">Enlace</button>
+                <button type="button" title="Limpiar formato" class="wide-label" (click)="clearFormatting()">Limpiar</button>
+              </div>
+              <span class="toolbar-caption">Fuente</span>
+            </div>
+
+            <div class="toolbar-group">
+              <div class="toolbar-controls compact">
+                <button type="button" title="Lista con viñetas" (click)="applyList('insertUnorderedList')">• Lista</button>
+                <button type="button" title="Lista numerada" class="wide-label" (click)="applyList('insertOrderedList')">1. Lista</button>
+              </div>
+              <span class="toolbar-caption">Listas</span>
+            </div>
+
+            <div class="toolbar-group">
+              <div class="toolbar-controls">
+                <button type="button" title="Alinear a la izquierda" (click)="applyAlignment('justifyLeft')">≡</button>
+                <button type="button" title="Centrar" (click)="applyAlignment('justifyCenter')">≣</button>
+                <button type="button" title="Alinear a la derecha" (click)="applyAlignment('justifyRight')">≡</button>
+                <button type="button" class="wide-label" title="Justificar" (click)="applyAlignment('justifyFull')">Just.</button>
+              </div>
+              <span class="toolbar-caption">Parrafo</span>
+            </div>
+          </div>
+
+          <div
+            #articleEditor
+            class="rich-editor"
+            contenteditable="true"
+            spellcheck="true"
+            (input)="onEditorInput()"
+            (keydown)="onEditorKeydown($event)"
+          ></div>
+        </div>
+      </ng-container>
+
+      <ng-template #externalFields>
+        <div class="wide external-section">
+          <div class="section-head">
+            <h3>Publicacion externa</h3>
+            <p>Este tipo se mostrara como una tarjeta visual y llevara al usuario directo a la otra red social.</p>
+          </div>
+        </div>
+
+        <label>
+          Plataforma
+          <select [(ngModel)]="draft.externalPlatform">
+            <option *ngFor="let option of platformOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Cuenta o referencia
+          <input type="text" [(ngModel)]="draft.externalAccount" placeholder="@tu_cuenta o nombre" />
+        </label>
+
+        <label class="wide">
+          URL externa
+          <input
+            type="url"
+            [(ngModel)]="draft.externalUrl"
+            placeholder="https://www.instagram.com/reel/..."
+          />
+        </label>
+
+        <label>
+          Texto del boton
+          <input type="text" [(ngModel)]="draft.externalCta" placeholder="Ver publicacion" />
+        </label>
+      </ng-template>
+
+      <div class="wide media-section">
+        <div class="section-head">
+          <h3>{{ draft.contentType === 'external' ? 'Miniatura de la publicacion' : 'Media de portada' }}</h3>
+          <p>Sube manualmente la imagen o video que se mostrara en la tarjeta del blog.</p>
+        </div>
+      </div>
+
+      <label class="wide">
+        URL de portada
+        <input type="text" [(ngModel)]="draft.coverImageUrl" />
+      </label>
+
+      <div class="image-preview wide" *ngIf="draft.coverImageUrl">
+        <video
+          *ngIf="isVideoUrl(draft.coverImageUrl); else coverImage"
+          [src]="draft.coverImageUrl"
+          controls
+        ></video>
+        <ng-template #coverImage>
+          <img [src]="draft.coverImageUrl" alt="Portada" />
+        </ng-template>
+        <button type="button" class="ghost" (click)="clearCover()">Quitar</button>
+      </div>
+
+      <label class="wide">
+        Subir portada
+        <input type="file" accept="image/*,video/*" (change)="uploadCover($event)" />
+        <small *ngIf="uploading">Subiendo archivo...</small>
+      </label>
+    </div>
+  </div>
+</section>

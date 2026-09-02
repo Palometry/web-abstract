@@ -40,7 +40,13 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "src/assets/dflip/css/dflip.min.css",
+              "src/assets/dflip/css/themify-icons.min.css"
+            ],
+            "scripts": [
+              "src/assets/dflip/js/libs/jquery.min.js",
+              "src/assets/dflip/js/dflip.min.js"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
@@ -53,13 +59,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1.1MB",
+                  "maximumError": "1.25MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "12kB",
+                  "maximumError": "14kB"
                 }
               ],
               "outputHashing": "all"
@@ -68,12 +74,29 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "github-pages": {
+              "baseHref": "/web-abstract/",
+              "outputMode": "static",
+              "ssr": false,
+              "outputHashing": "all"
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "host": "0.0.0.0",
+              "port": 4200,
+              "allowedHosts": [
+                "lie-bases-pan-salad.trycloudflare.com",
+                ".trycloudflare.com",
+                ".brs.devtunnels.ms",
+                "localhost",
+                "127.0.0.1"
+              ]
+            },
           "configurations": {
             "production": {
               "buildTarget": "arquiNelson-web:build:production"
@@ -91,3 +114,4 @@
     }
   }
 }
+

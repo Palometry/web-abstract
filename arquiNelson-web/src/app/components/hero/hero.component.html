@@ -1,19 +1,64 @@
-<section id="home" class="hero">
-  <div class="hero-background image-bg" role="img" aria-label="Logo background"></div>
-  
-  <div class="hero-content">
-    <div class="hero-text">
-      <h1 class="hero-title">{{ title || defaultTitle }}</h1>
-      <p class="hero-subtitle">{{ subtitle || defaultSubtitle }}</p>
-      
-      <div class="hero-buttons">
-        <button class="btn btn-primary" (click)="scrollToSection('portfolio')">
-          Ver Proyectos
-        </button>
-        <button class="btn btn-secondary" (click)="scrollToSection('contact')">
-          Contactar
-        </button>
-      </div>
+<section id="home" class="hero" aria-label="Banner principal de videos">
+  <ng-container *ngIf="isHeroReady && activeVideo as currentVideo; else heroLoading">
+    <video
+      #heroVideo
+      class="hero-video"
+      [class.is-ready]="isVideoReady"
+      [class.is-clickable]="activeVideoHasProject"
+      [src]="currentVideo.src"
+      [attr.aria-label]="currentVideo.label"
+      autoplay
+      muted
+      playsinline
+      preload="auto"
+      (loadeddata)="onVideoCanStart()"
+      (canplay)="onVideoCanStart()"
+      (playing)="onPlaying()"
+      (waiting)="onWaiting()"
+      (timeupdate)="onTimeUpdate()"
+      (ended)="onVideoEnded()"
+    ></video>
+
+    <div class="hero-video-shade" *ngIf="!isVideoReady" aria-hidden="true"></div>
+
+    <button
+      *ngIf="activeVideoHasProject"
+      type="button"
+      class="hero-link-layer"
+      [attr.aria-label]="'Abrir proyecto relacionado con ' + currentVideo.label"
+      (click)="goToActiveProject()"
+    ></button>
+
+    <div class="hero-pagination" *ngIf="videos.length > 1" aria-label="Selector de videos">
+      <button
+        type="button"
+        class="hero-dot"
+        *ngFor="let video of videos; let i = index"
+        [class.active]="i === activeVideoIndex"
+        [attr.aria-label]="'Reproducir video ' + (i + 1)"
+        [style.--progress]="progressValues[i]"
+        (click)="selectVideo(i)"
+      >
+        <span class="hero-dot-core"></span>
+      </button>
     </div>
-  </div>
+  </ng-container>
+
+  <ng-template #heroLoading>
+    <ng-container *ngIf="hasStaticFallback; else heroPending">
+      <div class="hero-static-fallback" aria-hidden="true">
+        <div class="hero-static-fallback__glow"></div>
+        <div class="hero-static-fallback__panel">
+          <span class="hero-static-fallback__eyebrow">Abstract Arquitectura</span>
+          <h2>Portafolio en actualizacion</h2>
+          <p>Estamos preparando nuevos videos destacados para mostrar los proyectos del estudio.</p>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #heroPending>
+      <div class="hero-loading" aria-hidden="true">
+        <div class="hero-loading__spinner"></div>
+      </div>
+    </ng-template>
+  </ng-template>
 </section>
