@@ -30,6 +30,9 @@ jobs:
           cache: npm
           cache-dependency-path: arquiNelson-web/package-lock.json
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Install dependencies
         working-directory: arquiNelson-web
         run: npm ci
@@ -38,16 +41,20 @@ jobs:
         working-directory: arquiNelson-web
         run: npm run build:pages
 
-      - name: Copy SPA fallback
-        run: cp arquiNelson-web/dist/arquiNelson-web/browser/index.html arquiNelson-web/dist/arquiNelson-web/browser/404.html
-
-      - name: Disable Jekyll
-        run: touch arquiNelson-web/dist/arquiNelson-web/browser/.nojekyll
+      - name: Prepare Pages artifact
+        run: |
+          test -f arquiNelson-web/dist/arquiNelson-web/browser/index.html
+          rm -rf site
+          mkdir site
+          cp -R arquiNelson-web/dist/arquiNelson-web/browser/. site/
+          cp site/index.html site/404.html
+          touch site/.nojekyll
+          find site -maxdepth 2 -type f | sort | head -50
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: arquiNelson-web/dist/arquiNelson-web/browser
+          path: site
 
   deploy:
     environment:
