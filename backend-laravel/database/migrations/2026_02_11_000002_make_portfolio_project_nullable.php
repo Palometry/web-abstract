@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
@@ -12,9 +11,9 @@ return new class extends Migration {
             $table->dropForeign(['project_id']);
         });
 
-        DB::statement('ALTER TABLE portfolio_entries MODIFY project_id BIGINT UNSIGNED NULL');
-
         Schema::table('portfolio_entries', function (Blueprint $table) {
+            $table->unsignedBigInteger('project_id')->nullable()->change();
+
             $table
                 ->foreign('project_id')
                 ->references('id')
@@ -29,9 +28,9 @@ return new class extends Migration {
             $table->dropForeign(['project_id']);
         });
 
-        DB::statement('ALTER TABLE portfolio_entries MODIFY project_id BIGINT UNSIGNED NOT NULL');
-
         Schema::table('portfolio_entries', function (Blueprint $table) {
+            $table->unsignedBigInteger('project_id')->nullable(false)->change();
+
             $table
                 ->foreign('project_id')
                 ->references('id')
