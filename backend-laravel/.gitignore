@@ -16,6 +16,10 @@
 /public/build
 /public/hot
 /public/uploads
+!/public/uploads/
+/public/uploads/**
+!/public/uploads/**/
+!/public/uploads/**/*.webp
 /public/storage
 /storage/*.key
 /storage/pail

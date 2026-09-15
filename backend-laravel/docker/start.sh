@@ -15,4 +15,8 @@ if [ "${RUN_SEEDERS:-false}" = "true" ]; then
     php artisan db:seed --force
 fi
 
+if [ -f database/upload-webp-map.json ]; then
+    php artisan uploads:apply-webp-map
+fi
+
 exec apache2-foreground

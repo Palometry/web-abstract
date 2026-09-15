@@ -7,6 +7,7 @@
     "build": "ng build",
     "build:pages": "ng build --configuration github-pages",
     "convert:images": "node scripts/convert-static-images.mjs",
+    "convert:uploads": "node scripts/convert-backend-uploads.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:arquiNelson-web": "node dist/arquiNelson-web/server/server.mjs"
