@@ -25,10 +25,10 @@ export class HeaderComponent implements OnInit {
   isDarkMode = false;
   private readonly isBrowser: boolean;
   socialLinks = [
-    { image: 'img/facebook.png', url: 'https://www.facebook.com/Abstract.Daza/', label: 'Facebook' },
-    { image: 'img/instagram.png', url: '#', label: 'Instagram' },
-    { image: 'img/linkedin.png', url: 'https://www.linkedin.com/in/ndd-10/', label: 'LinkedIn' },
-    { image: 'img/pngwing.com.png', url: '#', label: 'Tik Tok' }
+    { image: 'img/facebook.webp', url: 'https://www.facebook.com/Abstract.Daza/', label: 'Facebook' },
+    { image: 'img/instagram.webp', url: '#', label: 'Instagram' },
+    { image: 'img/linkedin.webp', url: 'https://www.linkedin.com/in/ndd-10/', label: 'LinkedIn' },
+    { image: 'img/pngwing.com.webp', url: '#', label: 'Tik Tok' }
   ];
 
   constructor(

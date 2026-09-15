@@ -88,7 +88,7 @@ export class HomeComponent implements OnInit {
     const projects = await this.getMergedProjects();
     return projects.map((project) => {
       const images = this.collectProjectImages(project);
-      const image = images[0] || '/LOGO.jpg';
+      const image = images[0] || '/img/LOGO.webp';
       return {
         id: project.id,
         src: image,

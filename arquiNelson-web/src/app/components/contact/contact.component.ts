@@ -17,7 +17,7 @@ export class ContactComponent {
   readonly phoneLabel = '+51 956 639 199';
   readonly phoneLink = 'tel:+51956639199';
   readonly whatsappLink = 'https://wa.me/51956639199';
-  readonly advisoryQrSrc = 'img/codigo-qr.jpeg';
+  readonly advisoryQrSrc = 'img/codigo-qr.webp';
   readonly advisoryPaymentName = 'Paolo Daza Tello';
   readonly advisoryInitialFee = 'S/ 25';
   readonly advisoryFinalFee = 'S/ 25';

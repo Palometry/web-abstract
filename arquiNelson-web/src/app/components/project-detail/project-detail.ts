@@ -47,7 +47,7 @@ type DearFlipWindow = Window & Record<string, unknown>;
   }
 })
 export class ProjectDetailComponent implements OnInit, OnDestroy {
-  readonly fallbackImage = '/LOGO.jpg';
+  readonly fallbackImage = '/img/LOGO.webp';
   project: PublicProject | ProjectData | undefined;
   bannerImages: string[] = [];
   currentBannerIndex = 0;

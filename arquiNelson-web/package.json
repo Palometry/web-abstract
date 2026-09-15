@@ -6,6 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "build:pages": "ng build --configuration github-pages",
+    "convert:images": "node scripts/convert-static-images.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:arquiNelson-web": "node dist/arquiNelson-web/server/server.mjs"
@@ -44,6 +45,7 @@
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
     "jsdom": "^27.1.0",
+    "sharp": "^0.35.4",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

@@ -192,7 +192,7 @@ export class ProjectListComponent {
   private buildCollageItems(projects: CollageProject[]): CollageTile[] {
     return projects.map((project) => {
       const images = this.collectProjectImages(project);
-      const image = images[0] || '/LOGO.jpg';
+      const image = images[0] || '/img/LOGO.webp';
       const taxonomy = this.resolveProjectTaxonomy(project);
       return {
         id: project.id,
