@@ -1,0 +1,162 @@
+<section class="lots-page">
+  <header class="lots-hero">
+    <div>
+      <span class="lots-eyebrow">Venta de lotes</span>
+      <h1>Lotes disponibles para vivir, invertir o desarrollar.</h1>
+      <p>
+        Explora lotes por proyecto, area y estado. La reserva se coordina por WhatsApp
+        para confirmar disponibilidad, condiciones y visita.
+      </p>
+    </div>
+
+    <aside class="lots-summary">
+      <span>Total publicado</span>
+      <strong>{{ lots.length }}</strong>
+      <small>{{ availableCount }} disponibles ahora</small>
+    </aside>
+  </header>
+
+  <section class="lots-filters" aria-label="Filtros de lotes">
+    <div class="filter-group">
+      <span class="filter-label">Estado</span>
+      <div class="filter-chips">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="!selectedStatus && !onlyAvailable"
+          (click)="setStatusFilter('')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          *ngFor="let status of statusOptions"
+          [class.active]="selectedStatus === status && !onlyAvailable"
+          (click)="setStatusFilter(status)"
+        >
+          {{ status }}
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-group" *ngIf="projectOptions.length > 1">
+      <span class="filter-label">Proyecto</span>
+      <div class="filter-chips">
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="!selectedProject"
+          (click)="setProjectFilter('')"
+        >
+          Todos los proyectos
+        </button>
+        <button
+          type="button"
+          class="filter-chip"
+          *ngFor="let project of projectOptions"
+          [class.active]="selectedProject === project"
+          (click)="setProjectFilter(project)"
+        >
+          {{ project }}
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-tools">
+      <label class="field field-search">
+        <span>Buscar</span>
+        <input
+          type="search"
+          [(ngModel)]="searchTerm"
+          placeholder="Proyecto, lote o ubicacion"
+        />
+      </label>
+
+      <div class="field field-area">
+        <span>Area</span>
+        <div class="range-grid">
+          <input type="number" [(ngModel)]="minArea" placeholder="Min m2" />
+          <input type="number" [(ngModel)]="maxArea" placeholder="Max m2" />
+        </div>
+      </div>
+
+      <label class="switch-row">
+        <input type="checkbox" [(ngModel)]="onlyAvailable" />
+        <span>Solo disponibles</span>
+      </label>
+
+      <button type="button" class="clear-filters" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </section>
+
+  <section class="lots-layout">
+    <div class="lots-content">
+      <div class="lots-statusbar">
+        <strong>{{ filteredLots.length }}</strong>
+        <span>{{ filteredLots.length === 1 ? 'lote encontrado' : 'lotes encontrados' }}</span>
+      </div>
+
+      <p class="lots-message" *ngIf="isLoading">Cargando lotes...</p>
+      <p class="lots-message" *ngIf="!isLoading && error">{{ error }}</p>
+
+      <div class="lots-grid" *ngIf="!isLoading && !error && filteredLots.length">
+        <article class="lot-card" *ngFor="let lot of filteredLots; trackBy: trackLot">
+          <a
+            class="lot-media"
+            [routerLink]="['/project', lot.projectRouteId]"
+            [attr.aria-label]="'Ver proyecto ' + lot.projectTitle"
+          >
+            <img [src]="lot.image" [alt]="lot.projectTitle + ' - ' + lot.id" loading="lazy" />
+            <span class="badge" [class]="statusClass(lot.status)">{{ lot.status }}</span>
+          </a>
+
+          <div class="lot-body">
+            <div class="price-row">
+              <strong>{{ formatPrice(lot.price) }}</strong>
+              <small *ngIf="lot.oldPrice">{{ formatPrice(lot.oldPrice) }}</small>
+            </div>
+
+            <h2>{{ lot.id }} en {{ lot.projectTitle }}</h2>
+            <p>{{ lot.notes }}</p>
+
+            <dl class="lot-data">
+              <div>
+                <dt>Area</dt>
+                <dd>{{ lot.area }}</dd>
+              </div>
+              <div>
+                <dt>Ubicacion</dt>
+                <dd>{{ lot.location }}</dd>
+              </div>
+              <div *ngIf="lot.block">
+                <dt>Manzana</dt>
+                <dd>{{ lot.block }}</dd>
+              </div>
+              <div *ngIf="lot.frontage || lot.depth">
+                <dt>Medidas</dt>
+                <dd>{{ lot.frontage || '-' }} x {{ lot.depth || '-' }}</dd>
+              </div>
+            </dl>
+
+            <div class="amenities" *ngIf="lot.amenities.length">
+              <span *ngFor="let amenity of lot.amenities | slice: 0:3">{{ amenity }}</span>
+            </div>
+
+            <div class="lot-actions">
+              <a [href]="buildWhatsAppHref(lot)" target="_blank" rel="noopener noreferrer">
+                Consultar lote
+              </a>
+              <a [routerLink]="['/project', lot.projectRouteId]">Ver proyecto</a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <section class="lots-empty" *ngIf="!isLoading && !error && !filteredLots.length">
+        <h2>No hay lotes con esos filtros.</h2>
+        <p>Prueba limpiando filtros o revisa nuevamente cuando se actualice el inventario.</p>
+      </section>
+    </div>
+  </section>
+</section>

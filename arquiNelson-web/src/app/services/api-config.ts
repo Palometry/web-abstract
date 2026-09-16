@@ -1,7 +1,10 @@
-const DEFAULT_API_BASE_URL =
-  'https://essays-functioning-solely-excess.trycloudflare.com/api';
+const DEFAULT_API_BASE_URL = 'http://localhost:8000/api';
 
 function readApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('.brs.devtunnels.ms')) {
+    return `${window.location.origin.replace('-4200.', '-8000.')}/api`;
+  }
+
   if (typeof document !== 'undefined') {
     const fromMeta = document
       .querySelector<HTMLMetaElement>('meta[name="arqui-api-base"]')

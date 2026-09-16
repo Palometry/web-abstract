@@ -114,6 +114,7 @@ export class HeaderComponent implements OnInit {
 
   menuItems: MenuItem[] = [
     { name: 'PROYECTOS', link: '/projects', dropdown: true },
+    { name: 'LOTES', link: '/lotes' },
     { name: 'SERVICIOS', link: '/services' },
     { name: 'TIENDA', link: '/tienda' },
     { name: 'SOBRE NOSOTROS', link: '/blog' },

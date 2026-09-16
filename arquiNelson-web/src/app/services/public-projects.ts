@@ -45,7 +45,17 @@ export type PublicProject = {
   description: string;
   bannerImages?: string[];
   gallery: string[];
-  lots?: { id: string; area: string; status: 'Disponible' | 'Reservado' | 'Vendido' }[];
+  lots?: {
+    id: string;
+    area: string;
+    status: 'Disponible' | 'Reservado' | 'Vendido' | string;
+    price?: number | string | null;
+    oldPrice?: number | string | null;
+    block?: string | null;
+    frontage?: string | null;
+    depth?: string | null;
+    notes?: string | null;
+  }[];
   videos?: {
     id: number;
     fileUrl: string;

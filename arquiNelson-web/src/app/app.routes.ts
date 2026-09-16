@@ -22,6 +22,7 @@ import { BlogDetailComponent } from './components/blog-detail/blog-detail.compon
 import { ServicesComponent } from './components/services/services.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { StoreComponent } from './components/store/store.component';
+import { LotsComponent } from './components/lots/lots.component';
 
 export const routes: Routes = [
   { path: 'admin/login', component: AdminLoginComponent },
@@ -48,6 +49,7 @@ export const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
   { path: 'about', redirectTo: 'blog', pathMatch: 'full' },
   { path: 'services', component: ServicesComponent, data: { standalonePage: true } },
+  { path: 'lotes', component: LotsComponent },
   { path: 'tienda', component: StoreComponent },
   { path: 'contact', component: ContactComponent, data: { standalonePage: true } },
   { path: 'projects', component: ProjectListComponent },

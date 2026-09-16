@@ -8,8 +8,8 @@ import express from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
-const defaultApiOrigin = 'https://essays-functioning-solely-excess.trycloudflare.com';
-const defaultFrontendOrigin = 'https://lie-bases-pan-salad.trycloudflare.com';
+const defaultApiOrigin = 'https://20t85ctb-8000.brs.devtunnels.ms';
+const defaultFrontendOrigin = 'https://20t85ctb-4200.brs.devtunnels.ms';
 
 function parseEnvList(value: string | undefined): string[] {
   return (value ?? '')
@@ -50,7 +50,10 @@ function buildCspHeader(): string {
       'http://localhost:4200',
       'ws://localhost:4200',
       'http://localhost:8000',
+      'https://localhost:8000',
       'http://127.0.0.1:8000',
+      'https://127.0.0.1:8000',
+      'https://*.brs.devtunnels.ms',
       apiOrigin,
       ...extraConnect,
     ].join(' '),
@@ -61,7 +64,10 @@ function buildCspHeader(): string {
       'blob:',
       frontendOrigin,
       'http://localhost:8000',
+      'https://localhost:8000',
       'http://127.0.0.1:8000',
+      'https://127.0.0.1:8000',
+      'https://*.brs.devtunnels.ms',
       apiOrigin,
       'https://images.unsplash.com',
       ...extraImages,
@@ -73,9 +79,12 @@ function buildCspHeader(): string {
       'blob:',
       frontendOrigin,
       'http://localhost:8000',
+      'https://localhost:8000',
       'http://127.0.0.1:8000',
+      'https://127.0.0.1:8000',
       'http://localhost:4001',
       'http://127.0.0.1:4001',
+      'https://*.brs.devtunnels.ms',
       apiOrigin,
       ...extraMedia,
     ].join(' '),
