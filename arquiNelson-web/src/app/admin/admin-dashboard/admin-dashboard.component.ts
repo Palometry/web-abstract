@@ -19,7 +19,7 @@ import { AdminDataService, AdminDashboardActivity } from '../../services/admin-d
 })
 export class AdminDashboardComponent implements OnInit, AfterViewInit {
   stats = [
-    { label: 'Proyectos activos', value: 0 },
+    { label: 'Publicaciones activas', value: 0 },
     { label: 'Solicitudes nuevas', value: 0 },
     { label: 'Cotizaciones enviadas', value: 0 }
   ];
@@ -36,9 +36,19 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
       link: '/admin/quotes/new'
     },
     {
-      title: 'Publicar proyecto',
-      description: 'Crea y actualiza proyectos publicados.',
+      title: 'Actualizar portafolio',
+      description: 'Crea y actualiza trabajos del portafolio.',
       link: '/admin/projects'
+    },
+    {
+      title: 'Nuevo proyecto',
+      description: 'Publica un proyecto inmobiliario y sus lotes.',
+      link: '/admin/lots'
+    },
+    {
+      title: 'Gestionar tienda',
+      description: 'Agrega o actualiza productos digitales.',
+      link: '/admin/store'
     }
   ];
 
@@ -71,7 +81,7 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     try {
       const dashboard = await this.data.getDashboard();
       this.stats = [
-        { label: 'Proyectos activos', value: dashboard.stats.activeProjects },
+        { label: 'Publicaciones activas', value: dashboard.stats.activeProjects },
         { label: 'Solicitudes nuevas', value: dashboard.stats.newQuotes },
         { label: 'Cotizaciones enviadas', value: dashboard.stats.sentQuotes }
       ];

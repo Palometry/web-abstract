@@ -1,0 +1,19 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.panorama-canvas {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 320px;
+  max-height: 640px;
+  background: #0d0d0d;
+}
+
+@media (max-width: 640px) {
+  .panorama-canvas {
+    aspect-ratio: 4 / 3;
+    min-height: 280px;
+  }
+}

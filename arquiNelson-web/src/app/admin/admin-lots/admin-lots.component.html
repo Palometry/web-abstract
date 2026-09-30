@@ -1,0 +1,19 @@
+<section class="lots-admin">
+  <header>
+    <div><h2>Proyectos</h2><p>Crea proyectos inmobiliarios y administra su inventario de lotes.</p></div>
+    <a class="primary" routerLink="/admin/projects/new" [queryParams]="{ kind: 'lotizacion', from: 'projects' }">Nuevo proyecto</a>
+  </header>
+  <p class="error" *ngIf="error">{{ error }}</p>
+  <p class="empty" *ngIf="loading">Cargando proyectos...</p>
+  <div class="table" *ngIf="!loading">
+    <div class="table-row table-header"><span>Proyecto</span><span>Tipo</span><span>Lotes</span><span>Estado</span><span>Accion</span></div>
+    <div class="table-row" *ngFor="let project of projects">
+      <div><strong>{{ project.name }}</strong><small>{{ project.address }}</small></div>
+      <span>{{ project.details?.publicClassification || project.details?.publicType || 'Habilitacion' }}</span>
+      <strong>{{ lotCount(project) }}</strong>
+      <span class="status">{{ project.status }}</span>
+      <a class="edit" [routerLink]="['/admin/projects', project.id]" [queryParams]="{ from: 'projects' }">Editar proyecto</a>
+    </div>
+    <div class="empty" *ngIf="!projects.length"><strong>No hay proyectos creados.</strong><span>Crea el primero para publicar sus lotes.</span></div>
+  </div>
+</section>

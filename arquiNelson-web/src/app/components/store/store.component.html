@@ -60,6 +60,7 @@
           [style.--card-glow]="item.glow"
         >
           <div class="store-card__preview" aria-hidden="true">
+            <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.title" loading="lazy" />
             <span class="store-card__code">{{ item.code }}</span>
             <span class="store-card__category">{{ item.category }}</span>
           </div>
@@ -83,6 +84,7 @@
           [style.--card-surface]="product.surface"
           [style.--card-glow]="product.glow"
         >
+          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.title" />
           <span>{{ product.code }}</span>
           <strong>{{ product.category }}</strong>
         </div>

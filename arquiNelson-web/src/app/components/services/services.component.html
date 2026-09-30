@@ -9,10 +9,12 @@
     <div class="services-grid">
       <ng-container *ngFor="let service of displayServices">
         <a
-          *ngIf="service.url && isInternal(service.url)"
+          *ngIf="isQuoteService(service)"
           class="service-link"
-          [routerLink]="service.url"
+          [routerLink]="getInternalPath(service.url)"
+          [fragment]="getInternalFragment(service.url)"
           [attr.target]="getTarget(service)"
+          (click)="openQuoteIfNeeded(service.url)"
         >
           <article class="service-card">
             <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
@@ -22,11 +24,11 @@
         </a>
 
         <a
-          *ngIf="service.url && isExternal(service.url)"
+          *ngIf="!isQuoteService(service)"
           class="service-link"
-          [href]="service.url"
-          [attr.target]="getTarget(service)"
-          rel="noreferrer"
+          [href]="buildServiceWhatsAppHref(service)"
+          target="_blank"
+          rel="noopener noreferrer"
         >
           <article class="service-card">
             <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
@@ -35,20 +37,15 @@
           </article>
         </a>
 
-        <article class="service-card" *ngIf="!service.url">
-          <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
-        </article>
       </ng-container>
     </div>
 
-    <section class="public-quote-create" *ngIf="standalonePage">
+    <section id="cotizacion" class="public-quote-create" *ngIf="standalonePage">
       <header class="quote-header">
         <div>
-          <span class="quote-eyebrow">Cotizacion web</span>
-          <h3>Arma tu cotizacion</h3>
-          <p>Completa los datos del cliente y del proyecto. Se enviara al admin como borrador.</p>
+          <span class="quote-eyebrow">Edificaciones</span>
+          <h3>Cotiza tu proyecto</h3>
+          <p>{{ featuredProjectService?.description || 'Define el tipo de proyecto y completa los datos para preparar una cotizacion.' }}</p>
         </div>
         <button
           type="button"
@@ -75,7 +72,7 @@
               </select>
             </label>
             <label>
-              NÂ° documento
+              N° documento
               <input
                 name="documentNumber"
                 [(ngModel)]="quoteDraft.documentNumber"
@@ -105,45 +102,6 @@
         <section class="panel">
           <h4>Datos del proyecto</h4>
           <div class="form-grid">
-            <label class="wide">
-              <span class="field-label-with-help">
-                <span>Plan</span>
-                <span class="plan-help" tabindex="0" aria-label="Ver beneficios del plan seleccionado">
-                  ?
-                  <span class="plan-tooltip" role="tooltip">
-                    <ng-container *ngIf="selectedPlanBenefits as selectedBenefits; else noPlanSelected">
-                      <strong>Beneficios del plan</strong>
-                      <span class="plan-tooltip__title">
-                        {{ selectedBenefits.title }}
-                        <small>{{ selectedBenefits.timeline }}</small>
-                      </span>
-                      <span class="plan-tooltip__benefit" *ngFor="let benefit of selectedBenefits.benefits">
-                        {{ benefit.included ? 'Si' : 'No' }} · {{ benefit.label }}
-                      </span>
-                    </ng-container>
-                    <ng-template #noPlanSelected>
-                      <strong>Selecciona un plan</strong>
-                      <span class="plan-tooltip__benefit">
-                        Elige un plan para ver aqui sus beneficios, plazo y alcance.
-                      </span>
-                    </ng-template>
-                  </span>
-                </span>
-              </span>
-              <select
-                name="pricingRateId"
-                [(ngModel)]="quoteDraft.pricingRateId"
-                (change)="onRateChange()"
-                [disabled]="loadingQuoteOptions || !rates.length"
-              >
-                <option *ngIf="loadingQuoteOptions" [ngValue]="null">Cargando planes...</option>
-                <option *ngIf="!loadingQuoteOptions && rates.length" [ngValue]="null">Selecciona un plan</option>
-                <option *ngIf="!loadingQuoteOptions && !rates.length" [ngValue]="null">Sin planes activos</option>
-                <option *ngFor="let rate of rates" [ngValue]="rate.id">
-                  {{ rate.name }} ({{ rate.basePricePerM2 }} {{ rate.currency }})
-                </option>
-              </select>
-            </label>
             <label>
               Nombre del proyecto
               <input
@@ -151,6 +109,29 @@
                 [(ngModel)]="quoteDraft.projectName"
                 placeholder="Nombre provisional"
               />
+            </label>
+            <label>
+              Tipo de proyecto
+              <select
+                name="projectType"
+                [(ngModel)]="quoteDraft.projectType"
+                (ngModelChange)="onProjectTypeChange()"
+                required
+              >
+                <option value="">Selecciona un tipo</option>
+                <option *ngFor="let option of projectTypeOptions" [value]="option">{{ formatProjectTypeLabel(option) }}</option>
+              </select>
+            </label>
+            <label>
+              Clasificacion
+              <select
+                name="projectClassification"
+                [(ngModel)]="quoteDraft.projectClassification"
+                [disabled]="!quoteDraft.projectType || !projectClassificationOptions.length"
+              >
+                <option value="">Selecciona una clasificacion</option>
+                <option *ngFor="let option of projectClassificationOptions" [value]="option">{{ formatProjectLabel(option) }}</option>
+              </select>
             </label>
             <label class="wide">
               Direccion
@@ -188,7 +169,7 @@
               <input name="areaUncoveredM2" type="number" [value]="getAreaUncoveredM2()" readonly />
             </label>
             <label>
-              NÂ° pisos
+              N° pisos
               <input
                 name="floorCount"
                 type="number"
@@ -206,6 +187,23 @@
 
         <section class="panel">
           <h4>Resumen</h4>
+          <label class="summary-plan">
+            Plan
+            <select
+              name="pricingRateId"
+              [(ngModel)]="quoteDraft.pricingRateId"
+              (change)="onRateChange()"
+              [disabled]="loadingQuoteOptions || !rates.length"
+              required
+            >
+              <option *ngIf="loadingQuoteOptions" [ngValue]="null">Cargando planes...</option>
+              <option *ngIf="!loadingQuoteOptions && rates.length" [ngValue]="null">Selecciona un plan</option>
+              <option *ngIf="!loadingQuoteOptions && !rates.length" [ngValue]="null">Sin planes activos</option>
+              <option *ngFor="let rate of rates" [ngValue]="rate.id">
+                {{ rate.name }} ({{ formatCurrency(rate.basePricePerM2, rate.currency) }}/m2)
+              </option>
+            </select>
+          </label>
           <div class="summary-meta">
             <div>
               <span>Fecha de creacion</span>
@@ -214,10 +212,6 @@
             <div>
               <span>Vigente hasta</span>
               <strong>{{ quoteDraft.expiresAt || defaultExpiresAt }}</strong>
-            </div>
-            <div>
-              <span>Plan</span>
-              <strong>{{ quoteDraft.planName || 'Sin seleccionar' }}</strong>
             </div>
             <div>
               <span>Costo x m2</span>
@@ -344,6 +338,76 @@
           </button>
         </div>
       </form>
+    </section>
+  </div>
+</section>
+
+<section class="consultation" *ngIf="standalonePage" aria-labelledby="consultation-title">
+  <div class="consultation-shell">
+    <header class="consultation-hero">
+      <span>Contacto</span>
+      <h2 id="consultation-title">Conversemos sobre tu proyecto</h2>
+      <p>
+        Si necesitas una visita personal a tu obra, coordinaremos una inspeccion presencial
+        para revisar el avance, identificar observaciones y orientarte sobre los siguientes
+        pasos. La visita tiene un costo unico de S/ 50.
+      </p>
+    </header>
+
+    <div class="consultation-fee">
+      <span>Visita de obras</span>
+      <strong>S/ 50</strong>
+      <p>Realiza un unico pago de S/ 50 por Yape para solicitar y coordinar la visita.</p>
+    </div>
+
+    <section class="advisory-flow" aria-label="Agendar visita a obra">
+      <header>
+        <span>Agendar visita</span>
+        <h3>Agenda una visita a tu obra</h3>
+        <p>
+          El flujo se coordina por WhatsApp. Realiza el pago unico por Yape, envia el
+          comprobante y la ubicacion de la obra para acordar la fecha y hora de la visita.
+        </p>
+      </header>
+
+      <div class="advisory-steps">
+        <article>
+          <span>Paso 1</span>
+          <strong>Paga S/ 50 por Yape</strong>
+          <p>El pago unico permite solicitar y reservar la visita tecnica a tu obra.</p>
+        </article>
+        <article>
+          <span>Paso 2</span>
+          <strong>Envia tu comprobante y ubicacion</strong>
+          <p>Escribenos por WhatsApp con el comprobante y la direccion de la obra.</p>
+        </article>
+        <article>
+          <span>Paso 3</span>
+          <strong>Coordina la fecha y hora</strong>
+          <p>Confirmaremos contigo la disponibilidad y los detalles de la visita.</p>
+        </article>
+      </div>
+
+      <div class="advisory-payment">
+        <figure>
+          <img [src]="advisoryQrSrc" [alt]="'QR de Yape de ' + advisoryPaymentName" loading="lazy" />
+          <figcaption>
+            <span>Pago unico</span>
+            <strong>{{ visitFee }} por Yape</strong>
+            <p>Titular: {{ advisoryPaymentName }}</p>
+          </figcaption>
+        </figure>
+
+        <div class="advisory-actions">
+          <a [href]="advisoryWhatsappLink" target="_blank" rel="noopener noreferrer">
+            Ya pague {{ visitFee }} y quiero agendar una visita
+          </a>
+          <p>
+            Envia tu comprobante, la ubicacion y una breve descripcion del estado de la obra
+            para coordinar la visita.
+          </p>
+        </div>
+      </div>
     </section>
   </div>
 </section>

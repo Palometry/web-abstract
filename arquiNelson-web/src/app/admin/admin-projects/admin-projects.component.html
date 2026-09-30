@@ -1,10 +1,10 @@
 <section class="projects-admin">
   <header>
     <div>
-      <h2>Proyectos</h2>
-      <p>Gestiona proyectos activos, borradores o suspendidos.</p>
+      <h2>Portafolio</h2>
+      <p>Gestiona las obras y trabajos que se muestran en el portafolio publico.</p>
     </div>
-    <a class="primary" routerLink="/admin/projects/new">Crear proyecto</a>
+    <a class="primary" routerLink="/admin/projects/new">Nueva entrada</a>
   </header>
 
   <p class="error" *ngIf="error">{{ error }}</p>
@@ -25,7 +25,7 @@
       <span></span>
     </div>
     <div class="table-row" *ngFor="let project of projects">
-      <span>{{ project.name }}</span>
+      <span class="project-name">{{ project.name }}</span>
       <span>{{ project.clientName }}</span>
       <span>{{ project.address }}</span>
       <span class="status" [class.suspended]="project.status === 'suspended'">
@@ -35,6 +35,11 @@
         <a [routerLink]="['/admin/projects', project.id]">Editar</a>
         <button type="button" class="danger" (click)="deleteProject(project)">Eliminar</button>
       </div>
+    </div>
+    <div class="empty-state" *ngIf="!loading && !projects.length">
+      <strong>El portafolio esta vacio</strong>
+      <span>Crea una entrada para comenzar a mostrar trabajos en el sitio publico.</span>
+      <a routerLink="/admin/projects/new">Crear primera entrada</a>
     </div>
   </div>
 </section>

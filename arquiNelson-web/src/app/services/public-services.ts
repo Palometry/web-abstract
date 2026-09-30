@@ -10,6 +10,7 @@ export type PublicService = {
   title: string;
   description: string;
   icon?: string | null;
+  url?: string | null;
   displayOrder?: number;
 };
 

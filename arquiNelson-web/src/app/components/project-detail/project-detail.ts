@@ -18,6 +18,7 @@ import {
   formatProjectLabel,
   formatProjectTypeLabel
 } from '../../admin/project-classifications';
+import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.component';
 
 type HousePlan = {
   name: string;
@@ -39,7 +40,7 @@ type DearFlipWindow = Window & Record<string, unknown>;
 
 @Component({
   selector: 'app-project-detail',
-  imports: [CommonModule],
+  imports: [CommonModule, PanoramaViewerComponent],
   templateUrl: './project-detail.html',
   styleUrl: './project-detail.scss',
   host: {

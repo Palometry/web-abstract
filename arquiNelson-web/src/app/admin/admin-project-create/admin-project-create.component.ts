@@ -113,6 +113,7 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
     startYear: '',
     deliveryYear: '',
     autocadUrl: '',
+    panoramaUrl: '',
     heroVideoUrl: '',
     brochurePdfUrl: '',
     mapUrl: '',
@@ -144,6 +145,7 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
 
   private readonly destroyRef = inject(DestroyRef);
   private catalog: ProjectCatalog = DEFAULT_PROJECT_CATALOG;
+  private newProjectKind = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -155,6 +157,7 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.loadCatalog();
+    this.newProjectKind = this.route.snapshot.queryParamMap.get('kind') ?? '';
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => void this.handleRouteChange(params.get('id')));
@@ -175,6 +178,18 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
 
   get isEditMode(): boolean {
     return this.projectId !== null;
+  }
+
+  get openedFromPublicProjects(): boolean {
+    return this.newProjectKind === 'lotizacion' || this.route.snapshot.queryParamMap.get('from') === 'projects';
+  }
+
+  get backLink(): string {
+    return this.openedFromPublicProjects ? '/admin/lots' : '/admin/projects';
+  }
+
+  get backLabel(): string {
+    return this.openedFromPublicProjects ? 'proyectos' : 'portafolio';
   }
 
   get coverImage(): ProjectImageView | null {
@@ -556,6 +571,11 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
       endDate: ''
     };
     this.applyDetailsToDraft(null);
+    if (projectId === null && this.newProjectKind === 'lotizacion') {
+      this.detailsDraft.publicScope = 'Habilitaciones';
+      this.detailsDraft.publicType = 'HABILITACIONES RESIDENCIALES';
+      this.detailsDraft.publicClassification = 'Habilitaciones para uso de vivienda o Urbanizaciones';
+    }
   }
 
   private syncCoverDraft() {
@@ -1146,7 +1166,13 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
       .map((parts) => ({
         id: parts[0] ?? '',
         area: parts[1] ?? '',
-        status: allowed.has(parts[2]) ? (parts[2] as 'Disponible' | 'Reservado' | 'Vendido') : 'Disponible'
+        status: allowed.has(parts[2]) ? (parts[2] as 'Disponible' | 'Reservado' | 'Vendido') : 'Disponible',
+        price: this.nullIfEmpty(parts[3] ?? ''),
+        oldPrice: this.nullIfEmpty(parts[4] ?? ''),
+        block: this.nullIfEmpty(parts[5] ?? ''),
+        frontage: this.nullIfEmpty(parts[6] ?? ''),
+        depth: this.nullIfEmpty(parts[7] ?? ''),
+        notes: this.nullIfEmpty(parts.slice(8).join(' | '))
       }));
   }
 
@@ -1209,6 +1235,7 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
       startYear,
       deliveryYear,
       autocadUrl: this.nullIfEmpty(this.detailsDraft.autocadUrl),
+      panoramaUrl: this.nullIfEmpty(this.detailsDraft.panoramaUrl),
       heroVideoUrl: this.nullIfEmpty(this.detailsDraft.heroVideoUrl),
       brochurePdfUrl: this.nullIfEmpty(this.detailsDraft.brochurePdfUrl),
       mapUrl: this.nullIfEmpty(mapUrl),
@@ -1598,6 +1625,7 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
       startYear: details?.startYear !== undefined && details?.startYear !== null ? String(details.startYear) : '',
       deliveryYear: details?.deliveryYear !== undefined && details?.deliveryYear !== null ? String(details.deliveryYear) : '',
       autocadUrl: this.normalizeSecureUrl(details?.autocadUrl ?? ''),
+      panoramaUrl: this.normalizeSecureUrl(details?.panoramaUrl ?? ''),
       heroVideoUrl: this.normalizeSecureUrl(details?.heroVideoUrl ?? ''),
       brochurePdfUrl: this.normalizeSecureUrl(details?.brochurePdfUrl ?? ''),
       mapUrl: details?.mapUrl ?? '',
@@ -1612,7 +1640,17 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
             .join('\n')
         : '',
       lotsText: details?.lots?.length
-        ? details.lots.map((l) => `${l.id} | ${l.area} | ${l.status}`).join('\n')
+        ? details.lots.map((l) => [
+            l.id,
+            l.area,
+            l.status,
+            l.price ?? '',
+            l.oldPrice ?? '',
+            l.block ?? '',
+            l.frontage ?? '',
+            l.depth ?? '',
+            l.notes ?? ''
+          ].join(' | ')).join('\n')
         : ''
     };
     this.houseModels = this.normalizeHouseModels(details?.houseModels);

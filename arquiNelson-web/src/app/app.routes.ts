@@ -23,6 +23,8 @@ import { ServicesComponent } from './components/services/services.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { StoreComponent } from './components/store/store.component';
 import { LotsComponent } from './components/lots/lots.component';
+import { AdminLotsComponent } from './admin/admin-lots/admin-lots.component';
+import { AdminStoreComponent } from './admin/admin-store/admin-store.component';
 
 export const routes: Routes = [
   { path: 'admin/login', component: AdminLoginComponent },
@@ -36,6 +38,8 @@ export const routes: Routes = [
       { path: 'projects', component: AdminProjectsComponent },
       { path: 'projects/new', component: AdminProjectCreateComponent, canDeactivate: [pendingProjectChangesGuard] },
       { path: 'projects/:id', component: AdminProjectCreateComponent, canDeactivate: [pendingProjectChangesGuard] },
+      { path: 'lots', component: AdminLotsComponent },
+      { path: 'store', component: AdminStoreComponent },
       { path: 'blog', component: AdminBlogComponent },
       { path: 'blog/new', component: AdminBlogDetailComponent },
       { path: 'blog/:id', component: AdminBlogDetailComponent },

@@ -1,26 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-
-type StoreProduct = {
-  id: number;
-  code: string;
-  title: string;
-  category: string;
-  software: string;
-  priceFrom: number;
-  delivery: string;
-  format: string;
-  support: string;
-  idealFor: string;
-  description: string;
-  longDescription: string;
-  includes: string[];
-  extraDetails: { label: string; value: string }[];
-  accent: string;
-  surface: string;
-  glow: string;
-};
+import { PublicStoreService, StoreProduct } from '../../services/public-store';
 
 @Component({
   selector: 'app-store',
@@ -37,7 +18,7 @@ export class StoreComponent {
   });
 
   readonly whatsappNumber = '51956639199';
-  readonly products: StoreProduct[] = [
+  products: StoreProduct[] = [
     {
       id: 1,
       code: 'RVT-PLT-01',
@@ -220,10 +201,20 @@ export class StoreComponent {
     }
   ];
 
-  readonly categories = ['Todos', ...new Set(this.products.map((product) => product.category))];
   selectedCategory = 'Todos';
   selectedProductId = this.products[0]?.id ?? 0;
   isDetailsExpanded = false;
+
+  constructor(
+    private readonly storeService: PublicStoreService,
+    private readonly cdr: ChangeDetectorRef
+  ) {
+    void this.loadManagedProducts();
+  }
+
+  get categories(): string[] {
+    return ['Todos', ...new Set(this.products.map((product) => product.category))];
+  }
 
   get visibleProducts(): StoreProduct[] {
     if (this.selectedCategory === 'Todos') {
@@ -284,5 +275,31 @@ export class StoreComponent {
 
   trackByProduct(index: number, product: StoreProduct): number {
     return product.id;
+  }
+
+  private async loadManagedProducts(): Promise<void> {
+    const managedProducts = await this.storeService.getProducts();
+    if (!managedProducts.length) {
+      return;
+    }
+
+    const merged = [...this.products];
+    managedProducts.forEach((product) => {
+      const existingIndex = merged.findIndex((item) => item.code === product.code);
+      const visualProduct: StoreProduct = {
+        ...product,
+        id: existingIndex >= 0 ? merged[existingIndex].id : 1000000 + product.id,
+        surface: `linear-gradient(135deg, ${product.accent}2e, rgba(16, 16, 16, 0.06))`,
+        glow: `radial-gradient(circle at 75% 20%, ${product.accent}57, transparent 45%)`
+      };
+      if (existingIndex >= 0) {
+        merged[existingIndex] = visualProduct;
+      } else {
+        merged.push(visualProduct);
+      }
+    });
+
+    this.products = merged;
+    this.cdr.detectChanges();
   }
 }

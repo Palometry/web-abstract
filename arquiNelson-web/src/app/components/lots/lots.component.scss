@@ -1,13 +1,13 @@
 .lots-page {
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(10, 10, 10, 0.96), rgba(10, 10, 10, 0.86) 250px, var(--color-bg) 250px),
-    var(--color-bg);
+  background: var(--color-bg);
   color: var(--color-text);
   padding-bottom: 72px;
 }
 
 .lots-hero {
+  position: relative;
+  isolation: isolate;
   max-width: 1320px;
   margin: 0 auto;
   padding: clamp(48px, 7vw, 92px) clamp(18px, 4vw, 42px) clamp(34px, 5vw, 58px);
@@ -16,6 +16,16 @@
   gap: 26px;
   align-items: end;
   color: #ffffff;
+
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0 auto 0 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(10, 10, 10, 0.96), rgba(10, 10, 10, 0.86));
+  }
 
   h1 {
     margin: 12px 0 14px;

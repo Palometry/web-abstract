@@ -186,6 +186,22 @@ class ProjectsController extends Controller
         return $resolved;
     }
 
+    private function resolvePublicPanoramaUrl(int $projectId, ?string $url): ?string
+    {
+        $resolved = $this->resolveFileUrl($url);
+        if (!$resolved) {
+            return null;
+        }
+
+        $parts = parse_url($resolved);
+        $path = $parts['path'] ?? '';
+        if ($path !== '' && str_starts_with($path, '/uploads/')) {
+            return $this->requestOrigin() . '/api/projects/public/' . $projectId . '/panorama';
+        }
+
+        return $resolved;
+    }
+
     private function resolveLocalUploadPath(?string $url): ?string
     {
         $resolved = $this->resolveFileUrl($url);
@@ -429,6 +445,7 @@ class ProjectsController extends Controller
         $bannerImages = $this->resolveUrlList($details['bannerImages'] ?? []);
         $gallery = $this->resolveUrlList($details['gallery'] ?? []);
         $masterplanImage = $this->resolveFileUrl($details['masterplanImage'] ?? null);
+        $panoramaUrl = $this->resolvePublicPanoramaUrl($project->id, $details['panoramaUrl'] ?? null);
         $heroVideoUrl = $this->resolvePublicHeroVideoUrl($project->id, $details['heroVideoUrl'] ?? null);
         $coverUrl = $this->resolveFileUrl($project->cover_url ?? null);
         $fallbackImage = $coverUrl
@@ -449,6 +466,7 @@ class ProjectsController extends Controller
             'houseModels' => $details['houseModels'] ?? [],
             'housePlans' => $details['housePlans'] ?? [],
             'autocad360Url' => $details['autocadUrl'] ?? null,
+            'panoramaUrl' => $panoramaUrl,
             'mapUrl' => $details['mapUrl'] ?? null,
             'mapEmbedUrl' => $details['mapEmbedUrl'] ?? null,
             'enjoyAreas' => $details['enjoyAreas'] ?? [],
@@ -543,6 +561,35 @@ class ProjectsController extends Controller
         $filename = basename($fullPath);
 
         return $this->streamLocalFile($fullPath, $mime, $filename);
+    }
+
+    public function publicPanorama(string $id)
+    {
+        $projectId = (int) $id;
+        if ($projectId <= 0) {
+            return response()->json(['error' => 'Invalid project id.'], 400);
+        }
+
+        $project = DB::table('projects')
+            ->select('details_json')
+            ->where('id', $projectId)
+            ->first();
+        if (!$project) {
+            return response()->json(['error' => 'Project not found.'], 404);
+        }
+
+        $details = json_decode($project->details_json ?: '{}', true);
+        $details = is_array($details) ? $details : [];
+        $fullPath = $this->resolveLocalUploadPath($details['panoramaUrl'] ?? null);
+        if (!$fullPath) {
+            return response()->json(['error' => 'Panorama not found.'], 404);
+        }
+
+        return response()->file($fullPath, [
+            'Content-Type' => mime_content_type($fullPath) ?: 'image/webp',
+            'Content-Disposition' => 'inline; filename="panorama-360.webp"',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
     }
 
     public function catalog()

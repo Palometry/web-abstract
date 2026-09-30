@@ -4,6 +4,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PublicService, PublicServicesService } from '../../services/public-services';
 import {
+  DEFAULT_PROJECT_CATALOG,
+  formatProjectLabel,
+  formatProjectTypeLabel
+} from '../../admin/project-classifications';
+import {
   PublicPricingRateOption,
   PublicQuoteServiceOption,
   PublicQuotesService
@@ -52,6 +57,7 @@ export class ServicesComponent implements OnInit {
 
   defaultTitle = 'Servicios';
   defaultSummary = 'Ofrecemos soluciones inmobiliarias integrales y profesionales';
+  readonly whatsappNumber = '51956639199';
   loadedServices: Service[] = [];
   loadingQuoteOptions = false;
   isSubmittingQuote = false;
@@ -63,6 +69,14 @@ export class ServicesComponent implements OnInit {
   servicesDraft: QuoteServiceDraft[] = [];
   readonly todayLabel = new Date().toLocaleDateString('es-PE');
   readonly defaultExpiresAt = this.buildDefaultExpiresAt();
+  readonly advisoryQrSrc = 'img/codigo-qr.webp';
+  readonly advisoryPaymentName = 'Paolo Daza Tello';
+  readonly visitFee = 'S/ 50';
+  readonly advisoryWhatsappLink =
+    'https://wa.me/51956639199?text=' +
+    encodeURIComponent(
+      'Hola, ya realice el pago unico de S/ 50 por Yape y quiero agendar una visita a mi obra. Les comparto mi comprobante y ubicacion para coordinar la fecha y hora.'
+    );
   readonly docTypes = [
     { value: 'DNI', label: 'DNI' },
     { value: 'RUC', label: 'RUC' },
@@ -117,6 +131,8 @@ export class ServicesComponent implements OnInit {
     documentType: 'DNI',
     documentNumber: '',
     projectName: '',
+    projectType: '',
+    projectClassification: '',
     projectAddress: '',
     areaM2: 0,
     areaCoveredM2: 0,
@@ -144,7 +160,8 @@ export class ServicesComponent implements OnInit {
       id: 1,
       icon: '',
       title: 'Desarrollo inmobiliario',
-      description: 'Vivienda unifamiliar, multifamiliar y casas de campo.'
+      description: 'Vivienda unifamiliar, multifamiliar y casas de campo.',
+      url: '/services#cotizacion'
     },
     {
       id: 2,
@@ -200,6 +217,9 @@ export class ServicesComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.standalonePage = this.standalonePage || !!this.route.snapshot.data['standalonePage'];
+    if (this.route.snapshot.fragment === 'cotizacion') {
+      this.isQuoteExpanded = true;
+    }
     if (!this.quoteDraft.expiresAt) {
       this.quoteDraft.expiresAt = this.defaultExpiresAt;
     }
@@ -212,9 +232,10 @@ export class ServicesComponent implements OnInit {
     if (publicServices.length) {
       this.loadedServices = publicServices.map((service: PublicService) => ({
         id: service.id,
-        icon: service.icon ?? '',
+        icon: '',
         title: service.title,
         description: service.description,
+        url: service.url ?? service.icon ?? undefined,
       }));
     }
 
@@ -224,13 +245,77 @@ export class ServicesComponent implements OnInit {
   }
 
   get displayServices() {
-    if (this.items?.length) {
-      return this.items;
+    const services = this.items?.length
+      ? this.items
+      : this.loadedServices.length
+        ? this.loadedServices
+        : this.services;
+
+    return this.standalonePage
+      ? services.filter((service) => !this.isBuildingService(service))
+      : services;
+  }
+
+  get featuredProjectService(): Service | undefined {
+    const services = this.items?.length
+      ? this.items
+      : this.loadedServices.length
+        ? this.loadedServices
+        : this.services;
+    return this.standalonePage ? services.find((service) => this.isBuildingService(service)) : undefined;
+  }
+
+  get projectTypeOptions(): string[] {
+    const buildingTypes = Object.keys(DEFAULT_PROJECT_CATALOG.edificaciones).map(formatProjectTypeLabel);
+    const developmentTypes = Object.keys(DEFAULT_PROJECT_CATALOG.habilitaciones).map(formatProjectTypeLabel);
+    return this.getUniqueOptions([...buildingTypes, ...developmentTypes]);
+  }
+
+  get projectClassificationOptions(): string[] {
+    const selectedType = this.toLookupKey(this.quoteDraft.projectType);
+    if (!selectedType) {
+      return [];
     }
-    if (this.loadedServices.length) {
-      return this.loadedServices;
+
+    for (const [type, classifications] of Object.entries(DEFAULT_PROJECT_CATALOG.edificaciones)) {
+      if (this.toLookupKey(formatProjectTypeLabel(type)) === selectedType) {
+        return this.getUniqueOptions(Object.keys(classifications).map(formatProjectLabel));
+      }
     }
-    return this.services;
+
+    for (const [type, classifications] of Object.entries(DEFAULT_PROJECT_CATALOG.habilitaciones)) {
+      if (this.toLookupKey(formatProjectTypeLabel(type)) === selectedType) {
+        return this.getUniqueOptions(classifications.map(formatProjectLabel));
+      }
+    }
+
+    return [];
+  }
+
+  private isBuildingService(service: Service): boolean {
+    const title = this.toLookupKey(service.title);
+    return title.includes('edific') || title.includes('desarrollo inmobiliario');
+  }
+
+  private toLookupKey(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  private getUniqueOptions(values: string[]): string[] {
+    return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)))
+      .sort((left, right) => left.localeCompare(right, 'es'));
+  }
+
+  onProjectTypeChange(): void {
+    this.quoteDraft.projectClassification = '';
+  }
+
+  formatProjectTypeLabel(label: string): string {
+    return formatProjectTypeLabel(label);
+  }
+
+  formatProjectLabel(label: string): string {
+    return formatProjectLabel(label);
   }
 
   private buildDefaultExpiresAt() {
@@ -478,6 +563,8 @@ export class ServicesComponent implements OnInit {
     const documentType = this.quoteDraft.documentType.trim();
     const documentNumber = this.quoteDraft.documentNumber.trim();
     const projectName = this.quoteDraft.projectName.trim();
+    const projectType = this.quoteDraft.projectType.trim();
+    const projectClassification = this.quoteDraft.projectClassification.trim();
     const projectAddress = this.quoteDraft.projectAddress.trim();
     const notes = this.quoteDraft.notes.trim();
     const areaM2 = Number(this.quoteDraft.areaM2);
@@ -488,9 +575,9 @@ export class ServicesComponent implements OnInit {
     this.quoteSuccess = '';
     this.quoteError = '';
 
-    if (!fullName || !phone || !email || !projectName) {
+    if (!fullName || !phone || !email || !projectName || !projectType) {
       this.isQuoteExpanded = true;
-      this.quoteError = 'Completa nombre, celular, correo y nombre del proyecto.';
+      this.quoteError = 'Completa nombre, celular, correo, nombre y tipo del proyecto.';
       return;
     }
 
@@ -523,6 +610,8 @@ export class ServicesComponent implements OnInit {
         documentType: documentType || null,
         documentNumber: documentNumber || null,
         projectName,
+        projectType,
+        projectClassification: projectClassification || null,
         projectAddress: projectAddress || null,
         areaM2,
         areaUncoveredPercent: Number.isFinite(areaUncoveredPercent) ? areaUncoveredPercent : null,
@@ -551,6 +640,8 @@ export class ServicesComponent implements OnInit {
           documentType: 'DNI',
           documentNumber: '',
           projectName: '',
+          projectType: '',
+          projectClassification: '',
           projectAddress: '',
           areaM2: 0,
           areaCoveredM2: 0,
@@ -587,6 +678,32 @@ export class ServicesComponent implements OnInit {
 
   isInternal(url: string | undefined) {
     return !!url && url.startsWith('/');
+  }
+
+  isQuoteService(service: Service): boolean {
+    return this.getInternalFragment(service.url) === 'cotizacion';
+  }
+
+  buildServiceWhatsAppHref(service: Service): string {
+    const message = encodeURIComponent(
+      `Hola, me interesa conocer mas sobre el servicio de ${service.title}. Podrian brindarme informacion?`
+    );
+    return `https://wa.me/${this.whatsappNumber}?text=${message}`;
+  }
+
+  getInternalPath(url: string | undefined) {
+    return url?.split('#', 1)[0] || '/services';
+  }
+
+  getInternalFragment(url: string | undefined) {
+    const fragment = url?.split('#', 2)[1];
+    return fragment || undefined;
+  }
+
+  openQuoteIfNeeded(url: string | undefined) {
+    if (this.getInternalFragment(url) === 'cotizacion') {
+      this.isQuoteExpanded = true;
+    }
   }
 
   isExternal(url: string | undefined) {

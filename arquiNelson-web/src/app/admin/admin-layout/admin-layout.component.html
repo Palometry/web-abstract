@@ -1,41 +1,56 @@
-<div class="admin-shell">
-  <aside class="admin-nav">
+<div class="admin-shell" [class.nav-open]="navOpen">
+  <button class="nav-backdrop" type="button" aria-label="Cerrar menu" (click)="navOpen = false"></button>
+
+  <aside class="admin-nav" aria-label="Navegacion administrativa">
     <div class="nav-brand">
-      <span>AN</span>
+      <span class="brand-mark">AN</span>
       <div>
         <strong>ArquiNelson</strong>
-        <small>Admin</small>
+        <small>Administracion</small>
       </div>
+      <button class="nav-close" type="button" aria-label="Cerrar menu" title="Cerrar menu" (click)="navOpen = false">&times;</button>
     </div>
 
     <nav class="nav-links">
+      <span class="nav-section">Principal</span>
       <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        Dashboard
+        <span class="nav-indicator"></span>Resumen
       </a>
-      <a routerLink="/admin/projects" routerLinkActive="active">Proyectos</a>
-      <a routerLink="/admin/blog" routerLinkActive="active">Blog</a>
-      <a routerLink="/admin/quotes" routerLinkActive="active">Cotizaciones</a>
-      <a routerLink="/admin/services" routerLinkActive="active">Servicios</a>
-      <a *ngIf="canManageUsers" routerLink="/admin/users" routerLinkActive="active">Usuarios</a>
+
+      <span class="nav-section">Sitio publico</span>
+      <a routerLink="/admin/projects" routerLinkActive="active"><span class="nav-indicator"></span>Portafolio</a>
+      <a routerLink="/admin/lots" routerLinkActive="active"><span class="nav-indicator"></span>Proyectos</a>
+      <a routerLink="/admin/store" routerLinkActive="active"><span class="nav-indicator"></span>Tienda</a>
+      <a routerLink="/admin/blog" routerLinkActive="active"><span class="nav-indicator"></span>Blog</a>
+      <a routerLink="/admin/services" routerLinkActive="active"><span class="nav-indicator"></span>Servicios</a>
+
+      <span class="nav-section">Gestion</span>
+      <a routerLink="/admin/quotes" routerLinkActive="active"><span class="nav-indicator"></span>Cotizaciones</a>
+      <a *ngIf="canManageUsers" routerLink="/admin/users" routerLinkActive="active"><span class="nav-indicator"></span>Usuarios</a>
     </nav>
 
     <div class="nav-footer">
-      <small>Version 0.1</small>
+      <a routerLink="/" target="_blank" rel="noopener">Ver sitio publico <span aria-hidden="true">&#8599;</span></a>
+      <button class="mobile-logout" type="button" (click)="logout()">Cerrar sesion</button>
+      <small>Panel v0.1</small>
     </div>
   </aside>
 
   <div class="admin-body">
     <header class="admin-top">
+      <button class="menu-toggle" type="button" aria-label="Abrir menu" title="Abrir menu" (click)="toggleNav()">&#9776;</button>
       <div class="admin-title">
-        <h1>Area administrativa</h1>
-        <p>Gestiona el sitio publico desde un solo lugar.</p>
+        <span>Administracion / {{ pageTitle }}</span>
+        <h1>{{ pageTitle }}</h1>
+        <p>{{ pageDescription }}</p>
       </div>
       <div class="admin-user">
-        <div>
+        <span class="user-avatar" aria-hidden="true">{{ userInitials }}</span>
+        <div class="user-copy">
           <span>{{ user?.fullName || 'Usuario' }}</span>
           <small>{{ user?.email }}</small>
         </div>
-        <button type="button" (click)="logout()">Salir</button>
+        <button class="logout-button" type="button" (click)="logout()">Cerrar sesion</button>
       </div>
     </header>
 

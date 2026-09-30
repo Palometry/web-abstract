@@ -384,6 +384,21 @@
       </section>
     }
 
+    @if (project.panoramaUrl) {
+      <section class="project-panorama">
+        <div class="panorama-header">
+          <div>
+            <span class="panorama-kicker">RECORRIDO INTERACTIVO</span>
+            <h3>Vista 360</h3>
+          </div>
+        </div>
+        <app-panorama-viewer
+          [src]="project.panoramaUrl"
+          [label]="'Vista panoramica de ' + project.title"
+        />
+      </section>
+    }
+
     @if (project.gallery && project.gallery.length > 0) {
       <section class="project-gallery">
         <h3>Galeria</h3>

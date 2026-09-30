@@ -79,6 +79,14 @@
             Nombre del proyecto
             <input name="projectName" [(ngModel)]="draft.projectName" />
           </label>
+          <label>
+            Tipo de proyecto
+            <input name="projectType" [value]="quote.projectType || 'No especificado'" readonly />
+          </label>
+          <label>
+            Clasificacion
+            <input name="projectClassification" [value]="quote.projectClassification || 'No especificada'" readonly />
+          </label>
           <label class="wide">
             Direccion
             <input name="projectAddress" [(ngModel)]="draft.projectAddress" />

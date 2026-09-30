@@ -2,7 +2,6 @@ import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HeroComponent } from '../hero/hero.component';
-import { AboutComponent } from '../about/about.component';
 import { ProjectData, ProjectService } from '../../services/project';
 import { PublicProject, PublicProjectsService } from '../../services/public-projects';
 
@@ -27,7 +26,7 @@ type CollageRow = {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, HeroComponent, AboutComponent],
+  imports: [CommonModule, RouterLink, HeroComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })

@@ -24,6 +24,7 @@ export interface ProjectData {
   }[];
   housePlans?: { name: string; ambientes: number; totalArea: string; coveredArea: string; image: string }[];
   autocad360Url?: string;
+  panoramaUrl?: string;
   mapUrl?: string;
   mapEmbedUrl?: string;
   enjoyAreas?: string[];

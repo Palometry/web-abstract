@@ -30,6 +30,8 @@ export interface PublicQuoteLeadPayload {
   documentType?: string | null;
   documentNumber?: string | null;
   projectName: string;
+  projectType: string;
+  projectClassification?: string | null;
   projectAddress?: string | null;
   areaM2?: number | null;
   areaUncoveredPercent?: number | null;

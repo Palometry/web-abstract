@@ -1,5 +1,5 @@
 ﻿<section class="project-create">
-  <a routerLink="/admin/projects" class="back-link"><- Volver a proyectos</a>
+  <a [routerLink]="backLink" class="back-link"><- Volver a {{ backLabel }}</a>
 
   <div class="header">
     <div>
@@ -12,6 +12,13 @@
         }}
       </p>
     </div>
+    <button
+      type="button"
+      (click)="isEditMode ? saveProject() : createProject()"
+      [disabled]="saving"
+    >
+      {{ saving ? 'Guardando...' : isEditMode ? 'Guardar cambios' : 'Crear proyecto' }}
+    </button>
   </div>
 
   <div class="toast" *ngIf="successMessage">{{ successMessage }}</div>
@@ -30,6 +37,11 @@
   </div>
 
   <div class="panel">
+    <div class="panel-title">
+      <span>Informacion basica</span>
+      <h3>Datos generales</h3>
+      <p>Identificacion, ubicacion y estado interno del proyecto.</p>
+    </div>
     <div class="form-grid">
       <label>
         Nombre
@@ -152,6 +164,14 @@
       <label class="wide">
         URL visor AutoCAD 360
         <input type="text" [(ngModel)]="detailsDraft.autocadUrl" placeholder="https://a360.co/..." />
+      </label>
+      <label class="wide">
+        URL panorama 360
+        <input
+          type="text"
+          [(ngModel)]="detailsDraft.panoramaUrl"
+          placeholder="/uploads/proyecto/panorama-360.webp"
+        />
       </label>
       <label class="wide">
         URL Mapa (Google Maps)
@@ -421,7 +441,7 @@
         <input type="file" accept="image/*" (change)="appendHousePlanImage($event)" />
       </label>
       <label class="wide">
-        Lotes (ID | Area | Estado: Disponible/Reservado/Vendido)
+        Lotes (ID | Area | Estado | Precio | Precio anterior | Manzana | Frente | Fondo | Notas)
         <textarea rows="4" [(ngModel)]="detailsDraft.lotsText"></textarea>
       </label>
     </div>

@@ -1,0 +1,83 @@
+<section class="store-admin">
+  <header class="page-header">
+    <div>
+      <h2>Tienda</h2>
+      <p>Administra los productos y servicios digitales publicados.</p>
+    </div>
+    <button type="button" class="primary" (click)="newProduct()">Nuevo producto</button>
+  </header>
+
+  <p class="message error" *ngIf="error">{{ error }}</p>
+  <p class="message success" *ngIf="success">{{ success }}</p>
+
+  <form class="editor" *ngIf="showEditor" (ngSubmit)="saveProduct()">
+    <div class="editor-header">
+      <div>
+        <h3>{{ editingId === null ? 'Nuevo producto' : 'Editar producto' }}</h3>
+        <p>Los campos marcados con * son obligatorios.</p>
+      </div>
+      <button type="button" class="icon-button" title="Cerrar editor" (click)="cancelEdit()">&times;</button>
+    </div>
+
+    <div class="form-grid">
+      <label>Codigo *<input name="code" [(ngModel)]="draft.code" placeholder="RVT-PLT-07" /></label>
+      <label>Nombre *<input name="title" [(ngModel)]="draft.title" /></label>
+      <label>Categoria *<input name="category" [(ngModel)]="draft.category" placeholder="Plantillas Revit" /></label>
+      <label>Software<input name="software" [(ngModel)]="draft.software" /></label>
+      <label>Precio desde *<input name="price" type="number" min="0" step="0.01" [(ngModel)]="draft.priceFrom" /></label>
+      <label>Moneda<input name="currency" maxlength="3" [(ngModel)]="draft.currency" /></label>
+      <label>Entrega<input name="delivery" [(ngModel)]="draft.delivery" placeholder="Entrega digital inmediata" /></label>
+      <label>Formato<input name="format" [(ngModel)]="draft.format" placeholder=".rte + manual PDF" /></label>
+      <label>Soporte<input name="support" [(ngModel)]="draft.support" /></label>
+      <label>Orden<input name="sortOrder" type="number" min="0" [(ngModel)]="draft.sortOrder" /></label>
+      <label>Estado<select name="active" [(ngModel)]="draft.isActive"><option [ngValue]="true">Publicado</option><option [ngValue]="false">Oculto</option></select></label>
+      <label>Color<input name="accent" type="color" [(ngModel)]="draft.accent" /></label>
+
+      <label class="wide">Ideal para<input name="idealFor" [(ngModel)]="draft.idealFor" /></label>
+      <label class="wide">Descripcion *<textarea name="description" rows="3" [(ngModel)]="draft.description"></textarea></label>
+      <label class="wide">Descripcion ampliada<textarea name="longDescription" rows="4" [(ngModel)]="draft.longDescription"></textarea></label>
+      <label class="wide">Incluye <small>Un elemento por linea</small><textarea name="includes" rows="4" [(ngModel)]="draft.includesText"></textarea></label>
+      <label class="wide">Datos extra <small>Formato: Etiqueta | Valor</small><textarea name="extraDetails" rows="4" [(ngModel)]="draft.extraDetailsText"></textarea></label>
+
+      <div class="image-field wide">
+        <div class="image-preview" [style.border-color]="draft.accent">
+          <img *ngIf="draft.imageUrl" [src]="draft.imageUrl" [alt]="draft.title || 'Vista previa'" />
+          <span *ngIf="!draft.imageUrl">Sin imagen</span>
+        </div>
+        <div>
+          <label class="upload-button">
+            {{ uploading ? 'Subiendo...' : 'Subir imagen' }}
+            <input type="file" accept="image/*" (change)="uploadImage($event)" [disabled]="uploading" />
+          </label>
+          <button type="button" class="secondary" *ngIf="draft.imageUrl" (click)="draft.imageUrl = null">Quitar imagen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-actions">
+      <button type="button" class="secondary" (click)="cancelEdit()">Cancelar</button>
+      <button type="submit" class="primary" [disabled]="saving || uploading">{{ saving ? 'Guardando...' : 'Guardar producto' }}</button>
+    </div>
+  </form>
+
+  <p class="empty" *ngIf="loading">Cargando productos...</p>
+  <div class="product-list" *ngIf="!loading">
+    <article class="product-row" *ngFor="let product of products; trackBy: trackProduct">
+      <div class="thumb" [style.border-color]="product.accent">
+        <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.title" />
+        <strong *ngIf="!product.imageUrl">{{ product.code }}</strong>
+      </div>
+      <div class="product-main">
+        <span>{{ product.category }}</span>
+        <h3>{{ product.title }}</h3>
+        <p>{{ product.code }} · S/ {{ product.priceFrom | number: '1.0-2' }}</p>
+      </div>
+      <span class="status" [class.hidden]="!product.isActive">{{ product.isActive ? 'Publicado' : 'Oculto' }}</span>
+      <div class="row-actions">
+        <button type="button" class="secondary" (click)="editProduct(product)">Editar</button>
+        <button type="button" class="danger" (click)="deleteProduct(product)">Eliminar</button>
+      </div>
+    </article>
+    <p class="empty" *ngIf="!products.length">Aun no hay productos administrables. El catalogo base sigue visible en la tienda.</p>
+  </div>
+</section>

@@ -96,8 +96,9 @@ class QuotesController extends Controller
     private function loadQuoteData(int $quoteId): ?array
     {
         $rows = DB::select(
-            "SELECT q.id, q.full_name, q.phone, q.email, q.document_type, q.document_number,
-                    q.project_name, q.project_address, q.area_m2, q.area_covered_m2,
+                "SELECT q.id, q.full_name, q.phone, q.email, q.document_type, q.document_number,
+                    q.project_name, q.project_type, q.project_classification, q.project_address,
+                    q.area_m2, q.area_covered_m2,
                     q.area_uncovered_percent, q.floor_count, q.expires_at,
                     q.base_rate_per_m2, q.base_cost, q.extras_cost, q.total_cost,
                     q.currency, q.status, q.notes, q.created_at,
@@ -148,6 +149,8 @@ class QuotesController extends Controller
                 'documentType' => $quote->document_type,
                 'documentNumber' => $quote->document_number,
                 'projectName' => $quote->project_name,
+                'projectType' => $quote->project_type,
+                'projectClassification' => $quote->project_classification,
                 'projectAddress' => $quote->project_address,
                 'areaM2' => $areaM2,
                 'areaCoveredM2' => $coveredM2,
@@ -175,8 +178,8 @@ class QuotesController extends Controller
     public function options()
     {
         $rateRows = DB::select(
-            "SELECT id, name, base_price_per_m2, currency, is_active, min_days, max_days
-             FROM pricing_rates
+              "SELECT id, name, base_price_per_m2, currency, is_active, min_days, max_days
+               FROM pricing_rates
              ORDER BY is_active DESC, effective_from DESC, id DESC"
         );
         $serviceRows = DB::select(
@@ -243,8 +246,9 @@ class QuotesController extends Controller
         }
 
         $rows = DB::select(
-            "SELECT q.id, q.full_name, q.phone, q.email, q.document_type, q.document_number,
-                    q.project_name, q.project_address, q.area_m2, q.area_covered_m2,
+                "SELECT q.id, q.full_name, q.phone, q.email, q.document_type, q.document_number,
+                    q.project_name, q.project_type, q.project_classification, q.project_address,
+                    q.area_m2, q.area_covered_m2,
                     q.area_uncovered_percent, q.floor_count, q.expires_at,
                     q.base_rate_per_m2, q.base_cost, q.extras_cost, q.total_cost,
                     q.currency, q.status, q.notes, q.created_at,
@@ -290,6 +294,8 @@ class QuotesController extends Controller
             'documentType' => $quote->document_type,
             'documentNumber' => $quote->document_number,
             'projectName' => $quote->project_name,
+            'projectType' => $quote->project_type,
+            'projectClassification' => $quote->project_classification,
             'projectAddress' => $quote->project_address,
             'areaM2' => (float) $quote->area_m2,
             'areaCoveredM2' => $quote->area_covered_m2 !== null ? (float) $quote->area_covered_m2 : null,
@@ -490,6 +496,8 @@ class QuotesController extends Controller
 
         $documentType = is_string($request->input('documentType')) ? trim((string) $request->input('documentType')) : null;
         $documentNumber = is_string($request->input('documentNumber')) ? trim((string) $request->input('documentNumber')) : null;
+        $projectType = is_string($request->input('projectType')) ? trim((string) $request->input('projectType')) : null;
+        $projectClassification = is_string($request->input('projectClassification')) ? trim((string) $request->input('projectClassification')) : null;
         $projectAddress = is_string($request->input('projectAddress')) ? trim((string) $request->input('projectAddress')) : null;
         $notes = is_string($request->input('notes')) ? trim((string) $request->input('notes')) : null;
         $notes = $notes ? "Solicitud web: {$notes}" : 'Solicitud web';
@@ -614,6 +622,8 @@ class QuotesController extends Controller
                 'document_type' => $documentType ?: null,
                 'document_number' => $documentNumber ?: null,
                 'project_name' => $projectName,
+                'project_type' => $projectType ?: null,
+                'project_classification' => $projectClassification ?: null,
                 'project_address' => $projectAddress ?: null,
                 'area_m2' => $areaM2,
                 'area_covered_m2' => $coveredM2,

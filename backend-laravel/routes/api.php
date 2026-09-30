@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\StoreProductController;
 
 Route::get('/health', fn () => response()->json(['ok' => true]));
 
@@ -33,9 +34,11 @@ Route::get('/portfolio/public/{id}', [PortfolioController::class, 'publicDetail'
 Route::get('/blog/public', [BlogController::class, 'publicList']);
 Route::get('/blog/public/{slug}', [BlogController::class, 'publicDetail']);
 Route::get('/services/public', [ServiceController::class, 'publicList']);
+Route::get('/store/products/public', [StoreProductController::class, 'publicList']);
 Route::get('/projects/public', [ProjectsController::class, 'publicList']);
 Route::get('/projects/public/{id}/brochure', [ProjectsController::class, 'publicBrochure']);
 Route::get('/projects/public/{id}/hero-video', [ProjectsController::class, 'publicHeroVideo']);
+Route::get('/projects/public/{id}/panorama', [ProjectsController::class, 'publicPanorama']);
 Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
 Route::get('/quotes/public/options', [QuotesController::class, 'options']);
 Route::post('/chat', [ChatController::class, 'send'])->middleware('throttle:public-chat');
@@ -64,6 +67,12 @@ Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor'])->group(
     Route::get('/services/{id}', [ServiceController::class, 'show']);
     Route::patch('/services/{id}', [ServiceController::class, 'update']);
     Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
+
+    Route::get('/store/products', [StoreProductController::class, 'index']);
+    Route::post('/store/products', [StoreProductController::class, 'store']);
+    Route::get('/store/products/{id}', [StoreProductController::class, 'show']);
+    Route::patch('/store/products/{id}', [StoreProductController::class, 'update']);
+    Route::delete('/store/products/{id}', [StoreProductController::class, 'destroy']);
 
     Route::get('/projects', [ProjectsController::class, 'index']);
     Route::get('/projects/catalog', [ProjectsController::class, 'catalog']);

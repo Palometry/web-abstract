@@ -31,6 +31,7 @@ class ServiceController extends Controller
             'title' => $row->name,
             'description' => $row->description,
             'icon' => $row->icon,
+            'url' => $row->icon,
             'displayOrder' => (int) $row->display_order,
         ]);
 

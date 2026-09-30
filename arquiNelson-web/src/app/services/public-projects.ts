@@ -30,6 +30,7 @@ export type PublicProject = {
   }[];
   housePlans?: { name: string; ambientes: number; totalArea: string; coveredArea: string; image: string }[];
   autocad360Url?: string | null;
+  panoramaUrl?: string | null;
   mapUrl?: string | null;
   mapEmbedUrl?: string | null;
   enjoyAreas?: string[];

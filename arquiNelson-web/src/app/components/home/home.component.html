@@ -1,11 +1,6 @@
 <app-hero></app-hero>
-<app-about [previewMode]="true" ctaLabel="Conocer mas" [ctaLink]="['/blog']"></app-about>
 <section class="portfolio-collage" aria-label="Collage de portafolio">
   <div class="collage-shell">
-    <div class="collage-heading">
-      <span class="collage-eyebrow">Portafolio</span>
-      <h2>Una mirada a nuestros proyectos recientes</h2>
-    </div>
     <div class="collage-rows">
       <div class="collage-row" *ngFor="let row of collageRows; let rowIndex = index" [class.row-reverse]="row.reverse">
         <figure class="collage-tile collage-feature">
@@ -50,18 +45,7 @@
       </div>
     </div>
     <div class="collage-footer" *ngIf="collageItems.length">
-      <a class="collage-cta" [routerLink]="['/projects']">Ver mas proyectos</a>
-    </div>
-  </div>
-</section>
-
-<section class="home-contact-cta" aria-label="Llamado final a contacto">
-  <div class="home-contact-cta__backdrop">
-    <div class="home-contact-cta__content">
-      <span class="home-contact-cta__eyebrow">Contacto</span>
-      <h2>Contactanos para tu proyecto</h2>
-      <p>Hablemos sobre tu proximo proyecto y/o brindarle una asesoria</p>
-      <a class="home-contact-cta__button" [routerLink]="['/contact']">Contactanos</a>
+      <a class="collage-cta" [routerLink]="['/projects']">Ver portafolio completo</a>
     </div>
   </div>
 </section>

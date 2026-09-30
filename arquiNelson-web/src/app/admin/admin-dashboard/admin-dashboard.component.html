@@ -1,27 +1,39 @@
 <section class="dashboard">
+  <header class="dashboard-heading">
+    <div>
+      <h2>Vista general</h2>
+      <p>Revisa la actividad del sitio y continua con las tareas frecuentes.</p>
+    </div>
+    <a class="public-link" routerLink="/" target="_blank" rel="noopener">Abrir sitio publico <span aria-hidden="true">&#8599;</span></a>
+  </header>
+
   <div class="stats-grid">
     <div class="stat-card" *ngFor="let stat of stats">
-      <span class="stat-value">{{ stat.value }}</span>
       <span class="stat-label">{{ stat.label }}</span>
+      <span class="stat-value">{{ stat.value }}</span>
+      <span class="stat-caption">Registro actual</span>
     </div>
   </div>
 
   <div class="panel-grid">
     <div class="panel">
-      <h2>Actividad reciente</h2>
+      <div class="panel-heading">
+        <div><span>Seguimiento</span><h3>Actividad reciente</h3></div>
+        <small>{{ activity.length }} registros</small>
+      </div>
       <p class="hint" *ngIf="loading">Cargando actividad...</p>
       <ul *ngIf="!loading">
-        <li *ngFor="let item of activity">{{ item.message }}</li>
+        <li *ngFor="let item of activity"><span class="activity-dot"></span>{{ item.message }}</li>
       </ul>
-      <p class="hint" *ngIf="!loading && !activity.length">Sin actividad reciente.</p>
+      <p class="hint" *ngIf="!loading && !activity.length">Todavia no hay actividad reciente.</p>
     </div>
 
     <div class="panel">
-      <h2>Acciones rapidas</h2>
+      <div class="panel-heading"><div><span>Atajos</span><h3>Acciones frecuentes</h3></div></div>
       <div class="quick-actions">
         <a class="quick-card" *ngFor="let action of quickActions" [routerLink]="action.link">
-          <strong>{{ action.title }}</strong>
-          <p>{{ action.description }}</p>
+          <div><strong>{{ action.title }}</strong><p>{{ action.description }}</p></div>
+          <span aria-hidden="true">&#8594;</span>
         </a>
       </div>
     </div>

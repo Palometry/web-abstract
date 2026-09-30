@@ -53,6 +53,30 @@ export type AdminProject = {
   portfolio: boolean;
 };
 
+export type AdminStoreProduct = {
+  id: number;
+  code: string;
+  title: string;
+  category: string;
+  software: string;
+  priceFrom: number;
+  currency: string;
+  delivery: string;
+  format: string;
+  support: string;
+  idealFor: string;
+  description: string;
+  longDescription: string;
+  includes: string[];
+  extraDetails: { label: string; value: string }[];
+  imageUrl: string | null;
+  accent: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
+export type AdminStoreProductPayload = Omit<AdminStoreProduct, 'id'>;
+
 export type AdminProjectDetails = {
   shortDesc?: string | null;
   bannerImages?: string[];
@@ -70,6 +94,7 @@ export type AdminProjectDetails = {
   startYear?: number | null;
   deliveryYear?: number | null;
   autocadUrl?: string | null;
+  panoramaUrl?: string | null;
   brochurePdfUrl?: string | null;
   mapUrl?: string | null;
   mapEmbedUrl?: string | null;
@@ -91,7 +116,17 @@ export type AdminProjectDetails = {
     coveredArea: string;
     image: string;
   }[];
-  lots?: { id: string; area: string; status: 'Disponible' | 'Reservado' | 'Vendido' }[];
+  lots?: {
+    id: string;
+    area: string;
+    status: 'Disponible' | 'Reservado' | 'Vendido';
+    price?: number | string | null;
+    oldPrice?: number | string | null;
+    block?: string | null;
+    frontage?: string | null;
+    depth?: string | null;
+    notes?: string | null;
+  }[];
 };
 
 export type AdminProjectCatalog = {
@@ -257,6 +292,8 @@ export type AdminQuoteDetail = {
   documentType?: string | null;
   documentNumber?: string | null;
   projectName: string;
+  projectType?: string | null;
+  projectClassification?: string | null;
   projectAddress?: string | null;
   areaM2: number;
   areaCoveredM2?: number | null;
@@ -1566,6 +1603,72 @@ export class AdminDataService {
     try {
       await firstValueFrom(
         this.http.delete(`${this.apiBaseUrl}/services/${serviceId}`, {
+          headers: this.authHeaders()
+        })
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async getStoreProducts(): Promise<AdminStoreProduct[]> {
+    if (!this.isBrowser) {
+      return [];
+    }
+    return this.safeGet<AdminStoreProduct[]>(`${this.apiBaseUrl}/store/products`, []);
+  }
+
+  async createStoreProduct(
+    payload: AdminStoreProductPayload
+  ): Promise<{ ok: boolean; id?: number; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ id: number }>(`${this.apiBaseUrl}/store/products`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true, id: response.id };
+    } catch (error: any) {
+      return {
+        ok: false,
+        error: error?.status === 422 ? 'Revisa los campos y que el codigo no este repetido.' : 'No se pudo crear el producto.'
+      };
+    }
+  }
+
+  async updateStoreProduct(
+    productId: number,
+    payload: AdminStoreProductPayload
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (!this.isBrowser) {
+      return { ok: false, error: 'Storage no disponible.' };
+    }
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.apiBaseUrl}/store/products/${productId}`, payload, {
+          headers: this.authHeaders()
+        })
+      );
+      return { ok: true };
+    } catch (error: any) {
+      return {
+        ok: false,
+        error: error?.status === 422 ? 'Revisa los campos y que el codigo no este repetido.' : 'No se pudo actualizar el producto.'
+      };
+    }
+  }
+
+  async deleteStoreProduct(productId: number): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiBaseUrl}/store/products/${productId}`, {
           headers: this.authHeaders()
         })
       );

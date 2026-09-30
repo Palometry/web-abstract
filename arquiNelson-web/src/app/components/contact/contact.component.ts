@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule, NgForm } from '@angular/forms';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ContactService } from '../../services/contact.service';
 
 @Component({
@@ -17,15 +17,6 @@ export class ContactComponent {
   readonly phoneLabel = '+51 956 639 199';
   readonly phoneLink = 'tel:+51956639199';
   readonly whatsappLink = 'https://wa.me/51956639199';
-  readonly advisoryQrSrc = 'img/codigo-qr.webp';
-  readonly advisoryPaymentName = 'Paolo Daza Tello';
-  readonly advisoryInitialFee = 'S/ 25';
-  readonly advisoryFinalFee = 'S/ 25';
-  readonly advisoryWhatsappLink =
-      'https://wa.me/51956639199?text=' +
-    encodeURIComponent(
-      'Hola, ya realice el primer pago de S/ 25 por Yape y quiero agendar mi asesoria. Les comparto mi comprobante para coordinar fecha y hora por WhatsApp.'
-    );
   readonly placeName = 'Abstract Arquitectura';
   readonly address = 'Jr. Manuel del Aguila, Moyobamba 22001, Peru';
   readonly schedule = 'Lunes a Viernes: 9:00 - 18:00';
@@ -37,7 +28,6 @@ export class ContactComponent {
   isSubmitting = false;
   submitError = '';
   submitSuccess = '';
-
   formModel = {
     fullName: '',
     email: '',
@@ -56,9 +46,7 @@ export class ContactComponent {
 
   async submitContact(form: NgForm): Promise<void> {
     if (form.invalid) {
-      Object.values(form.controls).forEach((control) => {
-        control.markAsTouched();
-      });
+      Object.values(form.controls).forEach((control) => control.markAsTouched());
       return;
     }
 
@@ -70,12 +58,7 @@ export class ContactComponent {
       const response = await this.contactService.send(this.formModel);
       this.submitSuccess =
         response.message || 'Tu mensaje fue enviado correctamente. Te responderemos pronto.';
-      this.formModel = {
-        fullName: '',
-        email: '',
-        phone: '',
-        message: ''
-      };
+      this.formModel = { fullName: '', email: '', phone: '', message: '' };
       form.resetForm(this.formModel);
     } catch (error) {
       const httpError = error as HttpErrorResponse;

@@ -130,6 +130,11 @@
   box-shadow: 0 12px 22px rgba(31, 45, 38, 0.08);
 }
 
+.panel-title { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e4e8e2; }
+.panel-title span { display: block; margin-bottom: 4px; color: var(--color-red); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.panel-title h3 { margin: 0 0 4px; font-size: 17px; }
+.panel-title p { margin: 0; color: #6b726c; font-size: 13px; }
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

@@ -26,7 +26,8 @@ export class FooterComponent {
   ];
 
   quickLinks = [
-    { name: 'Proyectos', href: '/projects' },
+    { name: 'Portafolio', href: '/projects' },
+    { name: 'Proyectos', href: '/lotes' },
     { name: 'Sobre Nosotros', href: '/blog' },
     { name: 'Servicios', href: '/services' },
     { name: 'Contacto', href: '/contact' }
