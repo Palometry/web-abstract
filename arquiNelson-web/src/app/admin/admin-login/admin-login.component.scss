@@ -71,24 +71,80 @@
 
   input {
     width: 100%;
-    padding-right: 84px;
+    padding-right: 60px;
   }
 }
 
 .password-toggle {
   position: absolute;
-  right: 10px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   margin: 0;
-  padding: 8px 10px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
   border: 1px solid #dde3dc;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   color: var(--color-muted);
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--color-red);
+  border-color: #c9b0ae;
+  background: #fff8f7;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid rgba(159, 50, 50, 0.2);
+  outline-offset: 2px;
+}
+
+.eye-icon {
+  position: relative;
+  width: 22px;
+  height: 16px;
+  display: block;
+}
+
+.eye-shape {
+  position: absolute;
+  inset: 1px 2px;
+  border: 2px solid currentColor;
+  border-radius: 70% 15%;
+  transform: rotate(45deg);
+}
+
+.eye-pupil {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.eye-slash {
+  position: absolute;
+  top: 7px;
+  left: -1px;
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow: 0 -2px 0 #ffffff, 0 2px 0 #ffffff;
+  transform: rotate(-42deg);
+}
+
+.eye-icon--open .eye-slash {
+  display: none;
 }
 
 .remember-session {

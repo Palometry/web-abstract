@@ -103,9 +103,10 @@
   .service-card {
     height: 100%;
     background: var(--color-surface);
-    padding: 40px 30px;
-    border-radius: 10px;
-    text-align: center;
+    padding: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: left;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 5px 15px var(--color-shadow);
 
@@ -114,10 +115,8 @@
       box-shadow: 0 15px 40px var(--color-shadow);
     }
 
-    .service-icon {
-      display: block;
-      margin-bottom: 20px;
-      font-size: 48px;
+    .service-content {
+      padding: 28px 30px 32px;
     }
 
     h3 {
@@ -125,7 +124,7 @@
       font-size: clamp(1.55rem, 2vw, 1.95rem);
       font-weight: 700;
       line-height: 1.08;
-      letter-spacing: -0.02em;
+      letter-spacing: 0;
       color: var(--color-red);
     }
 
@@ -138,8 +137,8 @@
   }
 
   &.services-page .service-card {
-    padding: 34px 28px;
-    border-radius: 28px;
+    padding: 0;
+    border-radius: 8px;
     text-align: left;
     background: rgba(255, 255, 255, 0.88);
     box-shadow: 0 24px 48px rgba(15, 16, 22, 0.08);
@@ -164,6 +163,10 @@
       max-width: 34ch;
       font-size: 1rem;
       line-height: 1.7;
+    }
+
+    .service-content {
+      padding: 26px 28px 30px;
     }
   }
 
@@ -861,12 +864,12 @@
     }
 
     .service-card {
-      padding: 32px 24px;
+      padding: 0;
     }
 
     &.services-page .service-card {
-      border-radius: 24px;
-      padding: 28px 22px;
+      border-radius: 8px;
+      padding: 0;
     }
 
     &.services-page .public-quote-create {

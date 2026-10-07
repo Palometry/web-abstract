@@ -58,6 +58,83 @@
   color: #607063;
 }
 
+.field-label {
+  color: #607063;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.image-field {
+  display: grid;
+  gap: 8px;
+}
+
+.image-control {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) minmax(160px, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.image-preview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid #dde3dc;
+  border-radius: 8px;
+  background: #f3f5f2;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.image-preview.empty {
+  display: grid;
+  place-items: center;
+  color: #7a857c;
+  font-size: 13px;
+}
+
+.image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.upload-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 15px;
+  border-radius: 8px;
+  background: var(--color-red);
+  color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  cursor: pointer;
+}
+
+.upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.services-admin .image-actions .secondary {
+  border: 1px solid #d8d2c6;
+  background: #ffffff;
+  color: var(--color-red);
+}
+
 .form-grid input,
 .form-grid select,
 .form-grid textarea {
@@ -95,6 +172,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.summary-image {
+  flex: 0 0 112px;
+  width: 112px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.summary-copy {
+  min-width: 0;
+  flex: 1;
 }
 
 .service-summary h3 {
@@ -154,5 +244,149 @@
 .error {
   margin: 0;
   color: #b35a3a;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: rgba(18, 21, 18, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+.notification-dialog {
+  width: min(460px, 100%);
+  padding: 26px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  border: 1px solid #dfe3dc;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(12, 16, 12, 0.28);
+}
+
+.dialog-symbol {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.notification-dialog--warning .dialog-symbol {
+  color: #9c3d2d;
+  background: #f9e9e4;
+}
+
+.notification-dialog--success .dialog-symbol {
+  color: #2d6941;
+  background: #e4f2e8;
+}
+
+.dialog-copy {
+  min-width: 0;
+}
+
+.dialog-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #8a332f;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.notification-dialog--success .dialog-eyebrow {
+  color: #347248;
+}
+
+.dialog-copy h3 {
+  margin: 0 0 8px;
+  color: #242924;
+  font-size: 20px;
+}
+
+.dialog-copy p {
+  margin: 0;
+  color: #626a62;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.dialog-copy strong {
+  color: #303630;
+}
+
+.dialog-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.services-admin .dialog-actions button {
+  min-width: 112px;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.services-admin .dialog-secondary {
+  border: 1px solid #d5dad3;
+  color: #434a43;
+  background: #ffffff;
+}
+
+.services-admin .dialog-danger {
+  border: 1px solid #a63131;
+  color: #ffffff;
+  background: #a63131;
+}
+
+.services-admin .dialog-primary {
+  border: 1px solid #326a45;
+  color: #ffffff;
+  background: #326a45;
+}
+
+.services-admin .dialog-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+@media (max-width: 520px) {
+  .image-control {
+    grid-template-columns: 1fr;
+  }
+
+  .service-summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .dialog-backdrop {
+    padding: 14px;
+  }
+
+  .notification-dialog {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+
+  .dialog-actions {
+    grid-column: auto;
+    flex-direction: column-reverse;
+  }
+
+  .services-admin .dialog-actions button {
+    width: 100%;
+  }
 }
 

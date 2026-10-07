@@ -11,6 +11,7 @@ export type PublicService = {
   description: string;
   icon?: string | null;
   url?: string | null;
+  imageUrl?: string | null;
   displayOrder?: number;
 };
 

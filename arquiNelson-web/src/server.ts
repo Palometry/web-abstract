@@ -39,7 +39,7 @@ function buildCspHeader(): string {
     `object-src 'none'`,
     `frame-ancestors 'self'`,
     `form-action 'self'`,
-    `script-src 'self' 'unsafe-inline'`,
+    `script-src 'self'`,
     `style-src 'self' 'unsafe-inline'`,
     `font-src 'self' data:`,
     `worker-src 'self' blob:`,
@@ -143,11 +143,21 @@ app.use((req, res, next) => {
  * Serve static files from /browser
  */
 app.use(
+  '/.well-known',
+  express.static(join(browserDistFolder, '.well-known'), {
+    maxAge: '1h',
+    index: false,
+    redirect: false,
+    dotfiles: 'allow',
+  }),
+);
+
+app.use(
   express.static(browserDistFolder, {
     maxAge: '1y',
     index: false,
     redirect: false,
-    dotfiles: 'allow',
+    dotfiles: 'ignore',
   }),
 );
 

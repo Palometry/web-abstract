@@ -341,6 +341,7 @@ export type AdminService = {
   name: string;
   description: string;
   icon: string | null;
+  imageUrl: string | null;
   displayOrder: number;
   public: boolean;
   isAddon: boolean;
@@ -354,6 +355,7 @@ export type AdminServiceListItem = {
   id: number;
   name: string;
   description: string;
+  imageUrl: string | null;
   public: boolean;
   isActive: boolean;
 };
@@ -1543,6 +1545,7 @@ export class AdminDataService {
     name: string;
     description: string;
     icon?: string | null;
+    imageUrl?: string | null;
     displayOrder?: number;
     isPublic?: boolean;
     isAddon?: boolean;
@@ -1572,6 +1575,7 @@ export class AdminDataService {
       name: string;
       description: string;
       icon: string | null;
+      imageUrl: string | null;
       displayOrder: number;
       isPublic: boolean;
       isAddon: boolean;

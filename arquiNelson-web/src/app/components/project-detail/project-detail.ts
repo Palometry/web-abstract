@@ -19,6 +19,7 @@ import {
   formatProjectTypeLabel
 } from '../../admin/project-classifications';
 import { PanoramaViewerComponent } from '../panorama-viewer/panorama-viewer.component';
+import { getTrustedEmbedUrl } from '../../services/trusted-embed-url';
 
 type HousePlan = {
   name: string;
@@ -802,9 +803,11 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const embedUrl =
+    const embedUrl = getTrustedEmbedUrl(
       this.extractIframeSrc(this.project.mapEmbedUrl) ||
-      this.buildEmbedUrlFromMapUrl(this.project.mapUrl);
+      this.buildEmbedUrlFromMapUrl(this.project.mapUrl),
+      'maps'
+    );
 
     if (embedUrl) {
       this.mapEmbedSafeUrl =
@@ -821,14 +824,14 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const embedUrl = this.extractIframeSrc(this.project.autocad360Url);
+    const embedUrl = getTrustedEmbedUrl(this.project.autocad360Url, 'autodesk');
     this.autocadEmbedSafeUrl = embedUrl
       ? this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl)
       : null;
   }
 
   getVideoEmbedUrl(url?: string | null): SafeResourceUrl | null {
-    const embed = this.toVideoEmbedUrl(url);
+    const embed = getTrustedEmbedUrl(this.toVideoEmbedUrl(url), 'video');
     return embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null;
   }
 

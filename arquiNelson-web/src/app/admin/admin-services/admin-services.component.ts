@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -15,6 +15,7 @@ type ServiceView = AdminServiceListItem &
     name: string;
     description: string;
     icon: string;
+    imageUrl: string;
     displayOrder: number;
     public: boolean;
     isAddon: boolean;
@@ -36,9 +37,12 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
   services: ServiceView[] = [];
   loading = false;
   saving = false;
+  uploadingImage = false;
   showAdd = false;
   error = '';
   editingId: number | null = null;
+  pendingDeactivation: ServiceView | null = null;
+  deactivatedServiceName = '';
   private loaded = false;
   private readonly isBrowser: boolean;
 
@@ -52,6 +56,7 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
     name: '',
     description: '',
     icon: '',
+    imageUrl: '',
     displayOrder: 0,
     public: true,
     isAddon: false,
@@ -93,6 +98,7 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
         const view: ServiceView = {
           ...service,
           icon: null,
+          imageUrl: service.imageUrl ?? null,
           displayOrder: 0,
           isAddon: false,
           pricingType: 'flat',
@@ -139,6 +145,7 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
       name,
       description,
       icon: this.addDraft.icon.trim() || null,
+      imageUrl: this.addDraft.imageUrl.trim() || null,
       displayOrder,
       isPublic: this.addDraft.public,
       isAddon: this.addDraft.isAddon,
@@ -207,6 +214,7 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
       name,
       description,
       icon: service.draft.icon.trim() || null,
+      imageUrl: service.draft.imageUrl.trim() || null,
       displayOrder,
       isPublic: service.draft.public,
       isAddon: service.draft.isAddon,
@@ -224,20 +232,98 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
     await this.loadServices();
   }
 
-  async deactivateService(service: ServiceView) {
-    const confirmed = confirm('Desactivar este servicio?');
-    if (!confirmed) {
+  requestDeactivation(service: ServiceView) {
+    this.error = '';
+    this.deactivatedServiceName = '';
+    this.pendingDeactivation = service;
+  }
+
+  cancelDeactivation() {
+    if (this.saving) {
       return;
     }
+    this.pendingDeactivation = null;
+  }
+
+  async confirmDeactivation() {
+    const service = this.pendingDeactivation;
+    if (!service || this.saving) {
+      return;
+    }
+
     this.saving = true;
     this.error = '';
     const ok = await this.data.deactivateService(service.id);
     this.saving = false;
     if (!ok) {
+      this.pendingDeactivation = null;
       this.error = 'No se pudo desactivar el servicio.';
+      this.cdr.detectChanges();
       return;
     }
+
+    this.pendingDeactivation = null;
+    this.editingId = null;
     await this.loadServices();
+    this.deactivatedServiceName = service.name;
+    this.cdr.detectChanges();
+  }
+
+  closeSuccessNotification() {
+    this.deactivatedServiceName = '';
+  }
+
+  async uploadServiceImage(event: Event, service?: ServiceView) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      this.error = 'Selecciona un archivo de imagen.';
+      input.value = '';
+      return;
+    }
+
+    this.uploadingImage = true;
+    this.error = '';
+    const title = service?.draft.name || this.addDraft.name || file.name;
+    const result = await this.data.uploadMedia(file, {
+      title,
+      altText: title || 'Imagen del servicio'
+    });
+    this.uploadingImage = false;
+    input.value = '';
+
+    if (!result.ok || !result.fileUrl) {
+      this.error = result.error ?? 'No se pudo subir la imagen.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (service) {
+      service.draft.imageUrl = result.fileUrl;
+    } else {
+      this.addDraft.imageUrl = result.fileUrl;
+    }
+    this.cdr.detectChanges();
+  }
+
+  removeServiceImage(service?: ServiceView) {
+    if (service) {
+      service.draft.imageUrl = '';
+      return;
+    }
+    this.addDraft.imageUrl = '';
+  }
+
+  @HostListener('document:keydown.escape')
+  closeNotificationWithEscape() {
+    if (this.saving) {
+      return;
+    }
+    this.pendingDeactivation = null;
+    this.deactivatedServiceName = '';
   }
 
   private resetDraft(service: ServiceView) {
@@ -249,6 +335,7 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
       name: service.name,
       description: service.description,
       icon: service.icon ?? '',
+      imageUrl: service.imageUrl ?? '',
       displayOrder:
         typeof service.displayOrder === 'number' && Number.isFinite(service.displayOrder)
           ? service.displayOrder
@@ -268,6 +355,7 @@ export class AdminServicesComponent implements OnInit, AfterViewInit {
       name: '',
       description: '',
       icon: '',
+      imageUrl: '',
       displayOrder: 0,
       public: true,
       isAddon: false,

@@ -6,12 +6,14 @@ import {
   Inject,
   OnInit,
   PLATFORM_ID,
+  SecurityContext,
   ViewChild,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AdminBlogDetail, AdminDataService } from '../../services/admin-data';
+import { DomSanitizer } from '@angular/platform-browser';
 
 type BlogDraft = {
   title: string;
@@ -73,6 +75,7 @@ export class AdminBlogDetailComponent implements OnInit, AfterViewInit {
     private router: Router,
     private data: AdminDataService,
     private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -376,7 +379,7 @@ export class AdminBlogDetailComponent implements OnInit, AfterViewInit {
     if (!this.articleEditor || this.draft.contentType !== 'article') {
       return;
     }
-    const html = this.renderEditorHtml(this.draft.content);
+    const html = this.sanitizeEditorHtml(this.renderEditorHtml(this.draft.content));
     if (this.articleEditor.nativeElement.innerHTML !== html) {
       this.articleEditor.nativeElement.innerHTML = html;
     }
@@ -388,7 +391,7 @@ export class AdminBlogDetailComponent implements OnInit, AfterViewInit {
       return '';
     }
     if (/<[a-z][\s\S]*>/i.test(value)) {
-      return value;
+      return this.sanitizeEditorHtml(value);
     }
     return value
       .split(/\n{2,}/)
@@ -403,7 +406,7 @@ export class AdminBlogDetailComponent implements OnInit, AfterViewInit {
     }
 
     const container = document.createElement('div');
-    container.innerHTML = value;
+    container.innerHTML = this.sanitizeEditorHtml(value);
     container.querySelectorAll('div').forEach((node) => {
       const paragraph = document.createElement('p');
       paragraph.innerHTML = node.innerHTML;
@@ -414,7 +417,11 @@ export class AdminBlogDetailComponent implements OnInit, AfterViewInit {
     if (!text && !hasMedia) {
       return '';
     }
-    return container.innerHTML.trim();
+    return this.sanitizeEditorHtml(container.innerHTML).trim();
+  }
+
+  private sanitizeEditorHtml(value: string): string {
+    return this.sanitizer.sanitize(SecurityContext.HTML, value) ?? '';
   }
 
   private escapeHtml(value: string): string {

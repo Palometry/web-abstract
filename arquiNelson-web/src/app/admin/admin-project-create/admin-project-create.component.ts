@@ -20,6 +20,7 @@ import {
   formatProjectTypeLabel,
   isHospedajeType
 } from '../project-classifications';
+import { getTrustedEmbedUrl } from '../../services/trusted-embed-url';
 
 type ProjectImageView = AdminProjectImage & {
   draft: {
@@ -271,7 +272,7 @@ export class AdminProjectCreateComponent implements OnInit, OnDestroy {
   }
 
   getVideoEmbedUrl(url?: string | null): SafeResourceUrl | null {
-    const embed = this.toVideoEmbedUrl(url);
+    const embed = getTrustedEmbedUrl(this.toVideoEmbedUrl(url), 'video');
     return embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null;
   }
 

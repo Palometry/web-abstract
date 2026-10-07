@@ -21,6 +21,7 @@ class AuthController extends Controller
 
         $email = $request->input('email');
         $password = $request->input('password');
+        $remember = $request->boolean('remember');
 
         $user = DB::table('users')
             ->select('id', 'email', 'password_hash', 'full_name', 'phone', 'is_active')
@@ -66,9 +67,8 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'roles' => $roles,
             ],
-            'token' => $token,
             'expiresAt' => gmdate(DATE_ATOM, $now + $ttl),
-        ])->withCookie($this->makeAuthCookie($token, $ttl));
+        ])->withCookie($this->makeAuthCookie($token, $ttl, $remember));
     }
 
     public function logout()
@@ -133,9 +133,9 @@ class AuthController extends Controller
         return 43200;
     }
 
-    private function makeAuthCookie(string $token, int $ttlSeconds)
+    private function makeAuthCookie(string $token, int $ttlSeconds, bool $remember)
     {
-        $minutes = max(1, (int) ceil($ttlSeconds / 60));
+        $minutes = $remember ? max(1, (int) ceil($ttlSeconds / 60)) : 0;
 
         return Cookie::make(
             (string) config('jwt.cookie_name', 'arqui_admin_session'),

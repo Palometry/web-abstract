@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { PortfolioItem, PortfolioService } from '../../services/portfolio';
+import { getTrustedEmbedUrl } from '../../services/trusted-embed-url';
 
 @Component({
   selector: 'app-portfolio-detail',
@@ -61,8 +62,9 @@ export class PortfolioDetailComponent implements OnInit, AfterViewInit {
         : [];
     this.activeHeroIndex = 0;
     this.activeHero = this.heroImages[0] ?? '';
-    this.autocadEmbedUrl = selected?.autocadUrl
-      ? this.sanitizer.bypassSecurityTrustResourceUrl(selected.autocadUrl)
+    const autocadUrl = getTrustedEmbedUrl(selected?.autocadUrl, 'autodesk');
+    this.autocadEmbedUrl = autocadUrl
+      ? this.sanitizer.bypassSecurityTrustResourceUrl(autocadUrl)
       : undefined;
     this.cdr.detectChanges();
   }

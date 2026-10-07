@@ -13,6 +13,7 @@ class Service extends Model
         'name',
         'description',
         'icon',
+        'image_url',
         'display_order',
         'is_public',
         'is_addon',

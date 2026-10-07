@@ -19,6 +19,7 @@ class StoreServiceRequest extends FormRequest
             'name' => ['required', 'string'],
             'description' => ['required', 'string'],
             'icon' => ['nullable', 'string'],
+            'imageUrl' => ['nullable', 'string', 'max:2048'],
             'displayOrder' => ['nullable', 'integer'],
             'isPublic' => ['nullable', 'boolean'],
             'isAddon' => ['nullable', 'boolean'],

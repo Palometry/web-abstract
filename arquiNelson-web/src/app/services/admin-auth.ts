@@ -16,9 +16,11 @@ type StoredUser = {
 export type AdminUser = StoredUser;
 
 export const ADMIN_AUTH_STORAGE_KEYS = {
-  token: 'arqui_admin_token',
+  session: 'arqui_admin_session_present',
   expiresAt: 'arqui_admin_expires_at',
 } as const;
+
+const LEGACY_TOKEN_STORAGE_KEY = 'arqui_admin_token';
 
 export type AdminLoginResult =
   | { ok: true }
@@ -62,18 +64,14 @@ export class AdminAuthService {
     try {
       const normalizedEmail = email.trim().toLowerCase();
       const response = await firstValueFrom(
-        this.http.post<{ user: AdminUser; token: string; expiresAt: string }>(`${this.apiBaseUrl}/auth/login`, {
+        this.http.post<{ user: AdminUser; expiresAt: string }>(`${this.apiBaseUrl}/auth/login`, {
           email: normalizedEmail,
           password,
           remember
         })
       );
       this.userSignal.set(response.user);
-      if (remember) {
-        this.persistSession(response.token, response.expiresAt);
-      } else {
-        this.clearPersistedSession();
-      }
+      this.persistSession(response.expiresAt, remember);
       this.sessionRestorePromise = Promise.resolve(true);
       return { ok: true };
     } catch (error) {
@@ -259,10 +257,12 @@ export class AdminAuthService {
       return false;
     }
 
-    const token = localStorage.getItem(ADMIN_AUTH_STORAGE_KEYS.token);
-    const expiresAt = localStorage.getItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt);
+    const localSession = localStorage.getItem(ADMIN_AUTH_STORAGE_KEYS.session);
+    const sessionSession = sessionStorage.getItem(ADMIN_AUTH_STORAGE_KEYS.session);
+    const storage = localSession ? localStorage : sessionSession ? sessionStorage : null;
+    const expiresAt = storage?.getItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt) ?? null;
 
-    if (!token || !expiresAt) {
+    if (!storage || !expiresAt) {
       this.clearPersistedSession();
       return false;
     }
@@ -276,20 +276,26 @@ export class AdminAuthService {
     return true;
   }
 
-  private persistSession(token: string, expiresAt: string): void {
+  private persistSession(expiresAt: string, remember: boolean): void {
     if (!this.isBrowser) {
       return;
     }
-    localStorage.setItem(ADMIN_AUTH_STORAGE_KEYS.token, token);
-    localStorage.setItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt, expiresAt);
+    this.clearPersistedSession();
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem(ADMIN_AUTH_STORAGE_KEYS.session, '1');
+    storage.setItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt, expiresAt);
   }
 
   private clearPersistedSession(): void {
     if (!this.isBrowser) {
       return;
     }
-    localStorage.removeItem(ADMIN_AUTH_STORAGE_KEYS.token);
+    localStorage.removeItem(ADMIN_AUTH_STORAGE_KEYS.session);
     localStorage.removeItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt);
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+    sessionStorage.removeItem(ADMIN_AUTH_STORAGE_KEYS.session);
+    sessionStorage.removeItem(ADMIN_AUTH_STORAGE_KEYS.expiresAt);
+    sessionStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
   }
 
   private authHeaders(): Record<string, string> {

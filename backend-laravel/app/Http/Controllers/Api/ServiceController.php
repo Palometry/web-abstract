@@ -18,6 +18,7 @@ class ServiceController extends Controller
                 'name',
                 'description',
                 'icon',
+                'image_url',
                 'display_order'
             )
             ->where('is_public', 1)
@@ -32,6 +33,7 @@ class ServiceController extends Controller
             'description' => $row->description,
             'icon' => $row->icon,
             'url' => $row->icon,
+            'imageUrl' => $row->image_url,
             'displayOrder' => (int) $row->display_order,
         ]);
 
@@ -45,6 +47,7 @@ class ServiceController extends Controller
                 'id',
                 'name',
                 'description',
+                'image_url',
                 'is_public',
                 'is_active'
             )
@@ -56,6 +59,7 @@ class ServiceController extends Controller
             'id' => $row->id,
             'name' => $row->name,
             'description' => $row->description,
+            'imageUrl' => $row->image_url,
             'public' => (bool) $row->is_public,
             'isActive' => (bool) $row->is_active,
         ]);
@@ -76,6 +80,7 @@ class ServiceController extends Controller
                 'name',
                 'description',
                 'icon',
+                'image_url',
                 'display_order',
                 'is_public',
                 'is_addon',
@@ -96,6 +101,7 @@ class ServiceController extends Controller
             'name' => $row->name,
             'description' => $row->description,
             'icon' => $row->icon,
+            'imageUrl' => $row->image_url,
             'displayOrder' => (int) $row->display_order,
             'public' => (bool) $row->is_public,
             'isAddon' => (bool) $row->is_addon,
@@ -120,6 +126,7 @@ class ServiceController extends Controller
             'name' => trim($data['name']),
             'description' => trim($data['description']),
             'icon' => $data['icon'] ?? null,
+            'image_url' => $data['imageUrl'] ?? null,
             'display_order' => isset($data['displayOrder']) ? (int) $data['displayOrder'] : 0,
             'is_public' => array_key_exists('isPublic', $data) && $data['isPublic'] === false ? 0 : 1,
             'is_addon' => !empty($data['isAddon']) ? 1 : 0,
@@ -161,6 +168,9 @@ class ServiceController extends Controller
         }
         if (array_key_exists('icon', $data)) {
             $updates['icon'] = $data['icon'];
+        }
+        if (array_key_exists('imageUrl', $data)) {
+            $updates['image_url'] = $data['imageUrl'];
         }
         if (array_key_exists('displayOrder', $data)) {
             $updates['display_order'] = (int) $data['displayOrder'];

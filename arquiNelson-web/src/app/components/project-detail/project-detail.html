@@ -93,6 +93,7 @@
               title="Mapa de ubicacion"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
+              sandbox="allow-scripts allow-same-origin allow-popups"
             ></iframe>
           </div>
         } @else {
@@ -287,6 +288,7 @@
                   frameborder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowfullscreen
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
                 ></iframe>
               } @else if (isDirectVideoUrl(video.fileUrl)) {
                 <video [src]="video.fileUrl" controls></video>
@@ -379,6 +381,7 @@
             loading="lazy"
             allowfullscreen
             referrerpolicy="strict-origin-when-cross-origin"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
           ></iframe>
         </div>
       </section>

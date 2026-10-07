@@ -17,9 +17,13 @@
           (click)="openQuoteIfNeeded(service.url)"
         >
           <article class="service-card">
-            <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
-            <h3>{{ service.title }}</h3>
-            <p>{{ service.description }}</p>
+            <div class="service-media">
+              <img [src]="service.imageUrl" [alt]="service.title" loading="lazy" />
+            </div>
+            <div class="service-content">
+              <h3>{{ service.title }}</h3>
+              <p>{{ service.description }}</p>
+            </div>
           </article>
         </a>
 
@@ -31,9 +35,13 @@
           rel="noopener noreferrer"
         >
           <article class="service-card">
-            <span class="service-icon" *ngIf="service.icon">{{ service.icon }}</span>
-            <h3>{{ service.title }}</h3>
-            <p>{{ service.description }}</p>
+            <div class="service-media">
+              <img [src]="service.imageUrl" [alt]="service.title" loading="lazy" />
+            </div>
+            <div class="service-content">
+              <h3>{{ service.title }}</h3>
+              <p>{{ service.description }}</p>
+            </div>
           </article>
         </a>
 
@@ -200,7 +208,7 @@
               <option *ngIf="!loadingQuoteOptions && rates.length" [ngValue]="null">Selecciona un plan</option>
               <option *ngIf="!loadingQuoteOptions && !rates.length" [ngValue]="null">Sin planes activos</option>
               <option *ngFor="let rate of rates" [ngValue]="rate.id">
-                {{ rate.name }} ({{ formatCurrency(rate.basePricePerM2, rate.currency) }}/m2)
+                {{ rate.displayName }} ({{ formatCurrency(rate.basePricePerM2, rate.currency) }}/m2)
               </option>
             </select>
           </label>

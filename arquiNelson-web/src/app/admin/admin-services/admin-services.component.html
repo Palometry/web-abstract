@@ -20,6 +20,22 @@
         Descripcion
         <textarea rows="3" [(ngModel)]="addDraft.description"></textarea>
       </label>
+      <div class="image-field wide">
+        <span class="field-label">Imagen del servicio</span>
+        <div class="image-control">
+          <div class="image-preview" [class.empty]="!addDraft.imageUrl">
+            <img *ngIf="addDraft.imageUrl" [src]="addDraft.imageUrl" [alt]="addDraft.name || 'Vista previa del servicio'" />
+            <span *ngIf="!addDraft.imageUrl">Sin imagen seleccionada</span>
+          </div>
+          <div class="image-actions">
+            <label class="upload-button">
+              {{ uploadingImage ? 'Subiendo...' : addDraft.imageUrl ? 'Cambiar imagen' : 'Seleccionar imagen' }}
+              <input type="file" accept="image/*" (change)="uploadServiceImage($event)" [disabled]="uploadingImage" />
+            </label>
+            <button *ngIf="addDraft.imageUrl" type="button" class="secondary" (click)="removeServiceImage()">Quitar</button>
+          </div>
+        </div>
+      </div>
       <label>
         Enlace de destino (URL)
         <input [(ngModel)]="addDraft.icon" placeholder="/services#cotizacion" />
@@ -65,7 +81,7 @@
           <option [ngValue]="false">Inactivo</option>
         </select>
       </label>
-      <button type="button" (click)="addService()" [disabled]="saving">
+      <button type="button" (click)="addService()" [disabled]="saving || uploadingImage">
         Agregar servicio
       </button>
     </div>
@@ -77,12 +93,13 @@
     <p class="hint" *ngIf="loading">Cargando servicios...</p>
     <article class="service-card" *ngFor="let service of services">
       <div class="service-summary" *ngIf="!isEditing(service)">
-        <div>
+        <img class="summary-image" *ngIf="service.imageUrl" [src]="service.imageUrl" [alt]="service.name" />
+        <div class="summary-copy">
           <h3>{{ service.name }}</h3>
           <p>{{ service.description }}</p>
         </div>
-        <span class="tag" [class.inactive]="!service.public">
-          {{ service.public ? 'Visible' : 'Oculto' }}
+        <span class="tag" [class.inactive]="!service.isActive || !service.public">
+          {{ !service.isActive ? 'Inactivo' : service.public ? 'Visible' : 'Oculto' }}
         </span>
       </div>
 
@@ -100,6 +117,22 @@
             Descripcion
             <textarea rows="3" [(ngModel)]="service.draft.description"></textarea>
           </label>
+          <div class="image-field wide">
+            <span class="field-label">Imagen del servicio</span>
+            <div class="image-control">
+              <div class="image-preview" [class.empty]="!service.draft.imageUrl">
+                <img *ngIf="service.draft.imageUrl" [src]="service.draft.imageUrl" [alt]="service.draft.name" />
+                <span *ngIf="!service.draft.imageUrl">Sin imagen seleccionada</span>
+              </div>
+              <div class="image-actions">
+                <label class="upload-button">
+                  {{ uploadingImage ? 'Subiendo...' : service.draft.imageUrl ? 'Cambiar imagen' : 'Seleccionar imagen' }}
+                  <input type="file" accept="image/*" (change)="uploadServiceImage($event, service)" [disabled]="uploadingImage" />
+                </label>
+                <button *ngIf="service.draft.imageUrl" type="button" class="secondary" (click)="removeServiceImage(service)">Quitar</button>
+              </div>
+            </div>
+          </div>
           <label>
             Enlace de destino (URL)
             <input [(ngModel)]="service.draft.icon" placeholder="/services#cotizacion" />
@@ -147,7 +180,7 @@
           </label>
         </div>
         <div class="actions">
-          <button type="button" (click)="saveService(service)" [disabled]="saving">
+          <button type="button" (click)="saveService(service)" [disabled]="saving || uploadingImage">
             Guardar
           </button>
           <button type="button" (click)="cancelEdit(service)" [disabled]="saving">
@@ -156,7 +189,7 @@
           <button
             type="button"
             class="danger"
-            (click)="deactivateService(service)"
+            (click)="requestDeactivation(service)"
             [disabled]="saving || !service.isActive"
           >
             Desactivar
@@ -165,5 +198,56 @@
       </div>
     </article>
     <p class="hint" *ngIf="!loading && !services.length">Sin servicios.</p>
+  </div>
+
+  <div class="dialog-backdrop" *ngIf="pendingDeactivation as service" (click)="cancelDeactivation()">
+    <section
+      class="notification-dialog notification-dialog--warning"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="deactivate-title"
+      aria-describedby="deactivate-description"
+      (click)="$event.stopPropagation()"
+    >
+      <span class="dialog-symbol" aria-hidden="true">!</span>
+      <div class="dialog-copy">
+        <span class="dialog-eyebrow">Confirmar cambio</span>
+        <h3 id="deactivate-title">Desactivar servicio</h3>
+        <p id="deactivate-description">
+          <strong>{{ service.name }}</strong> dejara de estar disponible y no se mostrara en el sitio publico.
+        </p>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="dialog-secondary" (click)="cancelDeactivation()" [disabled]="saving">
+          Cancelar
+        </button>
+        <button type="button" class="dialog-danger" (click)="confirmDeactivation()" [disabled]="saving">
+          {{ saving ? 'Desactivando...' : 'Si, desactivar' }}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="dialog-backdrop" *ngIf="deactivatedServiceName" (click)="closeSuccessNotification()">
+    <section
+      class="notification-dialog notification-dialog--success"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="success-title"
+      aria-describedby="success-description"
+      (click)="$event.stopPropagation()"
+    >
+      <span class="dialog-symbol" aria-hidden="true">&#10003;</span>
+      <div class="dialog-copy">
+        <span class="dialog-eyebrow">Cambio realizado</span>
+        <h3 id="success-title">Servicio desactivado</h3>
+        <p id="success-description">
+          <strong>{{ deactivatedServiceName }}</strong> ahora esta inactivo y oculto en el sitio publico.
+        </p>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="dialog-primary" (click)="closeSuccessNotification()">Entendido</button>
+      </div>
+    </section>
   </div>
 </section>

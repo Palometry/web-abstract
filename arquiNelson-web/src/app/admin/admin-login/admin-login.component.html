@@ -34,8 +34,14 @@
           class="password-toggle"
           (click)="togglePasswordVisibility()"
           [attr.aria-label]="showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'"
+          [attr.title]="showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'"
+          [attr.aria-pressed]="showPassword"
         >
-          {{ showPassword ? 'Ocultar' : 'Ver' }}
+          <span class="eye-icon" [class.eye-icon--open]="showPassword" aria-hidden="true">
+            <span class="eye-shape"></span>
+            <span class="eye-pupil"></span>
+            <span class="eye-slash"></span>
+          </span>
         </button>
       </div>
 

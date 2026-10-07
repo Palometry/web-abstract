@@ -17,6 +17,7 @@ class UpdateServiceRequest extends FormRequest
             'name' => ['sometimes', 'string'],
             'description' => ['sometimes', 'string'],
             'icon' => ['sometimes', 'nullable', 'string'],
+            'imageUrl' => ['sometimes', 'nullable', 'string', 'max:2048'],
             'displayOrder' => ['sometimes', 'integer'],
             'isPublic' => ['sometimes', 'boolean'],
             'isAddon' => ['sometimes', 'boolean'],

@@ -17,6 +17,7 @@ import {
 interface Service {
   id: number;
   icon?: string | null;
+  imageUrl: string;
   title: string;
   description: string;
   url?: string;
@@ -42,6 +43,10 @@ type PlanBenefitGroup = {
   benefits: PlanBenefit[];
 };
 
+type PricingRateView = PublicPricingRateOption & {
+  displayName: string;
+};
+
 @Component({
   selector: 'app-services',
   standalone: true,
@@ -64,7 +69,7 @@ export class ServicesComponent implements OnInit {
   isQuoteExpanded = false;
   quoteSuccess = '';
   quoteError = '';
-  rates: PublicPricingRateOption[] = [];
+  rates: PricingRateView[] = [];
   serviceOptions: PublicQuoteServiceOption[] = [];
   servicesDraft: QuoteServiceDraft[] = [];
   readonly todayLabel = new Date().toLocaleDateString('es-PE');
@@ -85,22 +90,24 @@ export class ServicesComponent implements OnInit {
   ];
   readonly planBenefitCatalog: Record<string, PlanBenefitGroup> = {
     basico: {
-      title: 'Plan Basico',
+      title: 'Plan Basico (Ante Proyecto)',
       timeline: '15-30 dias',
       benefits: [
-        { label: 'Planos de Arquitectura (distribucion, plantas, cortes y elevaciones)', included: true },
+        { label: 'Memoria Descriptiva', included: true },
         { label: 'Planos de Estructuras', included: true },
+        { label: 'Planos de Instalaciones Sanitarias', included: true },
+        { label: 'Planos de Instalaciones Electricas y Comunicaciones', included: true },
         { label: 'Renders profesionales de fachada 3D y recorrido interior', included: true },
-        { label: 'Planos de Instalaciones Sanitarias', included: false },
-        { label: 'Planos de Instalaciones Electricas y Comunicaciones', included: false },
+        { label: 'Planos de Arquitectura (distribucion, plantas, cortes y elevaciones)', included: false },
         { label: 'Propuesta de Diseno Interior', included: false },
         { label: 'Presupuesto de Obra', included: false }
       ]
     },
     pro: {
-      title: 'Plan Pro',
+      title: 'Plan Pro (Expediente técnico)',
       timeline: '30-45 dias',
       benefits: [
+        { label: 'Memoria Descriptiva', included: true },
         { label: 'Planos de Arquitectura (distribucion, plantas, cortes y elevaciones)', included: true },
         { label: 'Planos de Estructuras', included: true },
         { label: 'Planos de Instalaciones Sanitarias', included: true },
@@ -111,9 +118,10 @@ export class ServicesComponent implements OnInit {
       ]
     },
     premium: {
-      title: 'Plan Premium',
+      title: 'Plan Premium (Proyecto ejecutivo)',
       timeline: '45-60 dias',
       benefits: [
+        { label: 'Memoria Descriptiva', included: true },
         { label: 'Planos de Arquitectura (distribucion, plantas, cortes y elevaciones)', included: true },
         { label: 'Planos de Estructuras', included: true },
         { label: 'Planos de Instalaciones Sanitarias', included: true },
@@ -159,6 +167,7 @@ export class ServicesComponent implements OnInit {
     {
       id: 1,
       icon: '',
+      imageUrl: 'img/services/desarrollo-inmobiliario.webp',
       title: 'Desarrollo inmobiliario',
       description: 'Vivienda unifamiliar, multifamiliar y casas de campo.',
       url: '/services#cotizacion'
@@ -166,42 +175,49 @@ export class ServicesComponent implements OnInit {
     {
       id: 2,
       icon: '',
+      imageUrl: 'img/services/saneamiento-legal.webp',
       title: 'Saneamiento físico legal y consultoría urbana',
       description: 'Regularización de predios y asesoría técnica para el ordenamiento territorial.'
     },
     {
       id: 3,
       icon: '',
+      imageUrl: 'img/services/diseno-urbano.webp',
       title: 'Diseño urbano',
       description: 'Proyectos de habilitación urbana y planificación integral de barrios.'
     },
     {
       id: 4,
       icon: '',
+      imageUrl: 'img/services/supervision-obras.webp',
       title: 'Supervisión y ejecución de obras',
       description: 'Gestión y control de obras públicas y privadas con altos estándares de calidad.'
     },
     {
       id: 5,
       icon: '',
+      imageUrl: 'img/services/consultoria-tecnica.webp',
       title: 'Consultoría técnica',
       description: 'Elaboración de expedientes técnicos y asesoramiento al Estado y al sector privado.'
     },
     {
       id: 6,
       icon: '',
+      imageUrl: 'img/services/implementacion-bim.webp',
       title: 'Implementación BIM',
       description: 'Especialistas en procesos colaborativos y digitalización para entidades públicas y municipalidades.'
     },
     {
       id: 7,
       icon: '',
+      imageUrl: 'img/services/materiales-sostenibles.webp',
       title: 'Materiales sostenibles',
       description: 'Asesoría en el uso de bambú y madera de plantaciones forestales certificadas.'
     },
     {
       id: 8,
       icon: '',
+      imageUrl: 'img/services/alianzas-estrategicas.webp',
       title: 'Alianzas estratégicas',
       description: 'Colaboraciones con ONGs y actores públicos y privados para proteger agua, bosques y suelo.'
     }
@@ -236,6 +252,7 @@ export class ServicesComponent implements OnInit {
         title: service.title,
         description: service.description,
         url: service.url ?? service.icon ?? undefined,
+        imageUrl: service.imageUrl ?? this.getFallbackServiceImage(service.title, service.id),
       }));
     }
 
@@ -339,7 +356,12 @@ export class ServicesComponent implements OnInit {
     try {
       const options = await this.publicQuotesService.getOptions();
       this.zone.run(() => {
-        this.rates = options.pricingRates.filter((rate) => rate.isActive);
+        this.rates = options.pricingRates
+          .filter((rate) => rate.isActive)
+          .map((rate) => ({
+            ...rate,
+            displayName: this.formatPlanName(rate.name)
+          }));
         this.serviceOptions = options.services.filter((service) => service.isActive);
         this.onRateChange();
         this.cdr.detectChanges();
@@ -498,6 +520,46 @@ export class ServicesComponent implements OnInit {
     }).format(value);
   }
 
+  private getFallbackServiceImage(title: string, index: number): string {
+    const normalized = this.toLookupKey(title);
+    const matches: Array<[string[], string]> = [
+      [['inmobili', 'edific'], 'img/services/desarrollo-inmobiliario.webp'],
+      [['saneamiento', 'legal', 'predio'], 'img/services/saneamiento-legal.webp'],
+      [['urbano', 'lotiz'], 'img/services/diseno-urbano.webp'],
+      [['supervision', 'obra', 'constru'], 'img/services/supervision-obras.webp'],
+      [['consultoria', 'expediente'], 'img/services/consultoria-tecnica.webp'],
+      [['bim', 'digital'], 'img/services/implementacion-bim.webp'],
+      [['sostenible', 'bambu', 'madera'], 'img/services/materiales-sostenibles.webp'],
+      [['alianza', 'ambient'], 'img/services/alianzas-estrategicas.webp']
+    ];
+    const match = matches.find(([keywords]) => keywords.some((keyword) => normalized.includes(keyword)));
+    if (match) {
+      return match[1];
+    }
+    return this.services[Math.abs(index) % this.services.length].imageUrl!;
+  }
+
+  private formatPlanName(planName: string): string {
+    const normalized = this.normalizePlanName(planName);
+    if (
+      normalized.includes('ante proyecto')
+      || normalized.includes('proyecto ejecutivo')
+      || normalized.includes('expediente tecnico')
+    ) {
+      return planName;
+    }
+    if (normalized.includes('basico')) {
+      return `${planName} (Ante Proyecto)`;
+    }
+    if (normalized.includes('premium')) {
+      return `${planName} (Proyecto ejecutivo)`;
+    }
+    if (normalized.includes('pro')) {
+      return `${planName} (Expediente técnico)`;
+    }
+    return planName;
+  }
+
   pricingTypeLabel(pricingType: QuoteServiceDraft['pricingType']) {
     if (pricingType === 'per_m2') {
       return 'Por m2';
@@ -539,7 +601,7 @@ export class ServicesComponent implements OnInit {
 
     const source = this.planBenefitCatalog[matchedKey];
     return {
-      title: planName || source.title,
+      title: this.formatPlanName(planName || source.title),
       timeline:
         minDays !== null && minDays !== undefined && maxDays !== null && maxDays !== undefined
           ? `${minDays}-${maxDays} dias`
