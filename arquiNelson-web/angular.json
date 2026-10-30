@@ -90,13 +90,14 @@
           "builder": "@angular/build:dev-server",
           "options": {
             "host": "0.0.0.0",
-              "port": 4200,
-              "allowedHosts": [
-                ".brs.devtunnels.ms",
-                "localhost",
-                "127.0.0.1"
-              ]
-            },
+            "port": 4200,
+            "proxyConfig": "proxy.conf.cjs",
+            "allowedHosts": [
+              ".brs.devtunnels.ms",
+              "localhost",
+              "127.0.0.1"
+            ]
+          },
           "configurations": {
             "production": {
               "buildTarget": "arquiNelson-web:build:production"

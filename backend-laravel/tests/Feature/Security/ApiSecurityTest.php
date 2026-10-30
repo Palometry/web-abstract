@@ -4,12 +4,16 @@ namespace Tests\Feature\Security;
 
 use App\Http\Middleware\JwtAuth;
 use Firebase\JWT\JWT;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ApiSecurityTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -36,6 +40,8 @@ class ApiSecurityTest extends TestCase
 
     public function test_user_listing_rejects_users_without_the_required_role(): void
     {
+        $this->seedUser(20, ['editor']);
+
         $editorResponse = $this
             ->withToken($this->makeToken(20, ['editor']))
             ->getJson('/api/users');
@@ -45,6 +51,8 @@ class ApiSecurityTest extends TestCase
 
     public function test_jwt_middleware_accepts_http_only_cookie_tokens(): void
     {
+        $this->seedUser(25, ['editor']);
+
         $request = Request::create('/api/users', 'GET', [], [
             (string) config('jwt.cookie_name') => $this->makeToken(25, ['editor']),
         ]);
@@ -115,6 +123,8 @@ class ApiSecurityTest extends TestCase
 
     public function test_media_file_upload_rejects_php_files(): void
     {
+        $this->seedUser(30, ['admin']);
+
         $response = $this
             ->withToken($this->makeToken(30, ['admin']))
             ->post('/api/media/file', [
@@ -129,6 +139,8 @@ class ApiSecurityTest extends TestCase
 
     public function test_cookie_authenticated_writes_require_the_trusted_frontend_header(): void
     {
+        $this->seedUser(35, ['admin']);
+
         $response = $this
             ->withUnencryptedCookie((string) config('jwt.cookie_name'), $this->makeToken(35, ['admin']))
             ->postJson('/api/media', [
@@ -143,6 +155,8 @@ class ApiSecurityTest extends TestCase
 
     public function test_media_base64_upload_rejects_html_payloads(): void
     {
+        $this->seedUser(40, ['admin']);
+
         $response = $this
             ->withToken($this->makeToken(40, ['admin']))
             ->withHeader((string) config('jwt.frontend_header'), (string) config('jwt.frontend_header_value'))
@@ -152,6 +166,46 @@ class ApiSecurityTest extends TestCase
             ]);
 
         $response->assertStatus(422);
+    }
+
+    public function test_inactive_user_is_rejected_even_with_an_unexpired_token(): void
+    {
+        $this->seedUser(45, ['admin'], false);
+
+        $response = $this->withToken($this->makeToken(45, ['admin']))->getJson('/api/auth/me');
+
+        $response->assertStatus(401);
+    }
+
+    public function test_current_database_roles_replace_roles_stored_in_the_token(): void
+    {
+        $this->seedUser(50, ['editor']);
+
+        $response = $this->withToken($this->makeToken(50, ['admin']))->getJson('/api/users');
+
+        $response->assertStatus(403);
+    }
+
+    private function seedUser(int $userId, array $roles, bool $active = true): void
+    {
+        DB::table('users')->insert([
+            'id' => $userId,
+            'email' => "security{$userId}@example.com",
+            'password_hash' => password_hash('test-password', PASSWORD_BCRYPT),
+            'full_name' => 'Security Test',
+            'is_active' => $active ? 1 : 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        foreach ($roles as $roleName) {
+            $roleId = DB::table('roles')->insertGetId([
+                'name' => $roleName,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            DB::table('user_roles')->insert(['user_id' => $userId, 'role_id' => $roleId]);
+        }
     }
 
     private function makeToken(int $userId, array $roles, ?int $exp = null): string

@@ -375,11 +375,6 @@ export type AdminDashboardStats = {
   publishedPages: number;
 };
 
-export type AdminPublicDashboardStats = {
-  activeProjects: number;
-  newQuotes: number;
-};
-
 export type AdminDashboardData = {
   stats: AdminDashboardStats;
   activity: AdminDashboardActivity[];
@@ -1525,20 +1520,6 @@ export class AdminDataService {
       },
       activity: []
     });
-  }
-
-  async getPublicDashboardStats(): Promise<AdminPublicDashboardStats> {
-    if (!this.isBrowser) {
-      return { activeProjects: 0, newQuotes: 0 };
-    }
-    try {
-      const response = await firstValueFrom(
-        this.http.get<AdminPublicDashboardStats>(`${this.apiBaseUrl}/dashboard/public`)
-      );
-      return response;
-    } catch {
-      return { activeProjects: 0, newQuotes: 0 };
-    }
   }
 
   async createService(payload: {

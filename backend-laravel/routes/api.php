@@ -15,7 +15,7 @@ use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\StoreProductController;
 
-Route::get('/health', fn () => response()->json(['ok' => true]));
+Route::get('/health', fn () => response()->json(['ok' => true]))->middleware('throttle:public-read');
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware(['trusted.frontend', 'throttle:auth-login']);
@@ -23,29 +23,33 @@ Route::prefix('auth')->group(function () {
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth.jwt');
 });
 
-Route::get('/dashboard/public', [DashboardController::class, 'public']);
 Route::get('/dashboard', [DashboardController::class, 'admin'])
-    ->middleware(['auth.jwt', 'role:admin,editor']);
+    ->middleware(['auth.jwt', 'role:admin,editor', 'throttle:admin-api']);
 
-Route::get('/pages/public/home', [PagesController::class, 'publicHome']);
-Route::get('/pages/public/{slug}', [PagesController::class, 'publicBySlug']);
-Route::get('/portfolio/public', [PortfolioController::class, 'publicList']);
-Route::get('/portfolio/public/{id}', [PortfolioController::class, 'publicDetail']);
-Route::get('/blog/public', [BlogController::class, 'publicList']);
-Route::get('/blog/public/{slug}', [BlogController::class, 'publicDetail']);
-Route::get('/services/public', [ServiceController::class, 'publicList']);
-Route::get('/store/products/public', [StoreProductController::class, 'publicList']);
-Route::get('/projects/public', [ProjectsController::class, 'publicList']);
-Route::get('/projects/public/{id}/brochure', [ProjectsController::class, 'publicBrochure']);
-Route::get('/projects/public/{id}/hero-video', [ProjectsController::class, 'publicHeroVideo']);
-Route::get('/projects/public/{id}/panorama', [ProjectsController::class, 'publicPanorama']);
-Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
-Route::get('/quotes/public/options', [QuotesController::class, 'options']);
+Route::middleware('throttle:public-read')->group(function () {
+    Route::get('/pages/public/home', [PagesController::class, 'publicHome']);
+    Route::get('/pages/public/{slug}', [PagesController::class, 'publicBySlug']);
+    Route::get('/portfolio/public', [PortfolioController::class, 'publicList']);
+    Route::get('/portfolio/public/{id}', [PortfolioController::class, 'publicDetail']);
+    Route::get('/blog/public', [BlogController::class, 'publicList']);
+    Route::get('/blog/public/{slug}', [BlogController::class, 'publicDetail']);
+    Route::get('/services/public', [ServiceController::class, 'publicList']);
+    Route::get('/store/products/public', [StoreProductController::class, 'publicList']);
+    Route::get('/projects/public', [ProjectsController::class, 'publicList']);
+    Route::get('/projects/public/{id}', [ProjectsController::class, 'publicDetail']);
+    Route::get('/quotes/public/options', [QuotesController::class, 'publicOptions']);
+});
+
+Route::middleware('throttle:public-media')->group(function () {
+    Route::get('/projects/public/{id}/brochure', [ProjectsController::class, 'publicBrochure']);
+    Route::get('/projects/public/{id}/hero-video', [ProjectsController::class, 'publicHeroVideo']);
+    Route::get('/projects/public/{id}/panorama', [ProjectsController::class, 'publicPanorama']);
+});
 Route::post('/chat', [ChatController::class, 'send'])->middleware('throttle:public-chat');
 Route::post('/quotes/lead', [QuotesController::class, 'storeLead'])->middleware('throttle:public-quotes');
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:public-contact');
 
-Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor'])->group(function () {
+Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor', 'throttle:admin-api'])->group(function () {
     Route::get('/pages', [PagesController::class, 'index']);
     Route::post('/pages', [PagesController::class, 'store']);
     Route::get('/pages/{id}', [PagesController::class, 'show']);
@@ -123,7 +127,7 @@ Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor'])->group(
     Route::post('/media/chunks/{uploadId}/complete', [MediaController::class, 'completeChunkedUpload']);
 });
 
-Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor_user_manager'])->group(function () {
+Route::middleware(['trusted.frontend', 'auth.jwt', 'role:admin,editor_user_manager', 'throttle:admin-api'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::patch('/users/{id}', [UserController::class, 'update']);

@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'trusted.frontend' => \App\Http\Middleware\EnsureTrustedFrontendRequest::class,
         ]);
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->append(\App\Http\Middleware\ApiSecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -7,20 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function public()
-    {
-        $activeProjectsRows = DB::select("SELECT COUNT(*) AS total FROM projects WHERE status = 'active'");
-        $newQuotesRows = DB::select("SELECT COUNT(*) AS total FROM quotes WHERE status = 'new'");
-
-        $activeProjects = !empty($activeProjectsRows) ? (int) $activeProjectsRows[0]->total : 0;
-        $newQuotes = !empty($newQuotesRows) ? (int) $newQuotesRows[0]->total : 0;
-
-        return response()->json([
-            'activeProjects' => $activeProjects,
-            'newQuotes' => $newQuotes,
-        ]);
-    }
-
     public function admin()
     {
         $activeProjectsRows = DB::select("SELECT COUNT(*) AS total FROM projects WHERE status = 'active'");

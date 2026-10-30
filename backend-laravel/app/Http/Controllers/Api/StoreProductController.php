@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\PublicAssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -153,7 +154,7 @@ class StoreProductController extends Controller
             'longDescription' => $row->long_description ?? '',
             'includes' => $this->decodeList($row->includes_json),
             'extraDetails' => $this->decodeList($row->extra_details_json),
-            'imageUrl' => $row->image_url,
+            'imageUrl' => PublicAssetUrl::normalize($row->image_url),
             'accent' => $row->accent ?: '#9f3232',
             'sortOrder' => (int) $row->sort_order,
             'isActive' => (bool) $row->is_active,

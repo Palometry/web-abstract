@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Illuminate\Support\Facades\DB;
 
 class JwtAuth
 {
@@ -26,6 +27,28 @@ class JwtAuth
         } catch (\Throwable) {
             return response()->json(['error' => 'Invalid token'], 401);
         }
+
+        $userId = (int) ($payload['id'] ?? 0);
+        $user = $userId > 0
+            ? DB::table('users')
+                ->select('id', 'email', 'is_active')
+                ->where('id', $userId)
+                ->first()
+            : null;
+
+        if (!$user || !(bool) $user->is_active) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $roles = DB::table('roles as r')
+            ->join('user_roles as ur', 'ur.role_id', '=', 'r.id')
+            ->where('ur.user_id', $userId)
+            ->pluck('r.name')
+            ->values()
+            ->all();
+
+        $payload['email'] = $user->email;
+        $payload['roles'] = $roles;
 
         $request->attributes->set('jwt_user', $payload);
         return $next($request);

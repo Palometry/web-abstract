@@ -175,16 +175,30 @@ class QuotesController extends Controller
         ];
     }
 
+    public function publicOptions()
+    {
+        return $this->optionsResponse(true);
+    }
+
     public function options()
     {
+        return $this->optionsResponse(false);
+    }
+
+    private function optionsResponse(bool $onlyActive)
+    {
+        $rateFilter = $onlyActive ? ' WHERE is_active = 1' : '';
+        $serviceFilter = $onlyActive ? ' WHERE is_active = 1' : '';
         $rateRows = DB::select(
               "SELECT id, name, base_price_per_m2, currency, is_active, min_days, max_days
                FROM pricing_rates
+               {$rateFilter}
              ORDER BY is_active DESC, effective_from DESC, id DESC"
         );
         $serviceRows = DB::select(
             "SELECT id, name, pricing_type, price, currency, is_addon, is_active
              FROM services
+             {$serviceFilter}
              ORDER BY display_order ASC, id ASC"
         );
 

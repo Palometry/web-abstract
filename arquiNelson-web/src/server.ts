@@ -5,11 +5,11 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
-const defaultApiOrigin = 'https://20t85ctb-8000.brs.devtunnels.ms';
-const defaultFrontendOrigin = 'https://20t85ctb-4200.brs.devtunnels.ms';
 
 function parseEnvList(value: string | undefined): string[] {
   return (value ?? '')
@@ -26,35 +26,28 @@ function tryGetOrigin(value: string): string | null {
   }
 }
 
-function buildCspHeader(): string {
-  const apiOrigin = tryGetOrigin(process.env['ARQUI_API_BASE_URL'] ?? '') ?? defaultApiOrigin;
-  const frontendOrigin =
-    tryGetOrigin(process.env['ARQUI_FRONTEND_ORIGIN'] ?? '') ?? defaultFrontendOrigin;
+function buildCspHeader(nonce: string): string {
+  const frontendOrigin = tryGetOrigin(process.env['ARQUI_FRONTEND_ORIGIN'] ?? '');
+  const frontendSources = frontendOrigin ? [frontendOrigin] : [];
   const extraConnect = parseEnvList(process.env['ARQUI_CSP_CONNECT_SRC']);
   const extraMedia = parseEnvList(process.env['ARQUI_CSP_MEDIA_SRC']);
   const extraImages = parseEnvList(process.env['ARQUI_CSP_IMG_SRC']);
   const directives = [
-    `default-src 'self' ${frontendOrigin}`,
+    `default-src 'self' ${frontendSources.join(' ')}`,
     `base-uri 'self'`,
     `object-src 'none'`,
     `frame-ancestors 'self'`,
     `form-action 'self'`,
-    `script-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}'`,
     `style-src 'self' 'unsafe-inline'`,
     `font-src 'self' data:`,
     `worker-src 'self' blob:`,
     [
       'connect-src',
       "'self'",
-      frontendOrigin,
+      ...frontendSources,
       'http://localhost:4200',
       'ws://localhost:4200',
-      'http://localhost:8000',
-      'https://localhost:8000',
-      'http://127.0.0.1:8000',
-      'https://127.0.0.1:8000',
-      'https://*.brs.devtunnels.ms',
-      apiOrigin,
       ...extraConnect,
     ].join(' '),
     [
@@ -62,13 +55,7 @@ function buildCspHeader(): string {
       "'self'",
       'data:',
       'blob:',
-      frontendOrigin,
-      'http://localhost:8000',
-      'https://localhost:8000',
-      'http://127.0.0.1:8000',
-      'https://127.0.0.1:8000',
-      'https://*.brs.devtunnels.ms',
-      apiOrigin,
+      ...frontendSources,
       'https://images.unsplash.com',
       ...extraImages,
     ].join(' '),
@@ -77,21 +64,13 @@ function buildCspHeader(): string {
       "'self'",
       'data:',
       'blob:',
-      frontendOrigin,
-      'http://localhost:8000',
-      'https://localhost:8000',
-      'http://127.0.0.1:8000',
-      'https://127.0.0.1:8000',
-      'http://localhost:4001',
-      'http://127.0.0.1:4001',
-      'https://*.brs.devtunnels.ms',
-      apiOrigin,
+      ...frontendSources,
       ...extraMedia,
     ].join(' '),
     [
       'frame-src',
       "'self'",
-      frontendOrigin,
+      ...frontendSources,
       'https://a360.co',
       'https://*.autodesk.com',
       'https://*.a360.autodesk.com',
@@ -111,12 +90,41 @@ function buildCspHeader(): string {
   return directives.join('; ');
 }
 
+async function addCspNonce(response: Response, nonce: string): Promise<Response> {
+  if (!response.headers.get('content-type')?.includes('text/html')) {
+    return response;
+  }
+
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  const html = (await response.text()).replace(
+    /<script(?![^>]*\bnonce=)([^>]*)>/gi,
+    `<script nonce="${nonce}"$1>`
+  );
+
+  return new Response(html, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 const app = express();
+app.disable('x-powered-by');
 const angularApp = new AngularNodeAppEngine();
+const backendOrigin = tryGetOrigin(
+  process.env['ARQUI_BACKEND_ORIGIN'] ?? 'http://127.0.0.1:8000'
+);
+
+if (!backendOrigin) {
+  throw new Error('ARQUI_BACKEND_ORIGIN must be a valid HTTP or HTTPS URL.');
+}
 
 // Security headers for SSR responses.
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', buildCspHeader());
+  const cspNonce = randomBytes(18).toString('base64');
+  res.locals['cspNonce'] = cspNonce;
+  res.setHeader('Content-Security-Policy', buildCspHeader(cspNonce));
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -126,6 +134,24 @@ app.use((req, res, next) => {
   );
   next();
 });
+
+app.use(
+  createProxyMiddleware({
+    pathFilter: ['/api', '/uploads'],
+    target: backendOrigin,
+    changeOrigin: true,
+    xfwd: true,
+    proxyTimeout: 120_000,
+    timeout: 120_000,
+    on: {
+      proxyRes: (proxyResponse) => {
+        delete proxyResponse.headers['host'];
+        delete proxyResponse.headers['server'];
+        delete proxyResponse.headers['x-powered-by'];
+      },
+    },
+  })
+);
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -164,13 +190,19 @@ app.use(
 /**
  * Handle all other requests by rendering the Angular application.
  */
-app.use((req, res, next) => {
-  angularApp
-    .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
-    .catch(next);
+app.use(async (req, res, next) => {
+  try {
+    const response = await angularApp.handle(req);
+    if (!response) {
+      next();
+      return;
+    }
+
+    const securedResponse = await addCspNonce(response, res.locals['cspNonce']);
+    await writeResponseToNodeResponse(securedResponse, res);
+  } catch (error) {
+    next(error);
+  }
 });
 /**
  * Start the server if this module is the main entry point, or it is ran via PM2.

@@ -3,64 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\PublicAssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class BlogController extends Controller
 {
-    private function requestOrigin(): string
-    {
-        $scheme = $this->forwardedHeaderValue('x-forwarded-proto')
-            ?: $this->forwardedHeaderValue('x-forwarded-scheme')
-            ?: request()->getScheme();
-        $host = $this->forwardedHeaderValue('x-forwarded-host')
-            ?: $this->forwardedHeaderValue('x-original-host')
-            ?: request()->getHttpHost();
-
-        return strtolower((string) $scheme) . '://' . $host;
-    }
-
-    private function forwardedHeaderValue(string $name): ?string
-    {
-        $value = request()->headers->get($name);
-        if (!is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        return trim(explode(',', $value)[0]);
-    }
-
     private function resolveFileUrl(?string $url): ?string
     {
-        $url = is_string($url) ? trim($url) : '';
-        if ($url === '') {
-            return null;
-        }
-
-        $host = $this->requestOrigin();
-
-        if (preg_match('#^https?://#i', $url)) {
-            $parts = parse_url($url);
-            $path = $parts['path'] ?? '';
-            if ($path !== '' && str_starts_with($path, '/uploads/')) {
-                return $host . $path;
-            }
-
-            $currentHost = parse_url($host, PHP_URL_HOST);
-            $urlHost = $parts['host'] ?? null;
-            if ($urlHost && $currentHost && strcasecmp($urlHost, $currentHost) === 0) {
-                return $url;
-            }
-
-            return $url;
-        }
-
-        if (str_starts_with($url, '/')) {
-            return $host . $url;
-        }
-
-        return $host . '/' . $url;
+        return PublicAssetUrl::normalize($url);
     }
 
     private function sanitizeStatus(?string $status): string

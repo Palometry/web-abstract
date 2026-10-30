@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\PublicAssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -132,28 +133,6 @@ class ProjectsController extends Controller
         }, $status, $headers);
     }
 
-    private function requestOrigin(): string
-    {
-        $scheme = $this->forwardedHeaderValue('x-forwarded-proto')
-            ?: $this->forwardedHeaderValue('x-forwarded-scheme')
-            ?: request()->getScheme();
-        $host = $this->forwardedHeaderValue('x-forwarded-host')
-            ?: $this->forwardedHeaderValue('x-original-host')
-            ?: request()->getHttpHost();
-
-        return strtolower((string) $scheme) . '://' . $host;
-    }
-
-    private function forwardedHeaderValue(string $name): ?string
-    {
-        $value = request()->headers->get($name);
-        if (!is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        return trim(explode(',', $value)[0]);
-    }
-
     private function resolvePublicBrochureUrl(int $projectId, ?string $url): ?string
     {
         $resolved = $this->resolveFileUrl($url);
@@ -164,7 +143,7 @@ class ProjectsController extends Controller
         $parts = parse_url($resolved);
         $path = $parts['path'] ?? '';
         if ($path !== '' && str_starts_with($path, '/uploads/')) {
-            return $this->requestOrigin() . '/api/projects/public/' . $projectId . '/brochure';
+            return '/api/projects/public/' . $projectId . '/brochure';
         }
 
         return $resolved;
@@ -180,7 +159,7 @@ class ProjectsController extends Controller
         $parts = parse_url($resolved);
         $path = $parts['path'] ?? '';
         if ($path !== '' && str_starts_with($path, '/uploads/')) {
-            return $this->requestOrigin() . '/api/projects/public/' . $projectId . '/hero-video';
+            return '/api/projects/public/' . $projectId . '/hero-video';
         }
 
         return $resolved;
@@ -196,7 +175,7 @@ class ProjectsController extends Controller
         $parts = parse_url($resolved);
         $path = $parts['path'] ?? '';
         if ($path !== '' && str_starts_with($path, '/uploads/')) {
-            return $this->requestOrigin() . '/api/projects/public/' . $projectId . '/panorama';
+            return '/api/projects/public/' . $projectId . '/panorama';
         }
 
         return $resolved;
@@ -231,34 +210,7 @@ class ProjectsController extends Controller
 
     private function resolveFileUrl(?string $url): ?string
     {
-        $url = is_string($url) ? trim($url) : '';
-        if ($url === '') {
-            return null;
-        }
-
-        $host = $this->requestOrigin();
-
-        if (preg_match('#^https?://#i', $url)) {
-            $parts = parse_url($url);
-            $path = $parts['path'] ?? '';
-            if ($path !== '' && str_starts_with($path, '/uploads/')) {
-                return $host . $path;
-            }
-
-            $currentHost = parse_url($host, PHP_URL_HOST);
-            $urlHost = $parts['host'] ?? null;
-            if ($urlHost && $currentHost && strcasecmp($urlHost, $currentHost) === 0) {
-                return $url;
-            }
-
-            return $url;
-        }
-
-        if (str_starts_with($url, '/')) {
-            return $host . $url;
-        }
-
-        return $host . '/' . $url;
+        return PublicAssetUrl::normalize($url);
     }
 
     private function resolveUrlList(array $urls): array
@@ -396,7 +348,7 @@ class ProjectsController extends Controller
                           ORDER BY pi.is_cover DESC, pi.sort_order ASC, pi.id ASC
                           LIMIT 1) AS cover_url
                   FROM projects p
-                  WHERE ";
+                  WHERE p.status = 'active' AND ";
         $bindings = [];
 
         if ($projectId > 0) {
@@ -428,7 +380,7 @@ class ProjectsController extends Controller
              INNER JOIN media_assets m ON m.id = pv.media_id
              WHERE pv.project_id = ?
              ORDER BY pv.sort_order ASC, pv.id ASC",
-            [$projectId]
+            [$project->id]
         );
         $videos = array_map(function ($row) {
             return [
@@ -500,7 +452,7 @@ class ProjectsController extends Controller
         $rows = DB::select(
             "SELECT details_json
              FROM projects
-             WHERE id = ?
+             WHERE id = ? AND status = 'active'
              LIMIT 1",
             [$projectId]
         );
@@ -537,7 +489,7 @@ class ProjectsController extends Controller
         $rows = DB::select(
             "SELECT details_json
              FROM projects
-             WHERE id = ?
+             WHERE id = ? AND status = 'active'
              LIMIT 1",
             [$projectId]
         );
@@ -573,6 +525,7 @@ class ProjectsController extends Controller
         $project = DB::table('projects')
             ->select('details_json')
             ->where('id', $projectId)
+            ->where('status', 'active')
             ->first();
         if (!$project) {
             return response()->json(['error' => 'Project not found.'], 404);

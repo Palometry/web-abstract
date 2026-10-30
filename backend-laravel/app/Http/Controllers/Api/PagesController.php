@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\PublicAssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
@@ -32,7 +33,7 @@ class PagesController extends Controller
                 'sectionKey' => $row->section_key,
                 'title' => $row->title,
                 'description' => $row->description,
-                'imageUrl' => $row->image_url,
+                'imageUrl' => PublicAssetUrl::normalize($row->image_url),
                 'sortOrder' => (int) $row->sort_order,
                 'isVisible' => (bool) $row->is_visible,
                 'blocks' => [],
@@ -210,7 +211,7 @@ class PagesController extends Controller
                 'sectionKey' => $row->section_key,
                 'title' => $row->title,
                 'description' => $row->description,
-                'imageUrl' => $row->image_url,
+                'imageUrl' => PublicAssetUrl::normalize($row->image_url),
                 'sortOrder' => (int) $row->sort_order,
                 'isVisible' => (bool) $row->is_visible,
                 'blocks' => [],
@@ -349,7 +350,7 @@ class PagesController extends Controller
             'sectionKey' => $row->section_key,
             'title' => $row->title,
             'description' => $row->description,
-            'imageUrl' => $row->image_url,
+            'imageUrl' => PublicAssetUrl::normalize($row->image_url),
             'sortOrder' => (int) $row->sort_order,
             'isVisible' => (bool) $row->is_visible,
         ]);

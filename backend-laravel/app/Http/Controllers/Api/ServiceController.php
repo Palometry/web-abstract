@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Services\StoreServiceRequest;
 use App\Http\Requests\Services\UpdateServiceRequest;
+use App\Support\PublicAssetUrl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,7 @@ class ServiceController extends Controller
             'description' => $row->description,
             'icon' => $row->icon,
             'url' => $row->icon,
-            'imageUrl' => $row->image_url,
+            'imageUrl' => PublicAssetUrl::normalize($row->image_url),
             'displayOrder' => (int) $row->display_order,
         ]);
 
@@ -59,7 +60,7 @@ class ServiceController extends Controller
             'id' => $row->id,
             'name' => $row->name,
             'description' => $row->description,
-            'imageUrl' => $row->image_url,
+            'imageUrl' => PublicAssetUrl::normalize($row->image_url),
             'public' => (bool) $row->is_public,
             'isActive' => (bool) $row->is_active,
         ]);
@@ -101,7 +102,7 @@ class ServiceController extends Controller
             'name' => $row->name,
             'description' => $row->description,
             'icon' => $row->icon,
-            'imageUrl' => $row->image_url,
+            'imageUrl' => PublicAssetUrl::normalize($row->image_url),
             'displayOrder' => (int) $row->display_order,
             'public' => (bool) $row->is_public,
             'isAddon' => (bool) $row->is_addon,

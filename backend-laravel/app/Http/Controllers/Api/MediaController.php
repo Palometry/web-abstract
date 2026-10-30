@@ -11,28 +11,6 @@ use Illuminate\Validation\ValidationException;
 
 class MediaController extends Controller
 {
-    private function requestOrigin(): string
-    {
-        $scheme = $this->forwardedHeaderValue('x-forwarded-proto')
-            ?: $this->forwardedHeaderValue('x-forwarded-scheme')
-            ?: request()->getScheme();
-        $host = $this->forwardedHeaderValue('x-forwarded-host')
-            ?: $this->forwardedHeaderValue('x-original-host')
-            ?: request()->getHttpHost();
-
-        return strtolower((string) $scheme) . '://' . $host;
-    }
-
-    private function forwardedHeaderValue(string $name): ?string
-    {
-        $value = request()->headers->get($name);
-        if (!is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        return trim(explode(',', $value)[0]);
-    }
-
     private function allowedMimeTypes(): array
     {
         return config('media.allowed_mime_types', []);
@@ -264,7 +242,7 @@ class MediaController extends Controller
 
         return response()->json([
             'id' => $id,
-            'fileUrl' => $this->requestOrigin() . $fileUrl,
+            'fileUrl' => $fileUrl,
         ], 201);
     }
 
@@ -405,7 +383,7 @@ class MediaController extends Controller
 
             return response()->json([
                 'id' => $id,
-                'fileUrl' => $this->requestOrigin() . $fileUrl,
+                'fileUrl' => $fileUrl,
             ], 201);
         } catch (\Throwable $exception) {
             fclose($output);
@@ -476,7 +454,7 @@ class MediaController extends Controller
 
         return response()->json([
             'id' => $id,
-            'fileUrl' => $this->requestOrigin() . $fileUrl,
+            'fileUrl' => $fileUrl,
         ], 201);
     }
 }

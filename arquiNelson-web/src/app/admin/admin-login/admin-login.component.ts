@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminAuthService } from '../../services/admin-auth';
-import { AdminDataService, AdminPublicDashboardStats } from '../../services/admin-data';
 
 @Component({
   selector: 'app-admin-login',
@@ -19,12 +18,9 @@ export class AdminLoginComponent implements OnInit {
   showPassword = false;
   error = '';
   loading = false;
-  statsLoading = false;
-  stats: AdminPublicDashboardStats = { activeProjects: 0, newQuotes: 0 };
 
   constructor(
     private auth: AdminAuthService,
-    private data: AdminDataService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -34,7 +30,6 @@ export class AdminLoginComponent implements OnInit {
       this.router.navigate(['/admin']);
       return;
     }
-    this.loadStats();
   }
 
   async submit() {
@@ -59,12 +54,5 @@ export class AdminLoginComponent implements OnInit {
 
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
-  }
-
-  private async loadStats() {
-    this.statsLoading = true;
-    this.stats = await this.data.getPublicDashboardStats();
-    this.statsLoading = false;
-    this.cdr.detectChanges();
   }
 }
